@@ -6,8 +6,9 @@ import OgrenciPaneli from "./pages/ogrenci/OgrenciPaneli";
 import DersKonuYonetimi from "./pages/ogretmen/DersKonuYonetimi";
 import SablonOlustur from "./pages/ogretmen/SablonOlustur";
 import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
+import SonucGir from "./pages/ogretmen/SonucGir";
 
-type Sekme = "ders-konu" | "sablon" | "deneme";
+type Sekme = "ders-konu" | "sablon" | "deneme" | "sonuc";
 
 function OgretmenUygulamasi() {
   const [sekme, setSekme] = useState<Sekme>("ders-konu");
@@ -16,6 +17,7 @@ function OgretmenUygulamasi() {
     { id: "ders-konu", etiket: "Ders / Konu Yönetimi" },
     { id: "sablon", etiket: "Deneme Şablonu Oluştur" },
     { id: "deneme", etiket: "Deneme Oluştur" },
+    { id: "sonuc", etiket: "Sonuç Gir" },
   ];
 
   return (
@@ -30,6 +32,7 @@ function OgretmenUygulamasi() {
       {sekme === "ders-konu" && <DersKonuYonetimi />}
       {sekme === "sablon" && <SablonOlustur />}
       {sekme === "deneme" && <DenemeOlustur />}
+      {sekme === "sonuc" && <SonucGir />}
     </div>
   );
 }
