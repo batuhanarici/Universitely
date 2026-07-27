@@ -7,13 +7,15 @@ import DersKonuYonetimi from "./pages/ogretmen/DersKonuYonetimi";
 import SablonOlustur from "./pages/ogretmen/SablonOlustur";
 import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
 import SonucGir from "./pages/ogretmen/SonucGir";
+import SinifGenel from "./pages/ogretmen/SinifGenel";
 
-type Sekme = "ders-konu" | "sablon" | "deneme" | "sonuc";
+type Sekme = "ders-konu" | "sablon" | "deneme" | "sonuc" | "sinif";
 
 function OgretmenUygulamasi() {
-  const [sekme, setSekme] = useState<Sekme>("ders-konu");
+  const [sekme, setSekme] = useState<Sekme>("sinif");
 
   const sekmeler: { id: Sekme; etiket: string }[] = [
+    { id: "sinif", etiket: "Sınıf Genel Durumu" },
     { id: "ders-konu", etiket: "Ders / Konu Yönetimi" },
     { id: "sablon", etiket: "Deneme Şablonu Oluştur" },
     { id: "deneme", etiket: "Deneme Oluştur" },
@@ -33,6 +35,7 @@ function OgretmenUygulamasi() {
       {sekme === "sablon" && <SablonOlustur />}
       {sekme === "deneme" && <DenemeOlustur />}
       {sekme === "sonuc" && <SonucGir />}
+      {sekme === "sinif" && <SinifGenel />}
     </div>
   );
 }
