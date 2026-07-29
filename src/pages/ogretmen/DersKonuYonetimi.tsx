@@ -20,10 +20,7 @@ export default function DersKonuYonetimi() {
   }, []);
 
   useEffect(() => {
-    if (!seciliDersId) {
-      setKonular([]);
-      return;
-    }
+    if (!seciliDersId) { setKonular([]); return; }
     konulariGetir(seciliDersId).then(setKonular);
   }, [seciliDersId]);
 
@@ -45,64 +42,58 @@ export default function DersKonuYonetimi() {
   if (yukleniyor) return <p>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 560, margin: "40px auto", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 20 }}>Ders / Konu Yönetimi</h1>
+    <div>
+      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Ders / Konu Yönetimi</h1>
 
-      <section style={{ marginTop: 24 }}>
-        <h2 style={{ fontSize: 15, color: "#555" }}>Dersler</h2>
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
+        <h2 className="card-title">Dersler</h2>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
           <input
             value={yeniDersAdi}
             onChange={(e) => setYeniDersAdi(e.target.value)}
             placeholder="örn. Matematik"
-            style={{ flex: 1, padding: 8, border: "1px solid #ddd", borderRadius: 6 }}
+            className="input"
+            style={{ flex: 1 }}
+            onKeyDown={(e) => e.key === "Enter" && handleDersEkle()}
           />
-          <button onClick={handleDersEkle} style={{ padding: "8px 14px", borderRadius: 6 }}>
-            Ekle
-          </button>
+          <button onClick={handleDersEkle} className="btn btn-primary">Ekle</button>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {dersler.map((d) => (
             <button
               key={d.id}
               onClick={() => setSeciliDersId(d.id)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 999,
-                border: "1px solid #ddd",
-                background: d.id === seciliDersId ? "#1B2A4A" : "white",
-                color: d.id === seciliDersId ? "white" : "#333",
-              }}
+              className={`chip${d.id === seciliDersId ? " active" : ""}`}
             >
               {d.ad}
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
       {seciliDersId && (
-        <section style={{ marginTop: 28 }}>
-          <h2 style={{ fontSize: 15, color: "#555" }}>
-            Konular — {dersler.find((d) => d.id === seciliDersId)?.ad}
-          </h2>
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
+          <h2 className="card-title">Konular — {dersler.find((d) => d.id === seciliDersId)?.ad}</h2>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             <input
               value={yeniKonuAdi}
               onChange={(e) => setYeniKonuAdi(e.target.value)}
               placeholder="örn. Türev"
-              style={{ flex: 1, padding: 8, border: "1px solid #ddd", borderRadius: 6 }}
+              className="input"
+              style={{ flex: 1 }}
+              onKeyDown={(e) => e.key === "Enter" && handleKonuEkle()}
             />
-            <button onClick={handleKonuEkle} style={{ padding: "8px 14px", borderRadius: 6 }}>
-              Ekle
-            </button>
+            <button onClick={handleKonuEkle} className="btn btn-primary">Ekle</button>
           </div>
-          <ul style={{ paddingLeft: 18 }}>
-            {konular.map((k) => (
-              <li key={k.id} style={{ padding: "3px 0" }}>{k.ad}</li>
+          <div>
+            {konular.map((k, i) => (
+              <div key={k.id} className="stagger-item" style={{ padding: "8px 0", borderBottom: "1px solid #f2f2f2", fontSize: 13.5, animationDelay: `${0.15 + i * 0.04}s` }}>
+                {k.ad}
+              </div>
             ))}
-            {konular.length === 0 && <p style={{ color: "#999" }}>Henüz konu eklenmedi.</p>}
-          </ul>
-        </section>
+            {konular.length === 0 && <p style={{ color: "var(--muted)" }}>Henüz konu eklenmedi.</p>}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -13,9 +13,9 @@ import type { Deneme } from "../../types/database";
 type DenemeDetayli = Deneme & { sablon_adi: string };
 
 const DURUMLAR: { deger: SoruDurumu; etiket: string; renk: string }[] = [
-  { deger: "dogru", etiket: "D", renk: "#2E7D6B" },
-  { deger: "yanlis", etiket: "Y", renk: "#B5482A" },
-  { deger: "bos", etiket: "B", renk: "#999" },
+  { deger: "dogru", etiket: "D", renk: "var(--dogru)" },
+  { deger: "yanlis", etiket: "Y", renk: "var(--yanlis)" },
+  { deger: "bos", etiket: "B", renk: "var(--bos)" },
 ];
 
 export default function SonucGir() {
@@ -43,10 +43,7 @@ export default function SonucGir() {
 
   useEffect(() => {
     const secilenDeneme = denemeler.find((d) => d.id === denemeId);
-    if (!secilenDeneme?.sablon_id) {
-      setSorular([]);
-      return;
-    }
+    if (!secilenDeneme?.sablon_id) { setSorular([]); return; }
     sablonSorulariniGetir(secilenDeneme.sablon_id).then((s) => {
       setSorular(s);
       setCevaplar({});
@@ -81,73 +78,67 @@ export default function SonucGir() {
   if (yukleniyor) return <p>Yükleniyor…</p>;
 
   if (denemeler.length === 0) {
-    return <p style={{ textAlign: "center", marginTop: 60, color: "#b5482a" }}>Önce bir deneme oluşturman lazım.</p>;
+    return <p style={{ textAlign: "center", marginTop: 60, color: "var(--yanlis)" }}>Önce bir deneme oluşturman lazım.</p>;
   }
   if (ogrenciler.length === 0) {
-    return <p style={{ textAlign: "center", marginTop: 60, color: "#b5482a" }}>Henüz kayıtlı öğrenci yok — öğrenciler kendi hesaplarını oluşturunca burada görünecekler.</p>;
+    return <p style={{ textAlign: "center", marginTop: 60, color: "var(--yanlis)" }}>Henüz kayıtlı öğrenci yok — öğrenciler kendi hesaplarını oluşturunca burada görünecekler.</p>;
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "40px auto", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 20 }}>Sonuç Gir</h1>
+    <div>
+      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Sonuç Gir</h1>
 
-      <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-        <select value={denemeId} onChange={(e) => setDenemeId(e.target.value)} style={{ flex: 1, padding: 8, border: "1px solid #ddd", borderRadius: 6 }}>
-          {denemeler.map((d) => (
-            <option key={d.id} value={d.id}>{d.ad}</option>
-          ))}
-        </select>
-        <select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)} style={{ flex: 1, padding: 8, border: "1px solid #ddd", borderRadius: 6 }}>
-          {ogrenciler.map((o) => (
-            <option key={o.id} value={o.id}>{o.ad_soyad}</option>
-          ))}
-        </select>
-      </div>
+      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
+        <div style={{ display: "flex", gap: 10 }}>
+          <select value={denemeId} onChange={(e) => setDenemeId(e.target.value)} className="input" style={{ flex: 1 }}>
+            {denemeler.map((d) => <option key={d.id} value={d.id}>{d.ad}</option>)}
+          </select>
+          <select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)} className="input" style={{ flex: 1 }}>
+            {ogrenciler.map((o) => <option key={o.id} value={o.id}>{o.ad_soyad}</option>)}
+          </select>
+        </div>
 
-      {zatenGirilmis && (
-        <p style={{ color: "#c98a2b", marginTop: 12, fontSize: 13 }}>
-          Bu öğrenci için bu denemenin sonuçları zaten girilmiş.
-        </p>
-      )}
+        {zatenGirilmis && (
+          <p style={{ color: "var(--gold-dim)", marginTop: 12, fontSize: 13 }}>
+            Bu öğrenci için bu denemenin sonuçları zaten girilmiş.
+          </p>
+        )}
 
-      {!zatenGirilmis && sorular.length > 0 && (
-        <>
-          <div style={{ marginTop: 20, border: "1px solid #eee", borderRadius: 8, overflow: "hidden" }}>
-            {sorular.map((s) => (
-              <div key={s.soru_no} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderTop: "1px solid #eee" }}>
-                <span style={{ width: 36, fontSize: 13, color: "#777" }}>#{s.soru_no}</span>
-                <span style={{ flex: 1, fontSize: 13 }}>{s.konu_ad}</span>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {DURUMLAR.map((d) => (
-                    <button
-                      key={d.deger}
-                      onClick={() => cevapSec(s.soru_no, d.deger)}
-                      style={{
-                        width: 30, height: 30, borderRadius: 6, border: "1px solid #ddd",
-                        background: cevaplar[s.soru_no] === d.deger ? d.renk : "white",
-                        color: cevaplar[s.soru_no] === d.deger ? "white" : "#555",
-                        fontWeight: 700, fontSize: 12,
-                      }}
-                    >
-                      {d.etiket}
-                    </button>
-                  ))}
+        {!zatenGirilmis && sorular.length > 0 && (
+          <>
+            <div style={{ marginTop: 16, border: "1px solid var(--paper-dim)", borderRadius: 10, overflow: "hidden" }}>
+              {sorular.map((s, i) => (
+                <div key={s.soru_no} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderTop: i === 0 ? "none" : "1px solid #f2f2f2", animationDelay: `${i * 0.02}s` }}>
+                  <span className="mono" style={{ width: 36, fontSize: 12.5, color: "var(--muted)" }}>#{s.soru_no}</span>
+                  <span style={{ flex: 1, fontSize: 13 }}>{s.konu_ad}</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {DURUMLAR.map((d) => (
+                      <button
+                        key={d.deger}
+                        onClick={() => cevapSec(s.soru_no, d.deger)}
+                        style={{
+                          width: 30, height: 30, borderRadius: 7, border: "1px solid #ddd",
+                          background: cevaplar[s.soru_no] === d.deger ? d.renk : "white",
+                          color: cevaplar[s.soru_no] === d.deger ? "white" : "#555",
+                          fontWeight: 700, fontSize: 12, transition: "all 0.15s var(--ease)",
+                        }}
+                      >
+                        {d.etiket}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <button
-            onClick={handleKaydet}
-            disabled={!tumuCevaplandi || kaydediliyor}
-            style={{ marginTop: 16, padding: "10px 18px", borderRadius: 6, background: "#1B2A4A", color: "white", border: "none" }}
-          >
-            {kaydediliyor ? "Kaydediliyor…" : tumuCevaplandi ? "Sonuçları Kaydet" : `${Object.keys(cevaplar).length}/${sorular.length} soru işaretlendi`}
-          </button>
-        </>
-      )}
+            <button onClick={handleKaydet} disabled={!tumuCevaplandi || kaydediliyor} className="btn btn-primary" style={{ marginTop: 16 }}>
+              {kaydediliyor ? "Kaydediliyor…" : tumuCevaplandi ? "Sonuçları Kaydet" : `${Object.keys(cevaplar).length}/${sorular.length} soru işaretlendi`}
+            </button>
+          </>
+        )}
 
-      {mesaj && <p style={{ marginTop: 12, color: "#2e7d6b" }}>{mesaj}</p>}
+        {mesaj && <p style={{ marginTop: 12, color: "var(--dogru)" }}>{mesaj}</p>}
+      </div>
     </div>
   );
 }
