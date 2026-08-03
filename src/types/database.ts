@@ -48,3 +48,42 @@ export interface TekrarDurumu {
   sonuc_id: string;
   cozuldu: boolean;
 }
+
+export type SinavTuru = "tyt" | "ayt" | "her_ikisi";
+
+export interface OgrenciProfili {
+  ogrenci_id: string;
+  hedef_universite: string | null;
+  hedef_bolum: string | null;
+  sinav_turu: SinavTuru;
+  hedef_net: number | null;
+}
+
+export interface CalismaKaydi {
+  id: string;
+  ogrenci_id: string;
+  tarih: string;
+  sure_dk: number;
+  soru_sayisi: number | null;
+  konu_id: string | null;
+  not: string | null;
+}
+
+export type GorevTipi = "gunluk" | "haftalik" | "koc";
+
+export interface Gorev {
+  id: string;
+  ogrenci_id: string;
+  tarih: string;
+  baslik: string;
+  tip: GorevTipi;
+  tamamlandi: boolean;
+}
+
+export interface KonuIlerleme {
+  id: string;
+  ogrenci_id: string;
+  konu_id: string;
+  tamamlandi: boolean;
+  tamamlanma_tarihi: string | null;
+}

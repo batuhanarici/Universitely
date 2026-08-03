@@ -9,7 +9,6 @@ import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
 import SonucGir from "./pages/ogretmen/SonucGir";
 import SinifGenel from "./pages/ogretmen/SinifGenel";
 import UYArrow from "./components/UYArrow";
-
 type Sekme = "sinif" | "ders-konu" | "sablon" | "deneme" | "sonuc";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
@@ -65,16 +64,7 @@ function App() {
   if (ogrenciMi === null) return <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
 
   if (ogrenciMi) {
-    return (
-      <div>
-        <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px" }}>
-          <button onClick={() => supabase.auth.signOut()} style={{ fontSize: 13, color: "var(--muted)", border: "none", background: "none" }}>
-            Çıkış Yap
-          </button>
-        </div>
-        <OgrenciPaneli />
-      </div>
-    );
+    return <OgrenciPaneli />;
   }
 
   return <OgretmenUygulamasi />;
