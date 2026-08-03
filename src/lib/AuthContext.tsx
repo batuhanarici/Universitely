@@ -24,6 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setYukleniyor(false);
+    }).catch(() => {
+      setSession(null);
+      setYukleniyor(false);
     });
 
     const { data: dinleyici } = supabase.auth.onAuthStateChange((_event, yeniSession) => {

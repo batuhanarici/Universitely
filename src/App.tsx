@@ -64,10 +64,12 @@ function App() {
   let icerik: ReactNode;
   if (!supabaseConfigurada) {
     icerik = <KurulumEkrani />;
-  } else if (yukleniyor || ogrenciMi === null) {
+  } else if (yukleniyor) {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (!session) {
     icerik = <GirisEkrani />;
+  } else if (ogrenciMi === null) {
+    icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (ogrenciMi) {
     icerik = <OgrenciPaneli />;
   } else {
