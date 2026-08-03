@@ -36,3 +36,13 @@ export async function gorevSil(id: string) {
   const { error } = await supabase.from("gorevler").delete().eq("id", id);
   if (error) throw error;
 }
+
+export async function gorevAta(ogrenciId: string, baslik: string, tarih: string) {
+  const { data, error } = await supabase
+    .from("gorevler")
+    .insert({ ogrenci_id: ogrenciId, baslik, tarih, tip: "koc" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

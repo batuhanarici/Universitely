@@ -9,8 +9,16 @@ import Gorevler from "./Gorevler";
 import Kaynaklar from "./Kaynaklar";
 import Denemeler from "./Denemeler";
 import Analiz from "./Analiz";
+import Yanlislar from "./Yanlislar";
+import Tekrar from "./Tekrar";
+import Takvim from "./Takvim";
+import Mesaj from "./Mesaj";
+import Bildirimler from "./Bildirimler";
 
-type Sekme = "dashboard" | "profil" | "calisma" | "konular" | "gorevler" | "kaynaklar" | "denemeler" | "analiz";
+type Sekme =
+  | "dashboard" | "profil" | "calisma" | "konular" | "gorevler"
+  | "kaynaklar" | "denemeler" | "analiz" | "yanlislar" | "tekrar"
+  | "takvim" | "mesaj" | "bildirimler";
 
 interface SekmeTanimi {
   id: Sekme;
@@ -33,6 +41,7 @@ const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
       { id: "konular", etiket: "Konular", icon: "📚" },
       { id: "kaynaklar", etiket: "Kaynaklar", icon: "📖" },
       { id: "gorevler", etiket: "Görevler", icon: "✅" },
+      { id: "takvim", etiket: "Takvim", icon: "📅" },
     ],
   },
   {
@@ -40,6 +49,15 @@ const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
     sekmeler: [
       { id: "denemeler", etiket: "Denemeler", icon: "🗓️" },
       { id: "analiz", etiket: "Analiz", icon: "📈" },
+      { id: "yanlislar", etiket: "Yanlışlar", icon: "❌" },
+      { id: "tekrar", etiket: "Tekrar Planı", icon: "🔁" },
+    ],
+  },
+  {
+    grup: "Koç & Sistem",
+    sekmeler: [
+      { id: "mesaj", etiket: "Mesajlar", icon: "✉️" },
+      { id: "bildirimler", etiket: "Bildirimler", icon: "🔔" },
     ],
   },
 ];
@@ -83,6 +101,11 @@ export default function OgrenciPaneli() {
         {sekme === "kaynaklar" && <Kaynaklar />}
         {sekme === "denemeler" && <Denemeler />}
         {sekme === "analiz" && <Analiz />}
+        {sekme === "yanlislar" && <Yanlislar />}
+        {sekme === "tekrar" && <Tekrar />}
+        {sekme === "takvim" && <Takvim />}
+        {sekme === "mesaj" && <Mesaj />}
+        {sekme === "bildirimler" && <Bildirimler />}
         {sekme === "gorevler" && <Gorevler />}
       </main>
     </div>

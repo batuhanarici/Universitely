@@ -9,9 +9,12 @@ import SablonOlustur from "./pages/ogretmen/SablonOlustur";
 import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
 import SonucGir from "./pages/ogretmen/SonucGir";
 import SinifGenel from "./pages/ogretmen/SinifGenel";
+import OgretmenGorevAta from "./pages/ogretmen/OgretmenGorevAta";
+import OgretmenMesajlar from "./pages/ogretmen/OgretmenMesajlar";
 import UYArrow from "./components/UYArrow";
 import ErrorBoundary from "./components/ErrorBoundary";
-type Sekme = "sinif" | "ders-konu" | "sablon" | "deneme" | "sonuc";
+
+type Sekme = "sinif" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "gorev-ata" | "mesajlar";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "sinif", etiket: "Sınıf Genel Durumu", icon: "📊" },
@@ -19,8 +22,9 @@ const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "sablon", etiket: "Deneme Şablonu Oluştur", icon: "🧩" },
   { id: "deneme", etiket: "Deneme Oluştur", icon: "🗓️" },
   { id: "sonuc", etiket: "Sonuç Gir", icon: "✍️" },
+  { id: "gorev-ata", etiket: "Koç Görevi Ata", icon: "📝" },
+  { id: "mesajlar", etiket: "Mesajlar", icon: "✉️" },
 ];
-
 function OgretmenUygulamasi() {
   const [sekme, setSekme] = useState<Sekme>("sinif");
 
@@ -53,6 +57,8 @@ function OgretmenUygulamasi() {
         {sekme === "sablon" && <SablonOlustur />}
         {sekme === "deneme" && <DenemeOlustur />}
         {sekme === "sonuc" && <SonucGir />}
+        {sekme === "gorev-ata" && <OgretmenGorevAta />}
+        {sekme === "mesajlar" && <OgretmenMesajlar />}
       </main>
     </div>
   );

@@ -103,3 +103,33 @@ export interface Kitap {
   baslangic_tarihi: string | null;
   bitis_hedefi: string | null;
 }
+
+export interface YanlisArsivi {
+  id: string;
+  ogrenci_id: string;
+  konu_id: string | null;
+  kaynak_adi: string | null;
+  sayfa_no: number | null;
+  soru_no: number | null;
+  aciklama: string | null;
+  cozuldu: boolean;
+  eklenme_tarihi: string;
+}
+
+export interface TekrarPlan {
+  id: string;
+  ogrenci_id: string;
+  aciklama: string;
+  yanlis_id: string | null;
+  plan_tarihi: string;
+  yapildi: boolean;
+}
+
+export interface Mesaj {
+  id: string;
+  gonderici_id: string;
+  alici_id: string;
+  icerik: string;
+  tarih: string;
+  okundu: boolean;
+}
