@@ -132,7 +132,7 @@ export default function OgrenciPaneli() {
             <Tooltip />
             <Bar dataKey="dogru" name="Doğru" stackId="a" fill={TEAL} animationDuration={800} />
             <Bar dataKey="yanlis" name="Yanlış" stackId="a" fill={RUST} animationDuration={800} />
-            <Bar dataKey="bos" name="Boş" stackId="a" fill="#D9D4C7" radius={[3, 3, 0, 0]} animationDuration={800} />
+            <Bar dataKey="bos" name="Boş" stackId="a" fill={BOS} radius={[3, 3, 0, 0]} animationDuration={800} />
           </BarChart>
         </ResponsiveContainer>
       </div>
