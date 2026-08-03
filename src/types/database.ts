@@ -32,7 +32,10 @@ export interface Deneme {
   sablon_id: string | null;
   ad: string;
   tarih: string;
+  tur: DenemeTuru | null;
 }
+
+export type DenemeTuru = "tyt" | "ayt" | "brans";
 
 export type SoruDurumu = "dogru" | "yanlis" | "bos";
 
@@ -86,4 +89,17 @@ export interface KonuIlerleme {
   konu_id: string;
   tamamlandi: boolean;
   tamamlanma_tarihi: string | null;
+}
+
+export type KaynakTuru = "kitap" | "soru_bankasi" | "deneme" | "video";
+
+export interface Kitap {
+  id: string;
+  ogrenci_id: string;
+  ad: string;
+  kaynak_turu: KaynakTuru;
+  toplam: number;
+  ilerleme: number;
+  baslangic_tarihi: string | null;
+  bitis_hedefi: string | null;
 }

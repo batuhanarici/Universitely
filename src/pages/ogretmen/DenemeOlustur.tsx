@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
-import type { DenemeSablonu, Deneme } from "../../types/database";
+import type { DenemeSablonu, Deneme, DenemeTuru } from "../../types/database";
 import { sablonlariGetirDetayli, denemeOlustur, denemeleriGetir } from "../../lib/denemeQueries";
 
 type SablonDetayli = DenemeSablonu & { ders_adi: string };
 type DenemeDetayli = Deneme & { sablon_adi: string };
+
+const TURLER: { deger: DenemeTuru; etiket: string }[] = [
+  { deger: "tyt", etiket: "TYT" },
+  { deger: "ayt", etiket: "AYT" },
+  { deger: "brans", etiket: "Branş" },
+];
 
 export default function DenemeOlustur() {
   const [sablonlar, setSablonlar] = useState<SablonDetayli[]>([]);
@@ -11,6 +17,7 @@ export default function DenemeOlustur() {
   const [sablonId, setSablonId] = useState("");
   const [ad, setAd] = useState("");
   const [tarih, setTarih] = useState(() => new Date().toISOString().slice(0, 10));
+  const [tur, setTur] = useState<DenemeTuru>("tyt");
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(true);
 
@@ -30,7 +37,7 @@ export default function DenemeOlustur() {
     if (!ad.trim() || !sablonId || !tarih) return;
     setKaydediliyor(true);
     try {
-      await denemeOlustur(ad.trim(), tarih, sablonId);
+      await denemeOlustur(ad.trim(), tarih, sablonId, tur);
       setAd("");
       await verileriYenile();
     } finally {
@@ -54,6 +61,9 @@ export default function DenemeOlustur() {
               <select value={sablonId} onChange={(e) => setSablonId(e.target.value)} className="input" style={{ flex: 1 }}>
                 {sablonlar.map((s) => <option key={s.id} value={s.id}>{s.ad} ({s.ders_adi})</option>)}
               </select>
+              <select value={tur} onChange={(e) => setTur(e.target.value as DenemeTuru)} className="input" style={{ width: 110 }}>
+                {TURLER.map((t) => <option key={t.deger} value={t.deger}>{t.etiket}</option>)}
+              </select>
               <input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} className="input" />
             </div>
             <button onClick={handleKaydet} disabled={kaydediliyor || !ad.trim()} className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
@@ -72,7 +82,10 @@ export default function DenemeOlustur() {
               <p style={{ fontSize: 14 }}>{d.ad}</p>
               <p style={{ fontSize: 12, color: "var(--muted)" }}>{d.sablon_adi}</p>
             </div>
-            <span className="mono" style={{ fontSize: 13, color: "var(--muted)" }}>{d.tarih}</span>
+            <div style={{ textAlign: "right" }}>
+              {d.tur && <span className="chip" style={{ padding: "2px 8px", fontSize: 11 }}>{d.tur.toUpperCase()}</span>}
+              <p className="mono" style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{d.tarih}</p>
+            </div>
           </div>
         ))}
       </div>

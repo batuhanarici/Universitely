@@ -6,8 +6,11 @@ import Profil from "./Profil";
 import Calisma from "./Calisma";
 import Konular from "./Konular";
 import Gorevler from "./Gorevler";
+import Kaynaklar from "./Kaynaklar";
+import Denemeler from "./Denemeler";
+import Analiz from "./Analiz";
 
-type Sekme = "dashboard" | "profil" | "calisma" | "konular" | "gorevler";
+type Sekme = "dashboard" | "profil" | "calisma" | "konular" | "gorevler" | "kaynaklar" | "denemeler" | "analiz";
 
 interface SekmeTanimi {
   id: Sekme;
@@ -28,7 +31,15 @@ const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
     sekmeler: [
       { id: "calisma", etiket: "Çalışma", icon: "⏱️" },
       { id: "konular", etiket: "Konular", icon: "📚" },
+      { id: "kaynaklar", etiket: "Kaynaklar", icon: "📖" },
       { id: "gorevler", etiket: "Görevler", icon: "✅" },
+    ],
+  },
+  {
+    grup: "Ölçme",
+    sekmeler: [
+      { id: "denemeler", etiket: "Denemeler", icon: "🗓️" },
+      { id: "analiz", etiket: "Analiz", icon: "📈" },
     ],
   },
 ];
@@ -69,6 +80,9 @@ export default function OgrenciPaneli() {
         {sekme === "profil" && <Profil />}
         {sekme === "calisma" && <Calisma />}
         {sekme === "konular" && <Konular />}
+        {sekme === "kaynaklar" && <Kaynaklar />}
+        {sekme === "denemeler" && <Denemeler />}
+        {sekme === "analiz" && <Analiz />}
         {sekme === "gorevler" && <Gorevler />}
       </main>
     </div>

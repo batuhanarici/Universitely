@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Deneme, DenemeSablonu } from "../types/database";
+import type { Deneme, DenemeSablonu, DenemeTuru } from "../types/database";
 
 export async function sablonlariGetirDetayli(): Promise<
   (DenemeSablonu & { ders_adi: string })[]
@@ -18,11 +18,12 @@ export async function sablonlariGetirDetayli(): Promise<
 export async function denemeOlustur(
   ad: string,
   tarih: string,
-  sablonId: string
+  sablonId: string,
+  tur: DenemeTuru
 ): Promise<Deneme> {
   const { data, error } = await supabase
     .from("denemeler")
-    .insert({ ad, tarih, sablon_id: sablonId })
+    .insert({ ad, tarih, sablon_id: sablonId, tur })
     .select()
     .single();
   if (error) throw error;
