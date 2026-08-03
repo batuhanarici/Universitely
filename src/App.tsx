@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { useAuth } from "./lib/AuthContext";
-import { supabase } from "./lib/supabase";
+import { supabase, supabaseConfigurada } from "./lib/supabase";
 import GirisEkrani from "./pages/GirisEkrani";
+import KurulumEkrani from "./pages/KurulumEkrani";
 import OgrenciPaneli from "./pages/ogrenci/OgrenciPaneli";
 import DersKonuYonetimi from "./pages/ogretmen/DersKonuYonetimi";
 import SablonOlustur from "./pages/ogretmen/SablonOlustur";
@@ -61,7 +62,9 @@ function App() {
   const { session, yukleniyor, ogrenciMi } = useAuth();
 
   let icerik: ReactNode;
-  if (yukleniyor || ogrenciMi === null) {
+  if (!supabaseConfigurada) {
+    icerik = <KurulumEkrani />;
+  } else if (yukleniyor || ogrenciMi === null) {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (!session) {
     icerik = <GirisEkrani />;

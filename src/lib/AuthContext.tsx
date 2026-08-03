@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+import { supabase, supabaseConfigurada } from "./supabase";
 
 interface AuthCtx {
   session: Session | null;
@@ -16,6 +16,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ogrenciMi, setOgrenciMi] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (!supabaseConfigurada) {
+      setSession(null);
+      setYukleniyor(false);
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setYukleniyor(false);
