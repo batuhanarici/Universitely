@@ -25,7 +25,7 @@ export default function Gorevler() {
   const [tip, setTip] = useState<GorevTipi>("gunluk");
 
   useEffect(() => {
-    gorevleriGetir().then(setGorevler).finally(() => setYukleniyor(false));
+    gorevleriGetir().then(setGorevler).catch(() => {}).finally(() => setYukleniyor(false));
   }, []);
 
   async function handleEkle() {

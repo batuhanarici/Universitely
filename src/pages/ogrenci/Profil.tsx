@@ -27,7 +27,7 @@ export default function Profil() {
         setSinavTuru(p.sinav_turu);
         setHedefNet(p.hedef_net != null ? String(p.hedef_net) : "");
       }
-    }).finally(() => setYukleniyor(false));
+    }).catch(() => {}).finally(() => setYukleniyor(false));
   }, []);
 
   async function handleKaydet() {

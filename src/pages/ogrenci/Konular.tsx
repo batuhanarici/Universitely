@@ -31,6 +31,7 @@ export default function Konular() {
         setIlerlemeler(i);
         setZayiflar(zayifKonuIdleri(s));
       })
+      .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
 

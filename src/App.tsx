@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { supabase } from "./lib/supabase";
 import GirisEkrani from "./pages/GirisEkrani";
@@ -9,6 +9,7 @@ import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
 import SonucGir from "./pages/ogretmen/SonucGir";
 import SinifGenel from "./pages/ogretmen/SinifGenel";
 import UYArrow from "./components/UYArrow";
+import ErrorBoundary from "./components/ErrorBoundary";
 type Sekme = "sinif" | "ders-konu" | "sablon" | "deneme" | "sonuc";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
@@ -59,15 +60,18 @@ function OgretmenUygulamasi() {
 function App() {
   const { session, yukleniyor, ogrenciMi } = useAuth();
 
-  if (yukleniyor) return <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
-  if (!session) return <GirisEkrani />;
-  if (ogrenciMi === null) return <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
-
-  if (ogrenciMi) {
-    return <OgrenciPaneli />;
+  let icerik: ReactNode;
+  if (yukleniyor || ogrenciMi === null) {
+    icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
+  } else if (!session) {
+    icerik = <GirisEkrani />;
+  } else if (ogrenciMi) {
+    icerik = <OgrenciPaneli />;
+  } else {
+    icerik = <OgretmenUygulamasi />;
   }
 
-  return <OgretmenUygulamasi />;
+  return <ErrorBoundary>{icerik}</ErrorBoundary>;
 }
 
 export default App;

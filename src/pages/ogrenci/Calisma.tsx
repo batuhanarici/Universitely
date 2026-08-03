@@ -44,7 +44,7 @@ export default function Calisma() {
   const [notMetni, setNotMetni] = useState("");
 
   useEffect(() => {
-    calismalariGetir().then(setKayitlar).finally(() => setYukleniyor(false));
+    calismalariGetir().then(setKayitlar).catch(() => {}).finally(() => setYukleniyor(false));
   }, []);
 
   useEffect(() => {

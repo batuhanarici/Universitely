@@ -78,6 +78,7 @@ export default function Dashboard() {
         setHavuz(h);
         setGorevler(g);
       })
+      .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
 
