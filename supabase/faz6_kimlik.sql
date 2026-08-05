@@ -1,5 +1,11 @@
 -- Universitely Faz A (koç paneli): Çoklu koç + Davet kodu + Veli portalı + RLS scoping
 -- Supabase > SQL Editor > New query > yapistir > RUN
+--
+-- NOT: Fonksiyon gövdeleri $fn$ ... $fn$ (isimli dolar-alinti) ile sarilidir.
+-- Supabase SQL Editor'un $$ isaretli gövdeleri bozan bilinen bir parcalayici
+-- hatasi vardir ("no function body specified" / 42P13); isimli etiket bu
+-- sorunu atlatir. View'larda "security definer" yoktur (CREATE VIEW icin
+-- gecersizdir); auth.uid() filtreleri zaten gecerli kullaniciya göre daraltir.
 
 -- ============ 1) ogrenciler tablosu: koç ilişkisi + aktif + davet kodu ============
 alter table public.ogrenciler
@@ -19,12 +25,12 @@ create or replace function public.ogrencim_mi(ogrenci_id uuid)
 returns boolean
 language sql security definer stable
 set search_path = public
-as $$
+as $fn$
   select exists (
     select 1 from public.ogrenciler o
     where o.id = ogrenci_id and o.ogretmen_id = auth.uid()
   );
-$$;
+$fn$;
 
 revoke all on function public.ogrencim_mi(uuid) from public;
 grant execute on function public.ogrencim_mi(uuid) to authenticated;
@@ -34,9 +40,9 @@ create or replace function public.benim_ogretmen_id()
 returns uuid
 language sql security definer stable
 set search_path = public
-as $$
+as $fn$
   select ogretmen_id from public.ogrenciler where id = auth.uid();
-$$;
+$fn$;
 
 revoke all on function public.benim_ogretmen_id() from public;
 grant execute on function public.benim_ogretmen_id() to authenticated;
@@ -46,12 +52,12 @@ create or replace function public.koc_ogrencileri()
 returns table (id uuid, ad_soyad text, aktif boolean, davet_kodu text)
 language sql security definer stable
 set search_path = public
-as $$
+as $fn$
   select o.id, o.ad_soyad, o.aktif, o.davet_kodu
   from public.ogrenciler o
   where o.ogretmen_id = auth.uid()
   order by o.ad_soyad;
-$$;
+$fn$;
 
 revoke all on function public.koc_ogrencileri() from public;
 grant execute on function public.koc_ogrencileri() to authenticated;
@@ -76,13 +82,13 @@ create or replace function public.davet_kodunu_dogrula(kod text)
 returns uuid
 language sql security definer stable
 set search_path = public
-as $$
+as $fn$
   select olusturan_id
   from public.davet_kodlari
   where kod = davet_kodunu_dogrula.kod
     and aktif
     and not kullanildi_mi;
-$$;
+$fn$;
 
 revoke all on function public.davet_kodunu_dogrula(text) from public;
 grant execute on function public.davet_kodunu_dogrula(text) to authenticated;
@@ -92,7 +98,7 @@ create or replace function public.davet_kodunu_bagla(kod text)
 returns boolean
 language plpgsql security definer
 set search_path = public
-as $$
+as $fn$
 declare
   koc uuid;
 begin
@@ -112,7 +118,7 @@ begin
 
   return true;
 end;
-$$;
+$fn$;
 
 revoke all on function public.davet_kodunu_bagla(text) from public;
 grant execute on function public.davet_kodunu_bagla(text) to authenticated;
@@ -137,7 +143,7 @@ create or replace function public.veli_bagla(kod text, ad_soyad text)
 returns boolean
 language plpgsql security definer
 set search_path = public
-as $$
+as $fn$
 declare
   ogr uuid;
 begin
@@ -154,7 +160,7 @@ begin
 
   return true;
 end;
-$$;
+$fn$;
 
 revoke all on function public.veli_bagla(text, text) from public;
 grant execute on function public.veli_bagla(text, text) to authenticated;
@@ -164,12 +170,12 @@ create or replace function public.velinin_kocu()
 returns uuid
 language sql security definer stable
 set search_path = public
-as $$
+as $fn$
   select o.ogretmen_id
   from public.veliler v
   join public.ogrenciler o on o.id = v.ogrenci_id
   where v.id = auth.uid();
-$$;
+$fn$;
 
 revoke all on function public.velinin_kocu() from public;
 grant execute on function public.velinin_kocu() to authenticated;
@@ -179,9 +185,9 @@ create or replace function public.veli_mi()
 returns boolean
 language sql security definer stable
 set search_path = public
-as $$
+as $fn$
   select exists (select 1 from public.veliler where id = auth.uid());
-$$;
+$fn$;
 
 revoke all on function public.veli_mi() from public;
 grant execute on function public.veli_mi() to authenticated;
@@ -191,22 +197,24 @@ create or replace function public.ogrenci_aktif_yap(ogrenci_id uuid, yeni_durum 
 returns boolean
 language plpgsql security definer
 set search_path = public
-as $$
+as $fn$
 begin
   update public.ogrenciler
     set aktif = yeni_durum
     where id = ogrenci_id and ogretmen_id = auth.uid();
   return found;
 end;
-$$;
+$fn$;
 
 revoke all on function public.ogrenci_aktif_yap(uuid, boolean) from public;
 grant execute on function public.ogrenci_aktif_yap(uuid, boolean) to authenticated;
 
--- ============ 5) Koç görünürlüğü: scoped view'lar (base RLS'i bypass etmeden koç kontrolü) ============
+-- ============ 5) Koç görünürlüğü: scoped view'lar ============
+-- View'lar görünüm sahibi (postgres) ayrıcalıklarıyla çalışır; yani alttaki
+-- tabloların RLS'ini bypass ederler. Görünürlük WHERE icindeki auth.uid()
+-- filtreleriyle sağlanır (sinif_sonuclari view'i ile aynı desen).
 -- Sınıf sonuçları, koçun kendi öğrencileriyle sınırlı (sinif_sonuclari yerine kullanılır)
 create or replace view public.koc_sonuclari
-security definer
 as
 select
   s.id,
@@ -231,7 +239,6 @@ grant select on public.koc_sonuclari to authenticated;
 
 -- Veli sonuçları: veli, kendi çocuğunun sonuçlarını görür
 create or replace view public.veli_sonuclari
-security definer
 as
 select
   s.id,
