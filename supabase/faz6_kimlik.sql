@@ -1,7 +1,11 @@
 -- Universitely Faz A (koç paneli): Çoklu koç + Davet kodu + Veli portalı + RLS scoping
--- Supabase > SQL Editor > New query > yapistir > RUN
 --
--- NOT: Fonksiyon gövdeleri $fn$ ... $fn$ (isimli dolar-alinti) ile sarilidir.
+-- NOT: Bu dosya tum adimlari tek parcada icerir (teknik referans).
+-- Supabase SQL Editor'de sorun yasarsan lutf siralari ayri ayri calistir:
+--   1) supabase/faz6a_temel.sql          (kolonlar + yardimci fonksiyonlar)
+--   2) supabase/faz6b_davet_veli.sql     (davet kodlari + veliler)
+--   3) supabase/faz6c_gorunurluk.sql     (view'lar + policy'ler + cache yenileme)
+-- Fonksiyon gövdeleri $fn$ ... $fn$ (isimli dolar-alinti) ile sarilidir.
 -- Supabase SQL Editor'un $$ isaretli gövdeleri bozan bilinen bir parcalayici
 -- hatasi vardir ("no function body specified" / 42P13); isimli etiket bu
 -- sorunu atlatir. View'larda "security definer" yoktur (CREATE VIEW icin
