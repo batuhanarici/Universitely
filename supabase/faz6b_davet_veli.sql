@@ -13,6 +13,7 @@ create table if not exists public.davet_kodlari (
 
 alter table public.davet_kodlari enable row level security;
 
+drop policy if exists "koç kendi ürettiği daveti yönetir" on public.davet_kodlari;
 create policy "koç kendi ürettiği daveti yönetir" on public.davet_kodlari
   for all using (auth.uid() = olusturan_id) with check (auth.uid() = olusturan_id);
 
@@ -87,6 +88,7 @@ create table if not exists public.veliler (
 
 alter table public.veliler enable row level security;
 
+drop policy if exists "veli kendi kaydini gorur" on public.veliler;
 create policy "veli kendi kaydini gorur" on public.veliler
   for select using (auth.uid() = id);
 
