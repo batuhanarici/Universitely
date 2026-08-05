@@ -61,3 +61,33 @@ export async function sonucGirisiKaydet(
     if (tekrarHata) throw tekrarHata;
   }
 }
+
+export interface TopluSonucGirdisi {
+  ogrenci_id: string;
+  sorular: { soru_no: number; durum: SoruDurumu }[];
+}
+
+export async function topluSonucGir(denemeId: string, girdi: TopluSonucGirdisi[]): Promise<boolean> {
+  const { data, error } = await supabase.rpc("toplu_sonuc_gir", { deneme_id: denemeId, girdi });
+  if (error) throw error;
+  return data ?? false;
+}
+
+export interface DenemeSonucSatiri {
+  ogrenci_id: string;
+  soru_no: number;
+  durum: SoruDurumu;
+}
+
+export async function denemeSonuclariniGetir(denemeId: string): Promise<DenemeSonucSatiri[]> {
+  const { data, error } = await supabase
+    .from("koc_sonuclari")
+    .select("ogrenci_id, soru_no, durum")
+    .eq("deneme_id", denemeId);
+  if (error) throw error;
+  return (data ?? []).map((s: any) => ({
+    ogrenci_id: s.ogrenci_id,
+    soru_no: s.soru_no,
+    durum: s.durum as SoruDurumu,
+  }));
+}
