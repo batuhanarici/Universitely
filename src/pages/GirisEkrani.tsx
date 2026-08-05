@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { davetKodunuDogrula } from "../lib/ogrenciYonetimQueries";
 import UYArrow from "../components/UYArrow";
 
+type Mod = "giris" | "ogrenci" | "veli";
+
 export default function GirisEkrani() {
-  const [mod, setMod] = useState<"giris" | "kayit">("giris");
+  const [mod, setMod] = useState<Mod>("giris");
   const [email, setEmail] = useState("");
   const [sifre, setSifre] = useState("");
   const [adSoyad, setAdSoyad] = useState("");
+  const [kod, setKod] = useState("");
   const [hata, setHata] = useState("");
   const [bilgi, setBilgi] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -19,18 +23,44 @@ export default function GirisEkrani() {
       if (mod === "giris") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: sifre });
         if (error) throw error;
-      } else {
+      } else if (mod === "ogrenci") {
         if (!adSoyad.trim()) {
           setHata("Ad soyad gerekli.");
+          return;
+        }
+        if (!kod.trim()) {
+          setHata("Davet kodu gerekli — koçundan alabilirsin.");
+          return;
+        }
+        const gecerli = await davetKodunuDogrula(kod.trim().toUpperCase());
+        if (!gecerli) {
+          setHata("Davet kodu geçersiz veya daha önce kullanılmış.");
           return;
         }
         const { error } = await supabase.auth.signUp({
           email,
           password: sifre,
-          options: { data: { ad_soyad: adSoyad.trim() } },
+          options: { data: { ad_soyad: adSoyad.trim(), davet_kodu: kod.trim().toUpperCase() } },
         });
         if (error) throw error;
-        setBilgi("Kayıt oluşturuldu. Şimdi giriş yapabilirsin.");
+        setBilgi("Kayıt oluşturuldu. Şimdi giriş yapabilirsin — koçuna otomatik bağlanacaksın.");
+        setMod("giris");
+      } else {
+        if (!adSoyad.trim()) {
+          setHata("Ad soyad gerekli.");
+          return;
+        }
+        if (!kod.trim()) {
+          setHata("Bağlantı kodu gerekli — koç ya da çocuğunun hesabından alabilirsin.");
+          return;
+        }
+        const { error } = await supabase.auth.signUp({
+          email,
+          password: sifre,
+          options: { data: { rol: "veli", ad_soyad: adSoyad.trim(), veli_kodu: kod.trim().toUpperCase() } },
+        });
+        if (error) throw error;
+        setBilgi("Veli kaydı oluşturuldu. Şimdi giriş yapabilirsin — çocuğunun hesabına bağlanacaksın.");
         setMod("giris");
       }
     } catch (e: any) {
@@ -80,32 +110,30 @@ export default function GirisEkrani() {
           }}
         >
           <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(0,0,0,0.2)", padding: 4, borderRadius: 10 }}>
-            <button
-              onClick={() => setMod("giris")}
-              style={{
-                flex: 1, padding: "8px 0", borderRadius: 7, border: "none", fontSize: 13, fontWeight: 600,
-                background: mod === "giris" ? "var(--gold)" : "transparent",
-                color: mod === "giris" ? "var(--ink)" : "rgba(255,255,255,0.6)",
-                transition: "all 0.2s var(--ease)",
-              }}
-            >
-              Giriş Yap
-            </button>
-            <button
-              onClick={() => setMod("kayit")}
-              style={{
-                flex: 1, padding: "8px 0", borderRadius: 7, border: "none", fontSize: 13, fontWeight: 600,
-                background: mod === "kayit" ? "var(--gold)" : "transparent",
-                color: mod === "kayit" ? "var(--ink)" : "rgba(255,255,255,0.6)",
-                transition: "all 0.2s var(--ease)",
-              }}
-            >
-              Öğrenci Kaydı
-            </button>
+            {(
+              [
+                { id: "giris", etiket: "Giriş Yap" },
+                { id: "ogrenci", etiket: "Öğrenci Kaydı" },
+                { id: "veli", etiket: "Veli Kaydı" },
+              ] as { id: Mod; etiket: string }[]
+            ).map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setMod(s.id)}
+                style={{
+                  flex: 1, padding: "8px 0", borderRadius: 7, border: "none", fontSize: 12.5, fontWeight: 600,
+                  background: mod === s.id ? "var(--gold)" : "transparent",
+                  color: mod === s.id ? "var(--ink)" : "rgba(255,255,255,0.6)",
+                  transition: "all 0.2s var(--ease)",
+                }}
+              >
+                {s.etiket}
+              </button>
+            ))}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {mod === "kayit" && (
+            {mod !== "giris" && (
               <input
                 value={adSoyad}
                 onChange={(e) => setAdSoyad(e.target.value)}
@@ -129,8 +157,16 @@ export default function GirisEkrani() {
               type="password"
               className="input"
               style={{ background: "rgba(255,255,255,0.06)", borderColor: "var(--ink-border)", color: "white" }}
-              onKeyDown={(e) => e.key === "Enter" && handleGonder()}
             />
+            {mod !== "giris" && (
+              <input
+                value={kod}
+                onChange={(e) => setKod(e.target.value.toUpperCase())}
+                placeholder={mod === "ogrenci" ? "Davet kodu (koçundan al)" : "Bağlantı kodu (çocuğunun hesabından)"}
+                className="input"
+                style={{ background: "rgba(255,255,255,0.06)", borderColor: "var(--ink-border)", color: "white", textTransform: "uppercase" }}
+              />
+            )}
             <button
               onClick={handleGonder}
               disabled={gonderiliyor || !email || !sifre}

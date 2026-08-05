@@ -14,7 +14,7 @@ export interface SinifSonucSatiri {
 }
 
 export async function sinifSonuclariniGetir(): Promise<SinifSonucSatiri[]> {
-  const { data, error } = await supabase.from("sinif_sonuclari").select("*");
+  const { data, error } = await supabase.from("koc_sonuclari").select("*");
   if (error) throw error;
   return data ?? [];
 }

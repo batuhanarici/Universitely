@@ -2,9 +2,9 @@ import { supabase } from "./supabase";
 import type { Ogrenci, SoruDurumu } from "../types/database";
 
 export async function ogrencileriGetir(): Promise<Ogrenci[]> {
-  const { data, error } = await supabase.from("ogrenciler").select("*").order("ad_soyad");
+  const { data, error } = await supabase.rpc("koc_ogrencileri");
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((o: any) => ({ id: o.id, ad_soyad: o.ad_soyad }));
 }
 
 export interface SablonSorusuDetayli {

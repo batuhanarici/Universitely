@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/AuthContext";
-import { ogretmenHesapId, mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
+import { benimOgretmenId, mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
 import type { Mesaj } from "../../types/database";
 
 export default function Mesaj() {
@@ -29,7 +29,7 @@ export default function Mesaj() {
     if (!girdi.trim()) return;
     setGonderiliyor(true);
     try {
-      const aliciId = await ogretmenHesapId();
+      const aliciId = await benimOgretmenId();
       if (!aliciId) return;
       const yeni = await mesajGonder(aliciId, girdi.trim());
       setMesajlar((m) => [...m, yeni]);

@@ -1,8 +1,14 @@
 import { supabase } from "./supabase";
 import type { Mesaj } from "../types/database";
 
-export async function ogretmenHesapId(): Promise<string | null> {
-  const { data, error } = await supabase.rpc("ogretmen_hesap_id");
+export async function benimOgretmenId(): Promise<string | null> {
+  const { data, error } = await supabase.rpc("benim_ogretmen_id");
+  if (error) throw error;
+  return data ?? null;
+}
+
+export async function velininKocu(): Promise<string | null> {
+  const { data, error } = await supabase.rpc("velinin_kocu");
   if (error) throw error;
   return data ?? null;
 }

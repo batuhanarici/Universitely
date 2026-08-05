@@ -11,13 +11,19 @@ import SonucGir from "./pages/ogretmen/SonucGir";
 import SinifGenel from "./pages/ogretmen/SinifGenel";
 import OgretmenGorevAta from "./pages/ogretmen/OgretmenGorevAta";
 import OgretmenMesajlar from "./pages/ogretmen/OgretmenMesajlar";
+import KocDashboard from "./pages/ogretmen/KocDashboard";
+import OgrenciYonetimi from "./pages/ogretmen/OgrenciYonetimi";
+import OgrenciDetay from "./pages/ogretmen/OgrenciDetay";
+import VeliPaneli from "./pages/veli/VeliPaneli";
 import UYArrow from "./components/UYArrow";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-type Sekme = "sinif" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "gorev-ata" | "mesajlar";
+type Sekme = "koc-dashboard" | "sinif" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "gorev-ata" | "mesajlar";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
+  { id: "koc-dashboard", etiket: "Koç Paneli", icon: "🏠" },
   { id: "sinif", etiket: "Sınıf Genel Durumu", icon: "📊" },
+  { id: "ogrenciler", etiket: "Öğrenciler", icon: "🎓" },
   { id: "ders-konu", etiket: "Ders / Konu Yönetimi", icon: "📚" },
   { id: "sablon", etiket: "Deneme Şablonu Oluştur", icon: "🧩" },
   { id: "deneme", etiket: "Deneme Oluştur", icon: "🗓️" },
@@ -26,7 +32,13 @@ const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "mesajlar", etiket: "Mesajlar", icon: "✉️" },
 ];
 function OgretmenUygulamasi() {
-  const [sekme, setSekme] = useState<Sekme>("sinif");
+  const [sekme, setSekme] = useState<Sekme>("koc-dashboard");
+  const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
+
+  function ogrenciDetayinaGit(id: string) {
+    setSeciliOgrenci(id);
+    setSekme("ogrenci-detay");
+  }
 
   return (
     <div className="app-shell">
@@ -52,7 +64,10 @@ function OgretmenUygulamasi() {
         </div>
       </aside>
       <main className="main-area">
+        {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
         {sekme === "sinif" && <SinifGenel />}
+        {sekme === "ogrenciler" && <OgrenciYonetimi onOgrenciSec={ogrenciDetayinaGit} />}
+        {sekme === "ogrenci-detay" && <OgrenciDetay ogrenciId={seciliOgrenci ?? ""} onGeri={() => setSekme("ogrenciler")} />}
         {sekme === "ders-konu" && <DersKonuYonetimi />}
         {sekme === "sablon" && <SablonOlustur />}
         {sekme === "deneme" && <DenemeOlustur />}
@@ -65,7 +80,7 @@ function OgretmenUygulamasi() {
 }
 
 function App() {
-  const { session, yukleniyor, ogrenciMi } = useAuth();
+  const { session, yukleniyor, ogrenciMi, veliMi } = useAuth();
 
   let icerik: ReactNode;
   if (!supabaseConfigurada) {
@@ -74,6 +89,8 @@ function App() {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (!session) {
     icerik = <GirisEkrani />;
+  } else if (veliMi) {
+    icerik = <VeliPaneli />;
   } else if (ogrenciMi === null) {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (ogrenciMi) {
