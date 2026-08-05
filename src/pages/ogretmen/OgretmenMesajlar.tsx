@@ -2,13 +2,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../lib/AuthContext";
 import { mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
 import { ogrencileriGetir } from "../../lib/sonucQueries";
-import type { Mesaj, Ogrenci } from "../../types/database";
+import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
+import type { Mesaj, Ogrenci, VeliAlici } from "../../types/database";
+
+interface Alici {
+  id: string;
+  ad: string;
+  tur: "ogrenci" | "veli";
+}
 
 export default function OgretmenMesajlar() {
   const { session } = useAuth();
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
-  const [ogrenciler, setOgrenciler] = useState<Ogrenci[]>([]);
-  const [ogrenciId, setOgrenciId] = useState("");
+  const [aliciListesi, setAliciListesi] = useState<Alici[]>([]);
+  const [aliciId, setAliciId] = useState("");
   const [girdi, setGirdi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -17,11 +24,15 @@ export default function OgretmenMesajlar() {
   const ben = session?.user.id;
 
   useEffect(() => {
-    Promise.all([mesajlariGetir(), ogrencileriGetir()])
-      .then(([m, o]) => {
+    Promise.all([mesajlariGetir(), ogrencileriGetir(), kocVelileriniGetir()])
+      .then(([m, o, v]) => {
         setMesajlar(m);
-        setOgrenciler(o);
-        if (o.length > 0) setOgrenciId(o[0].id);
+        const alicilar: Alici[] = [
+          ...o.map((s: Ogrenci) => ({ id: s.id, ad: s.ad_soyad, tur: "ogrenci" as const })),
+          ...v.map((v: VeliAlici) => ({ id: v.id, ad: `${v.ad_soyad} (${v.ogrenci_adi})`, tur: "veli" as const })),
+        ];
+        setAliciListesi(alicilar);
+        if (alicilar.length > 0) setAliciId(alicilar[0].id);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
@@ -35,22 +46,22 @@ export default function OgretmenMesajlar() {
     if (altRef.current) altRef.current.scrollTop = altRef.current.scrollHeight;
   }, [mesajlar, ben]);
 
-  const ogrenciAdi = useMemo(() => {
+  const adMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const o of ogrenciler) map.set(o.id, o.ad_soyad);
+    for (const a of aliciListesi) map.set(a.id, a.ad);
     return map;
-  }, [ogrenciler]);
+  }, [aliciListesi]);
 
   function gondericiAdi(id: string): string {
     if (id === ben) return "Sen";
-    return ogrenciAdi.get(id) ?? "Öğrenci";
+    return adMap.get(id) ?? "Kullanıcı";
   }
 
   async function handleGonder() {
-    if (!ogrenciId || !girdi.trim()) return;
+    if (!aliciId || !girdi.trim()) return;
     setGonderiliyor(true);
     try {
-      const yeni = await mesajGonder(ogrenciId, girdi.trim());
+      const yeni = await mesajGonder(aliciId, girdi.trim());
       setMesajlar((m) => [...m, yeni]);
       setGirdi("");
     } finally {
@@ -90,11 +101,13 @@ export default function OgretmenMesajlar() {
           })}
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <select className="input" style={{ width: 160 }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
-            {ogrenciler.map((o) => <option key={o.id} value={o.id}>{o.ad_soyad}</option>)}
+          <select className="input" style={{ width: 200 }} value={aliciId} onChange={(e) => setAliciId(e.target.value)}>
+            {aliciListesi.map((a) => (
+              <option key={a.id} value={a.id}>{a.tur === "veli" ? "👪 " : "🎓 "}{a.ad}</option>
+            ))}
           </select>
           <input className="input" style={{ flex: 1 }} value={girdi} onChange={(e) => setGirdi(e.target.value)} placeholder="Mesajını yaz…" onKeyDown={(e) => e.key === "Enter" && handleGonder()} />
-          <button onClick={handleGonder} disabled={gonderiliyor || !girdi.trim()} className="btn btn-primary">Gönder</button>
+          <button onClick={handleGonder} disabled={gonderiliyor || !girdi.trim() || !aliciId} className="btn btn-primary">Gönder</button>
         </div>
       </div>
     </div>

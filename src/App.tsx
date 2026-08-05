@@ -15,6 +15,10 @@ import OgretmenMesajlar from "./pages/ogretmen/OgretmenMesajlar";
 import KocDashboard from "./pages/ogretmen/KocDashboard";
 import OgrenciYonetimi from "./pages/ogretmen/OgrenciYonetimi";
 import OgrenciDetay from "./pages/ogretmen/OgrenciDetay";
+import KocNotlar from "./pages/ogretmen/KocNotlar";
+import GorusmeYonetimi from "./pages/ogretmen/GorusmeYonetimi";
+import TopluBildirim from "./pages/ogretmen/TopluBildirim";
+import OgretmenRapor from "./pages/ogretmen/OgretmenRapor";
 import ProgramYonetimi from "./pages/ogretmen/ProgramYonetimi";
 import GorevYonetimi from "./pages/ogretmen/GorevYonetimi";
 import KaynakAta from "./pages/ogretmen/KaynakAta";
@@ -23,7 +27,7 @@ import VeliPaneli from "./pages/veli/VeliPaneli";
 import UYArrow from "./components/UYArrow";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar";
+type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "koc-dashboard", etiket: "Koç Paneli", icon: "🏠" },
@@ -40,6 +44,10 @@ const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "sonuc", etiket: "Sonuç Gir", icon: "✍️" },
   { id: "toplu-sonuc", etiket: "Toplu Sonuç Gir", icon: "🧮" },
   { id: "mesajlar", etiket: "Mesajlar", icon: "✉️" },
+  { id: "koc-notlar", etiket: "Koç Notları", icon: "📝" },
+  { id: "gorusme-yonetim", etiket: "Görüşme & Ödeme", icon: "🗓️" },
+  { id: "toplu-bildirim", etiket: "Toplu Bildirim", icon: "📣" },
+  { id: "ogretmen-rapor", etiket: "Sınıf Raporu", icon: "📄" },
 ];
 function OgretmenUygulamasi() {
   const [sekme, setSekme] = useState<Sekme>("koc-dashboard");
@@ -89,6 +97,10 @@ function OgretmenUygulamasi() {
         {sekme === "kaynak-ata" && <KaynakAta />}
         {sekme === "konu-ata" && <KonuAta />}
         {sekme === "mesajlar" && <OgretmenMesajlar />}
+        {sekme === "koc-notlar" && <KocNotlar />}
+        {sekme === "gorusme-yonetim" && <GorusmeYonetimi />}
+        {sekme === "toplu-bildirim" && <TopluBildirim />}
+        {sekme === "ogretmen-rapor" && <OgretmenRapor />}
       </main>
     </div>
   );

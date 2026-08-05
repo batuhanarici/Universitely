@@ -136,3 +136,53 @@ export interface Mesaj {
   tarih: string;
   okundu: boolean;
 }
+
+export interface KocNot {
+  id: string;
+  ogrenci_id: string;
+  not_metni: string;
+  onem: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Gorusme {
+  id: string;
+  ogrenci_id: string;
+  katilimci: string;
+  baslik: string;
+  tarih: string;
+  durum: string;
+  notlar: string | null;
+  created_at: string;
+}
+
+export interface Odeme {
+  id: string;
+  ogrenci_id: string;
+  tutar: number;
+  aciklama: string | null;
+  tarih: string;
+  odendi: boolean;
+  created_at: string;
+}
+
+export interface VeliAlici {
+  id: string;
+  ad_soyad: string;
+  ogrenci_id: string;
+  ogrenci_adi: string;
+}
+
+export interface KocSonucSatiri {
+  id: string;
+  deneme_id: string;
+  ogrenci_id: string;
+  soru_no: number;
+  durum: string;
+  deneme_adi: string;
+  tarih: string;
+  ad_soyad: string;
+  konu_adi: string | null;
+  ders_adi: string;
+}
