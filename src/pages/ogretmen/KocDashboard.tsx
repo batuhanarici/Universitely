@@ -16,7 +16,7 @@ function oranHesapla(dogru: number, yanlis: number, bos: number) {
 export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: string) => void }) {
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
   const [satirlar, setSatirlar] = useState<SinifSonucSatiri[]>([]);
-  const [gorevler, setGorevler] = useState<{ ogrenci_id: string; baslik: string; tarih: string; tamamlandi: boolean; tip: string }[]>([]);
+  const [gorevler, setGorevler] = useState<{ ogrenci_id: string; baslik: string; tarih: string; tamamlandi: boolean; kontrol_edildi: boolean; tip: string }[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
@@ -140,7 +140,14 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
               <input type="checkbox" checked={g.tamamlandi} readOnly style={{ accentColor: "var(--gold-dim)" }} />
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 13.5, color: "var(--ink)", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.5 : 1 }}>{g.baslik}</p>
-                <p style={{ fontSize: 11.5, color: "var(--muted)" }}>{o?.ad_soyad ?? "?"} · {g.tip}</p>
+                <p style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                  {o?.ad_soyad ?? "?"} · {g.tip}
+                  {g.tamamlandi && (
+                    <span style={{ color: g.kontrol_edildi ? "var(--dogru)" : "var(--gold-dim)" }}>
+                      {" "}· {g.kontrol_edildi ? "onaylandı" : "onay bekliyor"}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           );

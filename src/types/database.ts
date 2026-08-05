@@ -82,6 +82,8 @@ export interface Gorev {
   baslik: string;
   tip: GorevTipi;
   tamamlandi: boolean;
+  kontrol_edildi: boolean;
+  geri_bildirim: string | null;
 }
 
 export interface KonuIlerleme {

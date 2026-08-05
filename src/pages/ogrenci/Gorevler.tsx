@@ -37,7 +37,7 @@ export default function Gorevler() {
 
   async function toggleGorev(g: Gorev) {
     const yeniDurum = !g.tamamlandi;
-    setGorevler((gs) => gs.map((x) => (x.id === g.id ? { ...x, tamamlandi: yeniDurum } : x)));
+    setGorevler((gs) => gs.map((x) => (x.id === g.id ? { ...x, tamamlandi: yeniDurum, ...(yeniDurum ? {} : { kontrol_edildi: false }) } : x)));
     await gorevTamamla(g.id, yeniDurum);
   }
 
@@ -46,13 +46,17 @@ export default function Gorevler() {
     await gorevSil(id);
   }
 
+  const kocGorevleri = useMemo(
+    () => gorevler.filter((g) => g.tip === "koc").sort((a, b) => a.tarih.localeCompare(b.tarih)),
+    [gorevler]
+  );
   const gunlukGorevler = useMemo(() => gorevler.filter((g) => g.tip === "gunluk"), [gorevler]);
   const haftalikGorevler = useMemo(() => gorevler.filter((g) => g.tip === "haftalik"), [gorevler]);
 
   const bugunGunluk = gunlukGorevler.filter((g) => g.tarih === bugunIso());
   const tamamlananYuzde = bugunGunluk.length === 0 ? 0 : Math.round((bugunGunluk.filter((g) => g.tamamlandi).length / bugunGunluk.length) * 100);
 
-  function GorevSatiri({ g }: { g: Gorev }) {
+  function KendiGorevSatiri({ g }: { g: Gorev }) {
     return (
       <div className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2" }}>
         <input type="checkbox" checked={g.tamamlandi} onChange={() => toggleGorev(g)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
@@ -63,6 +67,30 @@ export default function Gorevler() {
           <p style={{ fontSize: 11.5, color: "var(--muted)" }}>{tarihEtiketi(g.tarih)}</p>
         </div>
         <button onClick={() => handleSil(g.id)} style={{ border: "none", background: "none", color: "var(--yanlis)", fontSize: 12 }}>Sil</button>
+      </div>
+    );
+  }
+
+  function KocGorevSatiri({ g }: { g: Gorev }) {
+    return (
+      <div className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2" }}>
+        <input type="checkbox" checked={g.tamamlandi} onChange={() => toggleGorev(g)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.45 : 1 }}>
+            {g.baslik}
+          </p>
+          <p style={{ fontSize: 11.5, color: "var(--muted)" }}>{tarihEtiketi(g.tarih)}</p>
+          {g.tamamlandi && (
+            <p style={{ fontSize: 11.5, color: g.kontrol_edildi ? "var(--dogru)" : "var(--gold-dim)" }}>
+              {g.kontrol_edildi ? "✓ koçun onayladı" : "Koçun onayı bekleniyor"}
+            </p>
+          )}
+          {g.geri_bildirim && (
+            <p style={{ fontSize: 12, color: "var(--ink)", background: "rgba(228,187,96,0.12)", borderRadius: 8, padding: "6px 10px", marginTop: 4 }}>
+              💬 Koçundan: {g.geri_bildirim}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -87,24 +115,35 @@ export default function Gorevler() {
       </div>
 
       <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <h2 className="card-title" style={{ marginBottom: 0 }}>Koçtan Görevler ({kocGorevleri.length})</h2>
+          {kocGorevleri.some((g) => g.tamamlandi && !g.kontrol_edildi) && (
+            <span className="chip" style={{ fontSize: 10.5 }}>onay bekleyen var</span>
+          )}
+        </div>
+        {kocGorevleri.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Koçun henüz görev atamadı.</p>}
+        {kocGorevleri.map((g) => <KocGorevSatiri key={g.id} g={g} />)}
+      </div>
+
+      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <h2 className="card-title" style={{ marginBottom: 0 }}>Bugün ({bugunGunluk.length})</h2>
           {bugunGunluk.length > 0 && <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>{tamamlananYuzde}% tamamlandı</span>}
         </div>
         {bugunGunluk.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bugün için görev yok.</p>}
-        {bugunGunluk.map((g) => <GorevSatiri key={g.id} g={g} />)}
-      </div>
-
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-        <h2 className="card-title">Tüm Günlük Görevler</h2>
-        {gunlukGorevler.filter((g) => g.tarih !== bugunIso()).length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Başka günlük görev yok.</p>}
-        {gunlukGorevler.filter((g) => g.tarih !== bugunIso()).map((g) => <GorevSatiri key={g.id} g={g} />)}
+        {bugunGunluk.map((g) => <KendiGorevSatiri key={g.id} g={g} />)}
       </div>
 
       <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
+        <h2 className="card-title">Tüm Günlük Görevler</h2>
+        {gunlukGorevler.filter((g) => g.tarih !== bugunIso()).length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Başka günlük görev yok.</p>}
+        {gunlukGorevler.filter((g) => g.tarih !== bugunIso()).map((g) => <KendiGorevSatiri key={g.id} g={g} />)}
+      </div>
+
+      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.25s" }}>
         <h2 className="card-title">Haftalık Hedefler</h2>
         {haftalikGorevler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Haftalık hedef yok.</p>}
-        {haftalikGorevler.map((g) => <GorevSatiri key={g.id} g={g} />)}
+        {haftalikGorevler.map((g) => <KendiGorevSatiri key={g.id} g={g} />)}
       </div>
     </div>
   );

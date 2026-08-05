@@ -30,6 +30,27 @@ export async function kitapEkle(girdi: KitapGirdisi): Promise<Kitap> {
   return data;
 }
 
+export async function kitapAta(ogrenciId: string, girdi: KitapGirdisi): Promise<Kitap> {
+  const { data, error } = await supabase
+    .from("kitaplar")
+    .insert({ ...girdi, ogrenci_id: ogrenciId, ilerleme: girdi.ilerleme ?? 0 })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function ogrenciKitaplariGetir(ogrenciId: string): Promise<Kitap[]> {
+  const { data, error } = await supabase
+    .from("kitaplar")
+    .select("*")
+    .eq("ogrenci_id", ogrenciId)
+    .order("bitis_hedefi", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function kitapGuncelle(id: string, degisiklik: Partial<Kitap>) {
   const { error } = await supabase.from("kitaplar").update(degisiklik).eq("id", id);
   if (error) throw error;

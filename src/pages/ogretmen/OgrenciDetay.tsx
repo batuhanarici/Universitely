@@ -71,7 +71,14 @@ export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string;
               <input type="checkbox" checked={g.tamamlandi} readOnly style={{ accentColor: "var(--gold-dim)" }} />
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 12.5, color: "var(--ink)", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.5 : 1 }}>{g.baslik}</p>
-                <p className="mono" style={{ fontSize: 10.5, color: "var(--muted)" }}>{g.tarih}</p>
+                <p className="mono" style={{ fontSize: 10.5, color: "var(--muted)" }}>
+                  {g.tarih}
+                  {g.tamamlandi && (
+                    <span style={{ color: g.kontrol_edildi ? "var(--dogru)" : "var(--gold-dim)" }}>
+                      {" "}· {g.kontrol_edildi ? "onaylandı" : "onay bekliyor"}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           ))}

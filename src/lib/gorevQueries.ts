@@ -28,8 +28,31 @@ export async function gorevEkle(girdi: GorevGirdisi): Promise<Gorev> {
 }
 
 export async function gorevTamamla(id: string, tamamlandi: boolean) {
-  const { error } = await supabase.from("gorevler").update({ tamamlandi }).eq("id", id);
+  const degisiklik: Partial<Gorev> = { tamamlandi };
+  if (!tamamlandi) degisiklik.kontrol_edildi = false;
+  const { error } = await supabase.from("gorevler").update(degisiklik).eq("id", id);
   if (error) throw error;
+}
+
+export async function gorevKontrolEt(id: string, kontrolEdildi: boolean) {
+  const { error } = await supabase.from("gorevler").update({ kontrol_edildi: kontrolEdildi }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function gorevGeriBildirimYaz(id: string, geriBildirim: string) {
+  const { error } = await supabase.from("gorevler").update({ geri_bildirim: geriBildirim }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function ogrenciGorevleriGetir(ogrenciId: string): Promise<Gorev[]> {
+  const { data, error } = await supabase
+    .from("gorevler")
+    .select("*")
+    .eq("ogrenci_id", ogrenciId)
+    .order("tarih", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function gorevSil(id: string) {

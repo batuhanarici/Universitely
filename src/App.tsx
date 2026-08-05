@@ -9,26 +9,32 @@ import SablonOlustur from "./pages/ogretmen/SablonOlustur";
 import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
 import SonucGir from "./pages/ogretmen/SonucGir";
 import SinifGenel from "./pages/ogretmen/SinifGenel";
-import OgretmenGorevAta from "./pages/ogretmen/OgretmenGorevAta";
 import OgretmenMesajlar from "./pages/ogretmen/OgretmenMesajlar";
 import KocDashboard from "./pages/ogretmen/KocDashboard";
 import OgrenciYonetimi from "./pages/ogretmen/OgrenciYonetimi";
 import OgrenciDetay from "./pages/ogretmen/OgrenciDetay";
+import ProgramYonetimi from "./pages/ogretmen/ProgramYonetimi";
+import GorevYonetimi from "./pages/ogretmen/GorevYonetimi";
+import KaynakAta from "./pages/ogretmen/KaynakAta";
+import KonuAta from "./pages/ogretmen/KonuAta";
 import VeliPaneli from "./pages/veli/VeliPaneli";
 import UYArrow from "./components/UYArrow";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-type Sekme = "koc-dashboard" | "sinif" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "gorev-ata" | "mesajlar";
+type Sekme = "koc-dashboard" | "sinif" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "koc-dashboard", etiket: "Koç Paneli", icon: "🏠" },
   { id: "sinif", etiket: "Sınıf Genel Durumu", icon: "📊" },
   { id: "ogrenciler", etiket: "Öğrenciler", icon: "🎓" },
-  { id: "ders-konu", etiket: "Ders / Konu Yönetimi", icon: "📚" },
+  { id: "program", etiket: "Haftalık Program", icon: "📅" },
+  { id: "gorev-yonetim", etiket: "Görev Yönetimi", icon: "📝" },
+  { id: "kaynak-ata", etiket: "Kaynak Ata", icon: "📚" },
+  { id: "konu-ata", etiket: "Konu Ata", icon: "🎯" },
+  { id: "ders-konu", etiket: "Ders / Konu Yönetimi", icon: "🗂️" },
   { id: "sablon", etiket: "Deneme Şablonu Oluştur", icon: "🧩" },
   { id: "deneme", etiket: "Deneme Oluştur", icon: "🗓️" },
   { id: "sonuc", etiket: "Sonuç Gir", icon: "✍️" },
-  { id: "gorev-ata", etiket: "Koç Görevi Ata", icon: "📝" },
   { id: "mesajlar", etiket: "Mesajlar", icon: "✉️" },
 ];
 function OgretmenUygulamasi() {
@@ -72,7 +78,10 @@ function OgretmenUygulamasi() {
         {sekme === "sablon" && <SablonOlustur />}
         {sekme === "deneme" && <DenemeOlustur />}
         {sekme === "sonuc" && <SonucGir />}
-        {sekme === "gorev-ata" && <OgretmenGorevAta />}
+        {sekme === "program" && <ProgramYonetimi />}
+        {sekme === "gorev-yonetim" && <GorevYonetimi />}
+        {sekme === "kaynak-ata" && <KaynakAta />}
+        {sekme === "konu-ata" && <KonuAta />}
         {sekme === "mesajlar" && <OgretmenMesajlar />}
       </main>
     </div>
