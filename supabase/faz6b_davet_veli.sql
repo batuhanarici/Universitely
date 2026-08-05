@@ -32,7 +32,11 @@ $fn$;
 revoke all on function public.davet_kodunu_dogrula(text) from public;
 grant execute on function public.davet_kodunu_dogrula(text) to authenticated;
 
--- Öğrenci kayıt sonrası kodu bağla
+-- Öğrenci kayıt sonrası kodu bağla.
+-- Önemli: Ogrencinin "ogrenciler" satiri yoksa OLUSTURUR (self-registration).
+-- "kullanildi_mi" kontrolu burada YOKTUR: ayni ogrenci her girisinde kendi
+-- metadata'sindaki kodla yeniden baglanabilir (ayni kod yeni kayit icin
+-- davet_kodunu_dogrula tarafindan hala engellenir).
 create or replace function public.davet_kodunu_bagla(kod text)
 returns boolean
 language plpgsql security definer
@@ -40,20 +44,29 @@ set search_path = public
 as $fn$
 declare
   koc uuid;
+  kod_kayit record;
+  ogrenci_adi text;
 begin
-  select olusturan_id into koc from public.davet_kodlari
-    where davet_kodlari.kod = davet_kodunu_bagla.kod and aktif and not kullanildi_mi;
-  if koc is null then
+  select * into kod_kayit
+    from public.davet_kodlari
+    where davet_kodlari.kod = davet_kodunu_bagla.kod and aktif;
+  if kod_kayit is null then
     return false;
   end if;
+  koc := kod_kayit.olusturan_id;
 
-  update public.ogrenciler
-    set ogretmen_id = koc, davet_kodu = davet_kodunu_bagla.kod
-    where id = auth.uid();
+  select raw_user_meta_data ->> 'ad_soyad' into ogrenci_adi
+    from auth.users where id = auth.uid();
+
+  insert into public.ogrenciler (id, ad_soyad, ogretmen_id, davet_kodu, aktif)
+  values (auth.uid(), coalesce(ogrenci_adi, kod_kayit.ogrenci_adi, 'Öğrenci'), koc, davet_kodunu_bagla.kod, true)
+  on conflict (id) do update
+    set ogretmen_id = excluded.ogretmen_id,
+        davet_kodu = excluded.davet_kodu;
 
   update public.davet_kodlari
     set kullanildi_mi = true
-    where kod = davet_kodunu_bagla.kod;
+    where davet_kodlari.kod = davet_kodunu_bagla.kod;
 
   return true;
 end;

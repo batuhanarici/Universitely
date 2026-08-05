@@ -44,25 +44,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setOgrenciMi(null);
       return;
     }
-    supabase
-      .from("ogrenciler")
-      .select("id")
-      .eq("id", session.user.id)
-      .maybeSingle()
-      .then(({ data }) => setOgrenciMi(!!data));
-  }, [session]);
-
-  useEffect(() => {
-    if (!session) return;
-    const meta = session.user.user_metadata ?? {};
-    const davetKod = meta.davet_kodu as string | undefined;
-    const veliKod = meta.veli_kodu as string | undefined;
-    if (davetKod && meta.rol !== "ogretmen") {
-      davetKodunuBagla(davetKod).catch(() => {});
+    const aktifSession = session;
+    let iptal = false;
+    async function kontrolEt() {
+      const meta = aktifSession.user.user_metadata ?? {};
+      const davetKod = meta.davet_kodu as string | undefined;
+      const veliKod = meta.veli_kodu as string | undefined;
+      if (davetKod && meta.rol !== "ogretmen") {
+        try {
+          await davetKodunuBagla(davetKod);
+        } catch {}
+      }
+      if (veliKod) {
+        try {
+          await veliBagla(veliKod, (meta.ad_soyad as string) ?? "");
+        } catch {}
+      }
+      if (iptal) return;
+      const { data } = await supabase.from("ogrenciler").select("id").eq("id", aktifSession.user.id).maybeSingle();
+      if (!iptal) setOgrenciMi(!!data);
     }
-    if (veliKod) {
-      veliBagla(veliKod, (meta.ad_soyad as string) ?? "").catch(() => {});
-    }
+    kontrolEt();
+    return () => {
+      iptal = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user.id]);
 
