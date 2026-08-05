@@ -14,11 +14,13 @@ import Tekrar from "./Tekrar";
 import Takvim from "./Takvim";
 import Mesaj from "./Mesaj";
 import Bildirimler from "./Bildirimler";
+import Oneriler from "./Oneriler";
+import HaftalikRapor from "./HaftalikRapor";
 
 type Sekme =
   | "dashboard" | "profil" | "calisma" | "konular" | "gorevler"
   | "kaynaklar" | "denemeler" | "analiz" | "yanlislar" | "tekrar"
-  | "takvim" | "mesaj" | "bildirimler";
+  | "takvim" | "mesaj" | "bildirimler" | "oneri" | "rapor";
 
 interface SekmeTanimi {
   id: Sekme;
@@ -56,6 +58,8 @@ const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
   {
     grup: "Koç & Sistem",
     sekmeler: [
+      { id: "oneri", etiket: "AI Koçum", icon: "🧠" },
+      { id: "rapor", etiket: "Haftalık Rapor", icon: "📄" },
       { id: "mesaj", etiket: "Mesajlar", icon: "✉️" },
       { id: "bildirimler", etiket: "Bildirimler", icon: "🔔" },
     ],
@@ -106,6 +110,8 @@ export default function OgrenciPaneli() {
         {sekme === "takvim" && <Takvim />}
         {sekme === "mesaj" && <Mesaj />}
         {sekme === "bildirimler" && <Bildirimler />}
+        {sekme === "oneri" && <Oneriler />}
+        {sekme === "rapor" && <HaftalikRapor />}
         {sekme === "gorevler" && <Gorevler />}
       </main>
     </div>
