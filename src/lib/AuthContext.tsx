@@ -53,12 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (davetKod && meta.rol !== "ogretmen") {
         try {
           await davetKodunuBagla(davetKod);
-        } catch {}
+        } catch (e) {
+          console.error("davet koduna baglanamadi:", davetKod, e);
+        }
       }
       if (veliKod) {
         try {
           await veliBagla(veliKod, (meta.ad_soyad as string) ?? "");
-        } catch {}
+        } catch (e) {
+          console.error("veli baglanamadi:", veliKod, e);
+        }
       }
       if (iptal) return;
       const { data } = await supabase.from("ogrenciler").select("id").eq("id", aktifSession.user.id).maybeSingle();
