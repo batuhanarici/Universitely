@@ -281,32 +281,40 @@ where exists (
 grant select on public.veli_sonuclari to authenticated;
 
 -- ============ 6) Bilinen öğretmen policy'lerini koç'a özel yap (cross-coach görünürlüğü kapat) ============
+-- Hem eski hem yeni ad drop edilir: dosya tekrar tekrar calistirilabilir.
 drop policy if exists "ogretmen profilleri gorur" on public.ogrenci_profilleri;
+drop policy if exists "koc profilleri gorur" on public.ogrenci_profilleri;
 create policy "koc profilleri gorur" on public.ogrenci_profilleri
   for select using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
 drop policy if exists "ogretmen calismalari gorur" on public.calisma_kayitlari;
+drop policy if exists "koc calismalari gorur" on public.calisma_kayitlari;
 create policy "koc calismalari gorur" on public.calisma_kayitlari
   for select using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
 drop policy if exists "ogretmen gorev gorur ve atar" on public.gorevler;
+drop policy if exists "koc gorev gorur ve atar" on public.gorevler;
 create policy "koc gorev gorur ve atar" on public.gorevler
   for all using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id))
   with check ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
 drop policy if exists "ogretmen konu ilerlemelerini gorur" on public.konu_ilerlemeleri;
+drop policy if exists "koc konu ilerlemelerini gorur" on public.konu_ilerlemeleri;
 create policy "koc konu ilerlemelerini gorur" on public.konu_ilerlemeleri
   for select using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
 drop policy if exists "ogretmen kaynaklari gorur" on public.kitaplar;
+drop policy if exists "koc kaynaklari gorur" on public.kitaplar;
 create policy "koc kaynaklari gorur" on public.kitaplar
   for select using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
 drop policy if exists "ogretmen yanlis arsivini gorur" on public.yanlis_arsivi;
+drop policy if exists "koc yanlis arsivini gorur" on public.yanlis_arsivi;
 create policy "koc yanlis arsivini gorur" on public.yanlis_arsivi
   for select using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
 drop policy if exists "ogretmen tekrar planlarini gorur" on public.tekrar_planlari;
+drop policy if exists "koc tekrar planlarini gorur" on public.tekrar_planlari;
 create policy "koc tekrar planlarini gorur" on public.tekrar_planlari
   for select using ((auth.jwt() -> 'user_metadata' ->> 'rol') = 'ogretmen' and public.ogrencim_mi(ogrenci_id));
 
