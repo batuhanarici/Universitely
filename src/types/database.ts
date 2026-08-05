@@ -60,6 +60,7 @@ export interface OgrenciProfili {
   hedef_bolum: string | null;
   sinav_turu: SinavTuru;
   hedef_net: number | null;
+  email_bildirim: boolean;
 }
 
 export interface CalismaKaydi {

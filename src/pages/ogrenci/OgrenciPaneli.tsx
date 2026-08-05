@@ -16,11 +16,14 @@ import Mesaj from "./Mesaj";
 import Bildirimler from "./Bildirimler";
 import Oneriler from "./Oneriler";
 import HaftalikRapor from "./HaftalikRapor";
+import Karsilastirma from "./Karsilastirma";
+import Motivasyon from "./Motivasyon";
 
 type Sekme =
   | "dashboard" | "profil" | "calisma" | "konular" | "gorevler"
   | "kaynaklar" | "denemeler" | "analiz" | "yanlislar" | "tekrar"
-  | "takvim" | "mesaj" | "bildirimler" | "oneri" | "rapor";
+  | "takvim" | "mesaj" | "bildirimler" | "oneri" | "rapor"
+  | "karsilastirma" | "motivasyon";
 
 interface SekmeTanimi {
   id: Sekme;
@@ -53,6 +56,7 @@ const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
       { id: "analiz", etiket: "Analiz", icon: "📈" },
       { id: "yanlislar", etiket: "Yanlışlar", icon: "❌" },
       { id: "tekrar", etiket: "Tekrar Planı", icon: "🔁" },
+      { id: "karsilastirma", etiket: "Karşılaştırma", icon: "⚔️" },
     ],
   },
   {
@@ -60,6 +64,7 @@ const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
     sekmeler: [
       { id: "oneri", etiket: "AI Koçum", icon: "🧠" },
       { id: "rapor", etiket: "Haftalık Rapor", icon: "📄" },
+      { id: "motivasyon", etiket: "Motivasyon", icon: "🏆" },
       { id: "mesaj", etiket: "Mesajlar", icon: "✉️" },
       { id: "bildirimler", etiket: "Bildirimler", icon: "🔔" },
     ],
@@ -112,6 +117,8 @@ export default function OgrenciPaneli() {
         {sekme === "bildirimler" && <Bildirimler />}
         {sekme === "oneri" && <Oneriler />}
         {sekme === "rapor" && <HaftalikRapor />}
+        {sekme === "karsilastirma" && <Karsilastirma />}
+        {sekme === "motivasyon" && <Motivasyon />}
         {sekme === "gorevler" && <Gorevler />}
       </main>
     </div>

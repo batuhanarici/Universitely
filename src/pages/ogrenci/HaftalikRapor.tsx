@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motorVerisiniGetir, bugunIso, gunEkle, type MotorVerisi } from "../../lib/oneriMotoru";
 import AnimatedNumber from "../../components/AnimatedNumber";
 import ProgressBar from "../../components/ProgressBar";
+import { pdfYazdir } from "../../lib/exportUtils";
 
 function gunEtiketi(iso: string): string {
   return new Date(iso + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
@@ -108,6 +109,20 @@ export default function HaftalikRapor() {
     } catch {}
   }
 
+  function pdfIndir() {
+    if (!rapor) return;
+    const tarih = new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+    pdfYazdir("Haftalık Rapor", tarih, [
+      ["Ölçüt", "Değer"],
+      ["Özet", rapor.ozet],
+      ["Toplam Çalışma", `${Math.round((rapor.haftalikCalismaDk / 60) * 10) / 10} saat (günde ort. ${rapor.gunlukOrt} dk)`],
+      ["Görev Tamamlama", `${rapor.tamamlanan}/${rapor.haftalikGorevler.length}`],
+      ["Deneme Ortalaması", `${rapor.ortalamaNet !== null ? rapor.ortalamaNet : "—"} net (${rapor.haftalikDenemeler.length} deneme)`],
+      ["Kaynak İlerlemesi", `%${rapor.kaynakYuzde}`],
+      ["En Çok Çalışılan", rapor.odak.length > 0 ? rapor.odak.map(([konu, dk]) => `${konu} (${dk}dk)`).join(" · ") : "—"],
+    ]);
+  }
+
   if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
   if (!rapor) return <p className="mono" style={{ color: "var(--muted)" }}>Rapor üretilemedi.</p>;
 
@@ -115,9 +130,10 @@ export default function HaftalikRapor() {
     <div style={{ maxWidth: 640, margin: "0 auto" }}>
       <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Haftalık Rapor</h1>
-        <button onClick={kopyala} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>
+        <button onClick={kopyala} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)", marginRight: 8 }}>
           {kopyalandi ? "Kopyalandı ✓" : "Raporu Kopyala"}
         </button>
+        <button onClick={pdfIndir} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>PDF</button>
       </div>
 
       <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>

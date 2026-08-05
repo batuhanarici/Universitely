@@ -3,6 +3,7 @@ import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import type { DenemeTuru } from "../../types/database";
 import AnimatedNumber from "../../components/AnimatedNumber";
+import { csvIndir } from "../../lib/exportUtils";
 
 const TURLER: { deger: DenemeTuru; etiket: string }[] = [
   { deger: "tyt", etiket: "TYT" },
@@ -83,9 +84,22 @@ export default function Denemeler() {
 
   if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
 
+  function csvIndirTikla() {
+    const satirlar: (string | number)[][] = [["Deneme", "Ders", "Tarih", "Doğru", "Yanlış", "Boş", "Net"]];
+    for (const o of gorunenler) {
+      satirlar.push([o.deneme_adi, o.ders_adi, o.tarih, o.dogru, o.yanlis, o.bos, o.net]);
+    }
+    csvIndir("denemelerim", satirlar);
+  }
+
   return (
     <div style={{ maxWidth: 660, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Denemelerim</h1>
+      <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Denemelerim</h1>
+        {gorunenler.length > 0 && (
+          <button onClick={csvIndirTikla} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>CSV indir</button>
+        )}
+      </div>
 
       {turlerMevcut.size > 0 && (
         <div className="stagger-item" style={{ display: "flex", gap: 6, marginBottom: 16, animationDelay: "0.05s" }}>

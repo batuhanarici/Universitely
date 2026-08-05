@@ -6,6 +6,7 @@ export interface ProfilGirdisi {
   hedef_bolum?: string;
   sinav_turu?: SinavTuru;
   hedef_net?: number | null;
+  email_bildirim?: boolean;
 }
 
 export async function profiliGetir(): Promise<OgrenciProfili | null> {

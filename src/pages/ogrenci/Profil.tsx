@@ -14,6 +14,7 @@ export default function Profil() {
   const [hedefBolum, setHedefBolum] = useState("");
   const [sinavTuru, setSinavTuru] = useState<SinavTuru>("tyt");
   const [hedefNet, setHedefNet] = useState("");
+  const [emailBildirim, setEmailBildirim] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [mesaj, setMesaj] = useState("");
@@ -26,6 +27,7 @@ export default function Profil() {
         setHedefBolum(p.hedef_bolum ?? "");
         setSinavTuru(p.sinav_turu);
         setHedefNet(p.hedef_net != null ? String(p.hedef_net) : "");
+        setEmailBildirim(p.email_bildirim);
       }
     }).catch(() => {}).finally(() => setYukleniyor(false));
   }, []);
@@ -39,6 +41,7 @@ export default function Profil() {
         hedef_bolum: hedefBolum.trim() || undefined,
         sinav_turu: sinavTuru,
         hedef_net: hedefNet.trim() === "" ? null : Number(hedefNet),
+        email_bildirim: emailBildirim,
       });
       setMesaj("Profil kaydedildi.");
     } catch {
@@ -77,6 +80,21 @@ export default function Profil() {
 
         <label className="fld">Hedef Net</label>
         <input className="input" value={hedefNet} onChange={(e) => setHedefNet(e.target.value)} placeholder="örn. 85.5" type="number" step="0.5" />
+
+        <label className="fld" style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+          <span>
+            E-posta hatırlatmaları
+            <span style={{ display: "block", fontWeight: 400, fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
+              Her sabah günün görevleri, tekrarları ve çözülmemiş yanlışların için kısa bir özet e-postası.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={emailBildirim}
+            onChange={(e) => setEmailBildirim(e.target.checked)}
+            style={{ accentColor: "var(--gold-dim)", width: 18, height: 18 }}
+          />
+        </label>
 
         <button onClick={handleKaydet} disabled={kaydediliyor} className="btn btn-primary" style={{ marginTop: 18 }}>
           {kaydediliyor ? "Kaydediliyor…" : "Profili Kaydet"}
