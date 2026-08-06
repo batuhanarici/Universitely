@@ -85,11 +85,18 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
   return (
     <div className="sidebar">
       <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid rgba(244,239,228,0.08)' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: '#F4EFE4', letterSpacing: '-0.02em' }}>
-          Universitely
-        </div>
-        <div style={{ fontSize: 11, color: 'rgba(244,239,228,0.4)', marginTop: 2, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          {roleLabel}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, background: '#fff', borderRadius: 7, overflow: 'hidden', flexShrink: 0 }}>
+            <img src="/icon.svg" alt="Universitely" style={{ width: 30, height: 30, objectFit: 'cover' }} />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 700, color: '#F4EFE4', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+              Universitely
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(244,239,228,0.4)', marginTop: 2, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {roleLabel}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { davetKodunuDogrula } from "../lib/ogrenciYonetimQueries";
 import { Card, Btn, Input, Label, FormGroup, Tabs } from "../components/ui";
-import { Icon } from "../components/Icon";
 
 type Tab = "Giriş Yap" | "Öğrenci Kaydı" | "Veli Kaydı";
 
@@ -78,8 +77,8 @@ export default function GirisEkrani() {
 
       <div className="anim-slide" style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 1 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ width: 48, height: 48, background: "#0F1B2D", borderRadius: 12, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="ai" size={24} color="#E4BB60" />
+          <div style={{ width: 48, height: 48, background: "#fff", border: "1px solid rgba(15,27,45,0.08)", borderRadius: 12, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <img src="/icon.svg" alt="Universitely" style={{ width: 48, height: 48, objectFit: "cover" }} />
           </div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 700, color: "#0F1B2D", letterSpacing: "-0.03em", marginBottom: 6 }}>
             Universitely
