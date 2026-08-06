@@ -138,7 +138,7 @@ export default function ProgramYonetimi() {
         </div>
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, overflowX: "auto", minWidth: 900 }}>
+      <div className="no-stack" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, overflowX: "auto", minWidth: 900 }}>
         {gunler.map((gun, i) => {
           const liste = gunGorevleri.get(gun.tarih) ?? [];
           const doneCount = liste.filter((g) => g.tamamlandi).length;

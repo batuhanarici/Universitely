@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Ogrenci, SoruDurumu } from "../../types/database";
+import type { Ogrenci } from "../../types/database";
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import {
   ogrencileriGetir,
@@ -10,17 +10,18 @@ import {
   type TopluSonucGirdisi,
 } from "../../lib/sonucQueries";
 import type { Deneme } from "../../types/database";
-import { Card, Select, Input, Textarea, Btn, Badge } from "../../components/ui";
+import { Card, Select, Input, Textarea, Btn, Badge, Tabs, Label, FormGroup, useToast } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
 type Mod = "grid" | "yapistir";
+type Cell = "dogru" | "yanlis" | "bos";
 
-const SIRADAKI: Record<SoruDurumu, SoruDurumu | null> = { dogru: "yanlis", yanlis: "bos", bos: null };
+const SIRADAKI: Record<Cell, Cell | null> = { dogru: "yanlis", yanlis: "bos", bos: null };
 
-const HUCRENIN_RENGI: Record<SoruDurumu, string> = {
+const COLORS: Record<Cell, string> = {
   dogru: "#2A9D8F",
   yanlis: "#C4503A",
-  bos: "#8C8780",
+  bos: "#9A9FA8",
 };
 
 const ORNEK = `Ayşe Yılmaz;DDYYBDDBDDY
@@ -28,14 +29,16 @@ Mehmet Kaya;DYBDYBBDDDY
 Zeynep Demir;DBYDDBYDBD`;
 
 export default function TopluSonucGir() {
+  const { toast, show } = useToast();
   const [denemeler, setDenemeler] = useState<DenemeDetayli[]>([]);
   const [ogrenciler, setOgrenciler] = useState<Ogrenci[]>([]);
   const [denemeId, setDenemeId] = useState("");
   const [sorular, setSorular] = useState<SablonSorusuDetayli[]>([]);
   const [soruSayisi, setSoruSayisi] = useState("40");
   const [mod, setMod] = useState<Mod>("grid");
-  const [grid, setGrid] = useState<Record<string, Record<number, SoruDurumu>>>({});
+  const [grid, setGrid] = useState<Record<string, Record<number, Cell>>>({});
   const [pasteMetin, setPasteMetin] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
   const [mesaj, setMesaj] = useState("");
   const [hata, setHata] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -67,10 +70,10 @@ export default function TopluSonucGir() {
     setGrid({});
     denemeSonuclariniGetir(denemeId)
       .then((satirlar) => {
-        const g: Record<string, Record<number, SoruDurumu>> = {};
+        const g: Record<string, Record<number, Cell>> = {};
         for (const s of satirlar) {
           if (!g[s.ogrenci_id]) g[s.ogrenci_id] = {};
-          g[s.ogrenci_id][s.soru_no] = s.durum;
+          g[s.ogrenci_id][s.soru_no] = s.durum as Cell;
         }
         setGrid(g);
       })
@@ -89,7 +92,7 @@ export default function TopluSonucGir() {
     return map;
   }, [sorular]);
 
-  function hucreyiTikla(ogrenciId: string, soruNo: number) {
+  function cycleCell(ogrenciId: string, soruNo: number) {
     setGrid((g) => {
       const satir = { ...(g[ogrenciId] ?? {}) };
       const mevcut = satir[soruNo];
@@ -100,7 +103,7 @@ export default function TopluSonucGir() {
     });
   }
 
-  function satiriTemizle(ogrenciId: string) {
+  function clearRow(ogrenciId: string) {
     setGrid((g) => {
       const yeni = { ...g };
       delete yeni[ogrenciId];
@@ -108,9 +111,10 @@ export default function TopluSonucGir() {
     });
   }
 
-  function yapistirVeGridiDoldur() {
-    setHata("");
+  function parseAndImport() {
+    setErrors([]);
     setMesaj("");
+    setHata("");
     const eslesmeyen: string[] = [];
     setGrid((g) => {
       const yeni = { ...g };
@@ -127,7 +131,7 @@ export default function TopluSonucGir() {
           eslesmeyen.push(t);
           continue;
         }
-        const satirDurum: Record<number, SoruDurumu> = {};
+        const satirDurum: Record<number, Cell> = {};
         const sorus = dizi.replace(/\s+/g, "").toUpperCase();
         for (let i = 0; i < sorus.length; i++) {
           const c = sorus[i];
@@ -137,9 +141,11 @@ export default function TopluSonucGir() {
       }
       return yeni;
     });
-    if (eslesmeyen.length > 0) {
-      setHata(`Eşleşmeyen satırlar: ${eslesmeyen.join("  |  ")}`);
+    const satirSayisi = pasteMetin.split("\n").filter((s) => s.trim()).length;
+    if (eslesmeyen.length === 0 && satirSayisi > 0) {
+      show(`${satirSayisi} öğrenci aktarıldı ✓`);
     }
+    setErrors(eslesmeyen);
   }
 
   async function handleKaydet() {
@@ -167,9 +173,7 @@ export default function TopluSonucGir() {
         return;
       }
       await topluSonucGir(denemeId, girdi);
-      setMesaj(
-        `${girdi.length} öğrenci kaydedildi.${eksikler.length ? ` Eksik bırakıldı: ${eksikler.join(", ")}` : ""}`
-      );
+      setMesaj(`${girdi.length} öğrenci kaydedildi.${eksikler.length ? ` Eksik bırakıldı: ${eksikler.join(", ")}` : ""}`);
       setGrid({});
       setPasteMetin("");
     } catch (e: any) {
@@ -187,148 +191,126 @@ export default function TopluSonucGir() {
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   if (denemeler.length === 0) {
-    return <p style={{ textAlign: "center", marginTop: 60, color: "#C4503A" }}>Önce bir deneme oluşturman lazım.</p>;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <h1 className="page-title">Toplu Sonuç Gir</h1>
+        <Card><p style={{ fontSize: 13, color: "rgba(15,27,45,0.6)" }}>Önce bir deneme oluşturman lazım.</p></Card>
+      </div>
+    );
   }
 
   return (
-    <div style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
       <div>
         <h1 className="page-title">Toplu Sonuç Gir</h1>
         <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Grid veya kopyala-yapıştır ile toplu cevap girişi</p>
       </div>
 
-      <Card className="tape-accent">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Select style={{ flex: 2, minWidth: 220 }} value={denemeId} onChange={(e) => setDenemeId(e.target.value)}>
-            {denemeler.map((d) => (
-              <option key={d.id} value={d.id}>{d.ad} · {d.tur ?? "brans"}</option>
-            ))}
-          </Select>
-          <div style={{ display: "flex", gap: 4, background: "rgba(15,27,45,0.05)", padding: 4, borderRadius: 10, flex: 1, minWidth: 260 }}>
-            {(
-              [
-                { id: "grid", etiket: "Sınıf Grid" },
-                { id: "yapistir", etiket: "Kopyala-Yapıştır" },
-              ] as { id: Mod; etiket: string }[]
-            ).map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setMod(m.id)}
-                style={{
-                  flex: 1, padding: "8px 0", borderRadius: 7, border: "none", fontSize: 12.5, fontWeight: 600,
-                  background: mod === m.id ? "#E4BB60" : "transparent",
-                  color: mod === m.id ? "#0F1B2D" : "rgba(15,27,45,0.5)",
-                  transition: "all 0.2s ease", cursor: "pointer",
-                }}
-              >
-                {m.etiket}
-              </button>
-            ))}
-          </div>
+      <Card style={{ padding: "14px 20px" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <FormGroup style={{ minWidth: 200 }}>
+            <Label>Deneme</Label>
+            <Select value={denemeId} onChange={(e) => setDenemeId(e.target.value)}>
+              {denemeler.map((d) => (
+                <option key={d.id} value={d.id}>{d.ad} · {d.tur ?? "brans"}</option>
+              ))}
+            </Select>
+          </FormGroup>
+          {sorular.length === 0 && (
+            <FormGroup style={{ minWidth: 100 }}>
+              <Label>Soru Sayısı</Label>
+              <Input type="number" min={1} max={200} value={soruSayisi} onChange={(e) => setSoruSayisi(e.target.value)} style={{ width: 100 }} />
+            </FormGroup>
+          )}
         </div>
-        {sorular.length === 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-            <span style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>Şablon yok — soru sayısı:</span>
-            <Input
-              type="number"
-              min={1}
-              max={200}
-              value={soruSayisi}
-              onChange={(e) => setSoruSayisi(e.target.value)}
-              style={{ width: 80 }}
-            />
-          </div>
-        )}
       </Card>
 
-      {mod === "yapistir" && (
-        <Card>
-          <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Optik Dizi Yapıştır</h3>
-          <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)", marginBottom: 8 }}>
-            Her satır: <span className="mono">Ad Soyad; DDYYBDD…</span> (D=doğru, Y=yanlış, diğer=boş). Bir karakter bir soru.
-          </p>
-          <Textarea
-            rows={5}
-            value={pasteMetin}
-            onChange={(e) => setPasteMetin(e.target.value)}
-            placeholder={ORNEK}
-            style={{ width: "100%", fontFamily: "var(--font-mono)" }}
-          />
-          <Btn onClick={yapistirVeGridiDoldur} disabled={!pasteMetin.trim()} size="sm" style={{ marginTop: 8 }}>
-            Grid'e Aktar
-          </Btn>
-        </Card>
-      )}
-
-      <Card style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px" }}>
-          <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>
-            Cevap Gridi <span className="tabular" style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>({doluOgrenciSayisi} öğrenci dolduruldu · hücreye tıklayınca D→Y→B döner)</span>
-          </h3>
-          <Btn onClick={handleKaydet} disabled={kaydediliyor || doluOgrenciSayisi === 0} size="sm">
-            {kaydediliyor ? "Kaydediliyor…" : "Kaydet"}
-          </Btn>
-        </div>
-
-        <div style={{ overflowX: "auto", padding: "0 20px 16px" }}>
-          <table style={{ borderCollapse: "collapse", minWidth: 600 }}>
-            <thead>
-              <tr>
-                <th style={{ position: "sticky", left: 0, background: "white", zIndex: 2, textAlign: "left", padding: "6px 10px", fontSize: 12, color: "rgba(15,27,45,0.5)", borderBottom: "2px solid rgba(15,27,45,0.08)" }}>
-                  Öğrenci
-                </th>
-                {soruNumaralari.map((n) => (
-                  <th key={n} style={{ padding: "4px 2px", fontSize: 10.5, color: "rgba(15,27,45,0.5)", borderBottom: "2px solid rgba(15,27,45,0.08)", minWidth: 30 }} title={konuHaritasi.get(n)}>
-                    {n}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {ogrenciler.map((o) => {
-                const satir = grid[o.id] ?? {};
-                const dolu = soruNumaralari.filter((n) => satir[n] !== undefined).length;
-                return (
-                  <tr key={o.id}>
-                    <td style={{ position: "sticky", left: 0, background: "white", zIndex: 1, padding: "4px 10px", fontSize: 12.5, whiteSpace: "nowrap", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                      {o.ad_soyad}
-                      <span className="tabular" style={{ marginLeft: 6, fontSize: 10.5, color: dolu === soruNumaralari.length ? "#2A9D8F" : "rgba(15,27,45,0.5)" }}>
-                        {dolu}/{soruNumaralari.length}
-                      </span>
-                      {dolu > 0 && (
-                        <button onClick={() => satiriTemizle(o.id)} style={{ marginLeft: 6, border: "none", background: "none", color: "#C4503A", fontSize: 11, cursor: "pointer" }}>
-                          temizle
-                        </button>
-                      )}
-                    </td>
-                    {soruNumaralari.map((n) => {
-                      const durum = satir[n];
-                      return (
-                        <td key={n} style={{ padding: 2, borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                          <button
-                            onClick={() => hucreyiTikla(o.id, n)}
-                            style={{
-                              width: 26, height: 26, borderRadius: 6, border: "1px solid #e3e3e3",
-                              background: durum ? HUCRENIN_RENGI[durum] : "white",
-                              color: durum ? "white" : "#bbb",
-                              fontWeight: 700, fontSize: 11, cursor: "pointer", transition: "all 0.12s ease",
-                            }}
-                          >
-                            {durum === "dogru" ? "D" : durum === "yanlis" ? "Y" : durum === "bos" ? "B" : "·"}
-                          </button>
-                        </td>
-                      );
-                    })}
+      <Card>
+        <Tabs tabs={["Sınıf Grid", "Kopyala-Yapıştır"]} active={mod === "grid" ? "Sınıf Grid" : "Kopyala-Yapıştır"} onChange={(t) => setMod(t === "Sınıf Grid" ? "grid" : "yapistir")} />
+        <div style={{ marginTop: 16 }}>
+          {mod === "grid" ? (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ borderCollapse: "collapse", minWidth: Math.max(600, soruNumaralari.length * 28 + 200) }}>
+                <thead>
+                  <tr>
+                    <th style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700, textAlign: "left", padding: "6px 12px", position: "sticky", left: 0, background: "#FDFBF7" }}>Öğrenci</th>
+                    {soruNumaralari.map((n) => (
+                      <th key={n} title={konuHaritasi.get(n)} style={{ fontSize: 10, color: "rgba(15,27,45,0.35)", fontWeight: 700, padding: "6px 4px", minWidth: 24, textAlign: "center" }}>{n}</th>
+                    ))}
+                    <th style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700, padding: "6px 8px" }}>Dolu</th>
+                    <th></th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div style={{ padding: "0 20px 16px" }}>
-          {mesaj && <Badge variant="teal" >{mesaj}</Badge>}
-          {hata && <Badge variant="brick" >{hata}</Badge>}
+                </thead>
+                <tbody>
+                  {ogrenciler.map((o) => {
+                    const satir = grid[o.id] ?? {};
+                    const filled = soruNumaralari.filter((n) => satir[n] !== undefined).length;
+                    return (
+                      <tr key={o.id}>
+                        <td style={{ fontSize: 13, fontWeight: 500, padding: "6px 12px", whiteSpace: "nowrap", position: "sticky", left: 0, background: "#FDFBF7", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>{o.ad_soyad}</td>
+                        {soruNumaralari.map((n) => {
+                          const cell = satir[n];
+                          return (
+                            <td key={n} style={{ padding: "3px 2px", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                              <div
+                                onClick={() => cycleCell(o.id, n)}
+                                title={konuHaritasi.get(n)}
+                                style={{
+                                  width: 20, height: 20, borderRadius: 4, cursor: "pointer",
+                                  background: cell ? `${COLORS[cell]}20` : "rgba(15,27,45,0.04)",
+                                  border: `1px solid ${cell ? COLORS[cell] : "rgba(15,27,45,0.12)"}`,
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 9, fontWeight: 700, color: cell ? COLORS[cell] : "rgba(15,27,45,0.2)",
+                                }}
+                              >
+                                {cell === "dogru" ? "D" : cell === "yanlis" ? "Y" : cell === "bos" ? "B" : ""}
+                              </div>
+                            </td>
+                          );
+                        })}
+                        <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, color: filled === soruNumaralari.length ? "#2A9D8F" : "rgba(15,27,45,0.5)", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>{filled}/{soruNumaralari.length}</td>
+                        <td style={{ borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => clearRow(o.id)}>Temizle</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <p style={{ fontSize: 13, color: "rgba(15,27,45,0.6)" }}>
+                Her satır: <code style={{ background: "rgba(15,27,45,0.07)", padding: "2px 6px", borderRadius: 4 }}>Ad Soyad;DDYYBDD…</code> (D=doğru, Y=yanlış, diğer=boş)
+              </p>
+              <Textarea
+                placeholder={ORNEK}
+                value={pasteMetin}
+                onChange={(e) => setPasteMetin(e.target.value)}
+                style={{ minHeight: 160, fontFamily: "var(--font-mono)", fontSize: 12 }}
+              />
+              <div style={{ display: "flex", gap: 8 }}>
+                <Btn variant="ghost" size="sm" onClick={parseAndImport} disabled={!pasteMetin.trim()}>Grid'e Aktar</Btn>
+              </div>
+              {errors.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {errors.map((e, i) => (
+                    <p key={i} style={{ fontSize: 12, color: "#C4503A" }}>{`Eşleşmeyen satır: "${e}"`}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              {mesaj && <Badge variant="teal">{mesaj}</Badge>}
+              {hata && <Badge variant="brick">{hata}</Badge>}
+            </div>
+            <Btn variant="primary" size="sm" onClick={handleKaydet} disabled={kaydediliyor || doluOgrenciSayisi === 0}>
+              {kaydediliyor ? "Kaydediliyor…" : "Kaydet"}
+            </Btn>
+          </div>
         </div>
       </Card>
     </div>

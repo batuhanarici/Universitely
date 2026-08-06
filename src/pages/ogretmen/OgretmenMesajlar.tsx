@@ -4,7 +4,7 @@ import { mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesa
 import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
 import type { Mesaj, Ogrenci, VeliAlici } from "../../types/database";
-import { Card, Select, Input, Btn } from "../../components/ui";
+import { Card, Select, Input, Btn, Label, FormGroup } from "../../components/ui";
 
 interface Alici {
   id: string;
@@ -12,10 +12,13 @@ interface Alici {
   tur: "ogrenci" | "veli";
 }
 
+type AliciTipi = "ogrenci" | "veli";
+
 export default function OgretmenMesajlar() {
   const { session } = useAuth();
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [aliciListesi, setAliciListesi] = useState<Alici[]>([]);
+  const [aliciTipi, setAliciTipi] = useState<AliciTipi>("ogrenci");
   const [aliciId, setAliciId] = useState("");
   const [girdi, setGirdi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -33,7 +36,6 @@ export default function OgretmenMesajlar() {
           ...v.map((v: VeliAlici) => ({ id: v.id, ad: `${v.ad_soyad} (${v.ogrenci_adi})`, tur: "veli" as const })),
         ];
         setAliciListesi(alicilar);
-        if (alicilar.length > 0) setAliciId(alicilar[0].id);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
@@ -44,21 +46,28 @@ export default function OgretmenMesajlar() {
     for (const m of bekleyen) {
       mesajOkunduIsaretle(m.id).catch(() => {});
     }
-    if (altRef.current) altRef.current.scrollTop = altRef.current.scrollHeight;
   }, [mesajlar, ben]);
 
-  const adMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const a of aliciListesi) map.set(a.id, a.ad);
-    return map;
-  }, [aliciListesi]);
+  const filtrelenenler = useMemo(() => aliciListesi.filter((a) => a.tur === aliciTipi), [aliciListesi, aliciTipi]);
 
-  function gondericiAdi(id: string): string {
-    if (id === ben) return "Sen";
-    return adMap.get(id) ?? "Kullanıcı";
-  }
+  useEffect(() => {
+    if (filtrelenenler.length > 0) setAliciId(filtrelenenler[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aliciTipi]);
 
-  async function handleGonder() {
+  const alici = useMemo(() => aliciListesi.find((a) => a.id === aliciId), [aliciListesi, aliciId]);
+
+  const konusma = useMemo(
+    () => mesajlar.filter((m) => m.gonderici_id === aliciId || m.alici_id === aliciId),
+    [mesajlar, aliciId]
+  );
+
+  useEffect(() => {
+    if (altRef.current) altRef.current.scrollTop = altRef.current.scrollHeight;
+  }, [konusma, aliciId]);
+
+  async function handleGonder(e: React.FormEvent) {
+    e.preventDefault();
     if (!aliciId || !girdi.trim()) return;
     setGonderiliyor(true);
     try {
@@ -70,33 +79,63 @@ export default function OgretmenMesajlar() {
     }
   }
 
-  if (yukleniyor) return <p>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+
+  if (aliciListesi.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <h1 className="page-title">Mesajlar</h1>
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz mesajlaşabileceğin öğrenci veya veli yok.</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ maxWidth: 620, display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
         <h1 className="page-title">Mesajlar</h1>
         <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Öğrenciler ve velilerle yazışın</p>
       </div>
 
-      <Card className="tape-accent">
-        <div ref={altRef} style={{ height: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: "4px 2px" }}>
-          {mesajlar.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz mesaj yok.</p>}
-          {mesajlar.map((m) => {
+      <Card style={{ padding: "14px 20px" }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <FormGroup>
+            <Label>Alıcı Tipi</Label>
+            <Select value={aliciTipi} onChange={(e) => setAliciTipi(e.target.value as AliciTipi)} style={{ maxWidth: 160 }}>
+              <option value="ogrenci">🎓 Öğrenci</option>
+              <option value="veli">👪 Veli</option>
+            </Select>
+          </FormGroup>
+          <FormGroup style={{ flex: 1 }}>
+            <Label>Kişi</Label>
+            <Select value={aliciId} onChange={(e) => setAliciId(e.target.value)} style={{ maxWidth: 220 }}>
+              {filtrelenenler.map((a) => (
+                <option key={a.id} value={a.id}>{a.ad}</option>
+              ))}
+            </Select>
+          </FormGroup>
+        </div>
+      </Card>
+
+      <Card style={{ display: "flex", flexDirection: "column", height: 460 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid rgba(15,27,45,0.08)" }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#2A9D8F", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700 }}>
+            {alici?.ad[0] ?? "?"}
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 600 }}>{alici?.ad}</p>
+        </div>
+
+        <div ref={altRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+          {konusma.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz mesaj yok.</p>}
+          {konusma.map((m) => {
             const benimki = m.gonderici_id === ben;
             return (
-              <div key={m.id} style={{ display: "flex", justifyContent: benimki ? "flex-end" : "flex-start" }}>
-                <div style={{
-                  maxWidth: "78%", padding: "8px 12px", borderRadius: 12,
-                  background: benimki ? "#0F1B2D" : "#EFE9DC",
-                  color: benimki ? "#E4BB60" : "#0F1B2D",
-                  fontSize: 13.5, lineHeight: 1.5,
-                }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: benimki ? "rgba(255,255,255,0.5)" : "rgba(15,27,45,0.5)", marginBottom: 3 }}>
-                    {gondericiAdi(m.gonderici_id)}
-                  </p>
-                  <p>{m.icerik}</p>
-                  <p style={{ fontSize: 10, color: benimki ? "rgba(255,255,255,0.4)" : "rgba(15,27,45,0.5)", marginTop: 4 }}>
+              <div key={m.id} style={{ display: "flex", flexDirection: benimki ? "row-reverse" : "row", alignItems: "flex-end", gap: 8 }}>
+                <div>
+                  <div className={benimki ? "bubble-self" : "bubble-other"}>{m.icerik}</div>
+                  <p style={{ fontSize: 10, color: "rgba(15,27,45,0.35)", marginTop: 2, textAlign: benimki ? "right" : "left" }}>
                     {new Date(m.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
@@ -104,15 +143,22 @@ export default function OgretmenMesajlar() {
             );
           })}
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-          <Select style={{ width: 220 }} value={aliciId} onChange={(e) => setAliciId(e.target.value)}>
-            {aliciListesi.map((a) => (
-              <option key={a.id} value={a.id}>{a.tur === "veli" ? "👪 " : "🎓 "}{a.ad}</option>
-            ))}
-          </Select>
-          <Input style={{ flex: 1, minWidth: 180 }} value={girdi} onChange={(e) => setGirdi(e.target.value)} placeholder="Mesajını yaz…" onKeyDown={(e) => e.key === "Enter" && handleGonder()} />
-          <Btn onClick={handleGonder} disabled={gonderiliyor || !girdi.trim() || !aliciId}>Gönder</Btn>
-        </div>
+
+        <form onSubmit={handleGonder} style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(15,27,45,0.08)" }}>
+          <Input
+            placeholder="Mesaj yaz…"
+            value={girdi}
+            onChange={(e) => setGirdi(e.target.value)}
+            style={{ flex: 1 }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (girdi.trim()) handleGonder(e as unknown as React.FormEvent);
+              }
+            }}
+          />
+          <Btn variant="primary" type="submit" disabled={gonderiliyor || !girdi.trim()}>Gönder</Btn>
+        </form>
       </Card>
     </div>
   );

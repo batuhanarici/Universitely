@@ -3,9 +3,11 @@ import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueri
 import { konularVeDersler, type KonuDersBilgisi } from "../../lib/konuIlerlemeQueries";
 import { ogrenciKonuIlerlemeleriGetir, konuAta, konuAtamasiKaldir } from "../../lib/konuIlerlemeQueries";
 import type { KonuIlerleme } from "../../types/database";
-import { Card, Select, Btn, Badge } from "../../components/ui";
+import { Card, Select, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
+import { Icon } from "../../components/Icon";
 
 export default function KonuAta() {
+  const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
   const [ogrenciId, setOgrenciId] = useState("");
   const [konular, setKonular] = useState<KonuDersBilgisi[]>([]);
@@ -58,6 +60,7 @@ export default function KonuAta() {
     await konuAta(ogrenciId, konuId);
     setKonuId("");
     setIlerlemeler(await ogrenciKonuIlerlemeleriGetir(ogrenciId));
+    show("Konu atandı ✓");
   }
 
   async function handleKaldir(konuId2: string) {
@@ -68,86 +71,93 @@ export default function KonuAta() {
 
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
+  if (ogrenciler.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {toast}
+        <h1 className="page-title">Konu Ata</h1>
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz öğrencin yok.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
       <div>
         <h1 className="page-title">Konu Ata</h1>
         <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Öğrencilere çalışacakları konuları atayın</p>
       </div>
 
-      {ogrenciler.length === 0 ? (
-        <Card>
-          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz öğrencin yok.</p>
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Öğrenci</h3>
-            <Select style={{ width: "100%" }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
-              {ogrenciler.map((o) => (
-                <option key={o.id} value={o.id}>{o.ad_soyad}</option>
+      <Card style={{ padding: "14px 20px" }}>
+        <FormGroup>
+          <Label>Öğrenci</Label>
+          <Select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)} style={{ maxWidth: 220 }}>
+            {ogrenciler.map((o) => (
+              <option key={o.id} value={o.id}>{o.ad_soyad}</option>
+            ))}
+          </Select>
+        </FormGroup>
+      </Card>
+
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Konu Ata</h3>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+          <FormGroup style={{ minWidth: 160 }}>
+            <Label>Ders</Label>
+            <Select
+              value={dersSecimi}
+              onChange={(e) => {
+                setDersSecimi(e.target.value);
+                setKonuId("");
+              }}
+            >
+              <option value="">Ders seç…</option>
+              {dersGrubu.map(([ad]) => (
+                <option key={ad} value={ad}>{ad}</option>
               ))}
             </Select>
-          </Card>
+          </FormGroup>
+          <FormGroup style={{ flex: 1 }}>
+            <Label>Konu</Label>
+            <Select value={konuId} onChange={(e) => setKonuId(e.target.value)}>
+              <option value="">Konu seç…</option>
+              {seciliDersKonulari.map((k) => (
+                <option key={k.id} value={k.id}>{k.ad}</option>
+              ))}
+            </Select>
+          </FormGroup>
+          <Btn variant="primary" onClick={handleAta} disabled={!konuId}>Ata</Btn>
+        </div>
+        {dersSecimi && seciliDersKonulari.length === 0 && (
+          <p style={{ fontSize: 12, color: "rgba(15,27,45,0.45)", marginTop: 8 }}>Bu ders için Ders/Konu yönetiminden konu ekleyin.</p>
+        )}
+      </Card>
 
-          <Card className="tape-accent">
-            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Konu Ata</h3>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Select
-                style={{ flex: 1, minWidth: 160 }}
-                value={dersSecimi}
-                onChange={(e) => {
-                  setDersSecimi(e.target.value);
-                  setKonuId("");
-                }}
-              >
-                <option value="">Ders seç…</option>
-                {dersGrubu.map(([ad]) => (
-                  <option key={ad} value={ad}>{ad}</option>
-                ))}
-              </Select>
-              <Select style={{ flex: 1, minWidth: 160 }} value={konuId} onChange={(e) => setKonuId(e.target.value)}>
-                <option value="">Konu seç…</option>
-                {seciliDersKonulari.map((k) => (
-                  <option key={k.id} value={k.id}>{k.ad}</option>
-                ))}
-              </Select>
-              <Btn onClick={handleAta} disabled={!konuId}>Ata</Btn>
-            </div>
-            {dersSecimi && seciliDersKonulari.length === 0 && (
-              <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 12.5, marginTop: 8 }}>Bu derste henüz konu yok — "Ders / Konu Yönetimi"nden ekleyebilirsin.</p>
-            )}
-          </Card>
-
-          <Card>
-            <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Atanan Konular</h3>
-            {ilerlemeler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu öğrenciye henüz konu atanmamış.</p>}
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {ilerlemeler.map((il) => {
-                const konu = konuHaritasi.get(il.konu_id);
-                return (
-                  <div key={il.konu_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 13.5, textDecoration: il.tamamlandi ? "line-through" : "none", opacity: il.tamamlandi ? 0.5 : 1 }}>
-                        {konu?.ad ?? "Bilinmeyen konu"}
-                      </p>
-                      <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>{konu?.ders_adi ?? "—"}</p>
-                    </div>
-                    {il.tamamlandi ? (
-                      <Badge variant="teal">✓ tamamlandı</Badge>
-                    ) : (
-                      <>
-                        <span style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>çalışılıyor</span>
-                        <Btn variant="ghost" size="sm" onClick={() => handleKaldir(il.konu_id)}>Kaldır</Btn>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        </>
-      )}
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Atanan Konular</h3>
+        {ilerlemeler.length === 0 ? (
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Konu atanmamış.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {ilerlemeler.map((il) => {
+              const konu = konuHaritasi.get(il.konu_id);
+              return (
+                <div key={il.konu_id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 500, textDecoration: il.tamamlandi ? "line-through" : "none", opacity: il.tamamlandi ? 0.6 : 1 }}>
+                    {konu?.ad ?? "Bilinmeyen konu"}
+                  </span>
+                  <Badge variant="gray">{konu?.ders_adi ?? "—"}</Badge>
+                  <Badge variant={il.tamamlandi ? "teal" : "gray"}>{il.tamamlandi ? "✓ Tamamlandı" : "Çalışılıyor"}</Badge>
+                  <button className="btn btn-danger btn-sm" onClick={() => handleKaldir(il.konu_id)} title="Atamayı kaldır"><Icon name="trash" size={13} /></button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

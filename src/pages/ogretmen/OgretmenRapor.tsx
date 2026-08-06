@@ -122,22 +122,22 @@ export default function OgretmenRapor() {
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 10 }}>
         <div>
-          <h1 className="page-title" style={{ marginBottom: 4 }}>Sınıf Haftalık Rapor</h1>
-          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14 }}>Son 7 gün · {rapor.ilk} → {rapor.bugun}</p>
+          <h1 className="page-title">Sınıf Raporu</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Son 7 gün · {rapor.ilk} → {rapor.bugun}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Btn variant="gold" size="sm" onClick={pdfIndir}>PDF</Btn>
-          <Btn variant="gold" size="sm" onClick={csvIndirHandle}>CSV</Btn>
+          <Btn variant="ghost" size="sm" onClick={csvIndirHandle}>CSV</Btn>
+          <Btn variant="primary" size="sm" onClick={pdfIndir}>PDF</Btn>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+      <div className="grid-3">
         <KPICard label="Öğrenci" value={ogrenciler.length} />
-        <KPICard label="Deneme sonucu" value={rapor.denemeSayisi} />
-        <KPICard label="Sınıf ortalaması" value={rapor.ortalamaNet !== null ? Math.round(rapor.ortalamaNet * 10) / 10 : 0} decimals={1} />
+        <KPICard label="Deneme Sonucu" value={rapor.denemeSayisi} />
+        <KPICard label="Sınıf Ortalaması" value={rapor.ortalamaNet !== null ? Math.round(rapor.ortalamaNet * 10) / 10 : 0} decimals={1} color="#E4BB60" />
       </div>
 
       {rapor.denemeSayisi === 0 && (
@@ -148,13 +148,15 @@ export default function OgretmenRapor() {
 
       {rapor.dersler.length > 0 && (
         <Card>
-          <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Ders Bazlı Başarı (hafta)</h3>
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Ders Bazlı Başarı</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {rapor.dersler.map((d) => (
-              <div key={d.ad} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                <span style={{ width: 120, fontSize: 13 }}>{d.ad}</span>
-                <div style={{ flex: 1 }}><ProgressBar pct={d.yuzde} color={d.yuzde < 55 ? "#C4503A" : d.yuzde >= 80 ? "#2A9D8F" : "#A07C20"} /></div>
-                <span className="tabular" style={{ width: 42, textAlign: "right", fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>{d.yuzde}%</span>
+              <div key={d.ad}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{d.ad}</span>
+                  <span className="tabular" style={{ fontSize: 13, fontWeight: 700, color: d.yuzde < 55 ? "#C4503A" : "#2A9D8F" }}>{d.yuzde}%</span>
+                </div>
+                <ProgressBar pct={d.yuzde} color={d.yuzde < 55 ? "#C4503A" : "#2A9D8F"} />
               </div>
             ))}
           </div>
@@ -162,32 +164,30 @@ export default function OgretmenRapor() {
       )}
 
       <Card>
-        <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Öğrenci Sıralaması</h3>
-        {rapor.ogrencilerRapor.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu hafta verisi olan öğrenci yok.</p>}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {rapor.ogrencilerRapor.map((o, i) => {
-            const ort = o.denemeler.length ? o.denemeler.reduce((a, d) => a + d.net, 0) / o.denemeler.length : 0;
-            return (
-              <div key={o.ogrenci_id} style={{ padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span className="tabular" style={{ width: 22, fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>{i + 1}.</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13.5, fontWeight: 500 }}>{o.ad_soyad}</p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 3 }}>
-                      {o.denemeler.map((d) => (
-                        <span key={d.ad} className="badge badge-gray" style={{ fontSize: 10.5 }}>{d.ad} · {d.net} net</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ width: 130 }}><ProgressBar pct={Math.min(Math.max((ort / 30) * 100, 0), 100)} color="#A07C20" /></div>
-                  <span className="tabular" style={{ fontSize: 14, fontWeight: 700 }}>
-                    {o.denemeler.length ? Math.round(ort * 10) / 10 : "—"} net
-                  </span>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenci Sıralaması</h3>
+        {rapor.ogrencilerRapor.length === 0 && <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Bu hafta verisi olan öğrenci yok.</p>}
+        {rapor.ogrencilerRapor.map((o, i) => {
+          const ort = o.denemeler.length ? o.denemeler.reduce((a, d) => a + d.net, 0) / o.denemeler.length : 0;
+          return (
+            <div key={o.ogrenci_id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "rgba(15,27,45,0.2)", minWidth: 28 }}>{i + 1}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{o.ad_soyad}</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {o.denemeler.map((d) => (
+                    <span key={d.ad} style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "rgba(15,27,45,0.07)", color: "rgba(15,27,45,0.7)" }}>
+                      {d.ad} · {d.net}
+                    </span>
+                  ))}
                 </div>
               </div>
-            );
-          })}
-        </div>
+              <div style={{ width: 80 }}><ProgressBar pct={Math.min(Math.max((ort / 120) * 100, 0), 100)} color="#E4BB60" /></div>
+              <span className="metric-value" style={{ fontSize: 18, fontWeight: 700, minWidth: 40, textAlign: "right" }}>
+                {o.denemeler.length ? Math.round(ort * 10) / 10 : "—"}
+              </span>
+            </div>
+          );
+        })}
       </Card>
     </div>
   );

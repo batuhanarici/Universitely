@@ -5,9 +5,12 @@ import {
   odemeleriGetir, odemeEkle, odemeOdendiGuncelle, odemeSil,
 } from "../../lib/kocAraclariQueries";
 import type { Gorusme, Odeme } from "../../types/database";
-import { Card, Select, Input, Btn, Badge, Checkbox, KPICard, Tabs } from "../../components/ui";
+import { Card, Select, Input, Textarea, Btn, Badge, Checkbox, Tabs, Label, FormGroup, useToast } from "../../components/ui";
+import { Icon } from "../../components/Icon";
 
 type Sekme = "gorusmeler" | "odemeler";
+
+const DURUM_ETIKET: Record<string, string> = { planlandi: "planlandı", tamamlandi: "tamamlandı", iptal: "iptal" };
 
 const DURUM_VAZIAN: Record<string, "gold" | "teal" | "brick"> = {
   planlandi: "gold",
@@ -20,6 +23,7 @@ function bugunIso(): string {
 }
 
 export default function GorusmeYonetimi() {
+  const { toast, show } = useToast();
   const [sekme, setSekme] = useState<Sekme>("gorusmeler");
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -60,7 +64,8 @@ export default function GorusmeYonetimi() {
     return map;
   }, [ogrenciler]);
 
-  async function handleGorusmeEkle() {
+  async function handleGorusmeEkle(e: React.FormEvent) {
+    e.preventDefault();
     if (!gOgrenciId || !gBaslik.trim() || !gTarih) return;
     setGKaydediliyor(true);
     try {
@@ -74,12 +79,14 @@ export default function GorusmeYonetimi() {
       setGorusmeler((gs) => [yeni, ...gs]);
       setGBaslik("");
       setGNotlar("");
+      show("Görüşme planlandı ✓");
     } finally {
       setGKaydediliyor(false);
     }
   }
 
-  async function handleOdemeEkle() {
+  async function handleOdemeEkle(e: React.FormEvent) {
+    e.preventDefault();
     if (!oOgrenciId || !oTutar) return;
     const tutar = Number(oTutar);
     if (!Number.isFinite(tutar) || tutar <= 0) return;
@@ -94,6 +101,7 @@ export default function GorusmeYonetimi() {
       setOdemeler((od) => [yeni, ...od]);
       setOTutar("");
       setOAciklama("");
+      show("Ödeme kaydedildi ✓");
     } finally {
       setOKaydediliyor(false);
     }
@@ -114,120 +122,181 @@ export default function GorusmeYonetimi() {
 
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
-  return (
-    <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div>
-        <h1 className="page-title">Görüşme & Ödeme Yönetimi</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Velilerle görüşmeleri planlayın, tahsilatları takip edin</p>
-      </div>
-
-      <div style={{ maxWidth: 420 }}>
-        <Tabs tabs={["Görüşmeler", "Ödemeler"]} active={sekme === "gorusmeler" ? "Görüşmeler" : "Ödemeler"} onChange={(t) => setSekme(t === "Görüşmeler" ? "gorusmeler" : "odemeler")} />
-      </div>
-
-      {ogrenciler.length === 0 ? (
+  if (ogrenciler.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {toast}
+        <h1 className="page-title">Görüşme & Ödeme</h1>
         <Card>
           <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz öğrencin yok.</p>
         </Card>
-      ) : sekme === "gorusmeler" ? (
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+      <div>
+        <h1 className="page-title">Görüşme & Ödeme</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Velilerle görüşmeleri planlayın, tahsilatları takip edin</p>
+      </div>
+
+      <Tabs tabs={["Görüşmeler", "Ödemeler"]} active={sekme === "gorusmeler" ? "Görüşmeler" : "Ödemeler"} onChange={(t) => setSekme(t === "Görüşmeler" ? "gorusmeler" : "odemeler")} />
+
+      {sekme === "gorusmeler" ? (
         <>
-          <Card className="tape-accent">
-            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Yeni Görüşme</h3>
-            <Select style={{ width: "100%" }} value={gOgrenciId} onChange={(e) => setGOgrenciId(e.target.value)}>
-              {ogrenciler.map((o) => (
-                <option key={o.id} value={o.id}>{o.ad_soyad}</option>
-              ))}
-            </Select>
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <Select style={{ width: 140 }} value={gKatilimci} onChange={(e) => setGKatilimci(e.target.value)}>
-                <option value="ogrenci">Öğrenci</option>
-                <option value="veli">Veli</option>
-              </Select>
-              <Input style={{ flex: 1 }} type="datetime-local" value={gTarih} onChange={(e) => setGTarih(e.target.value)} />
-            </div>
-            <Input style={{ width: "100%", marginTop: 8 }} value={gBaslik} onChange={(e) => setGBaslik(e.target.value)} placeholder="Görüşme konusu" onKeyDown={(e) => e.key === "Enter" && handleGorusmeEkle()} />
-            <Input style={{ width: "100%", marginTop: 8 }} value={gNotlar} onChange={(e) => setGNotlar(e.target.value)} placeholder="Not (isteğe bağlı)" onKeyDown={(e) => e.key === "Enter" && handleGorusmeEkle()} />
-            <Btn onClick={handleGorusmeEkle} disabled={gKaydediliyor || !gBaslik.trim() || !gTarih} style={{ marginTop: 8, width: "100%" }}>
-              {gKaydediliyor ? "Kaydediliyor…" : "Görüşmeyi Planla"}
-            </Btn>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Yeni Görüşme</h3>
+            <form onSubmit={handleGorusmeEkle} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 2fr 2fr", gap: 10 }}>
+              <FormGroup>
+                <Label>Öğrenci *</Label>
+                <Select value={gOgrenciId} onChange={(e) => setGOgrenciId(e.target.value)}>
+                  {ogrenciler.map((o) => (
+                    <option key={o.id} value={o.id}>{o.ad_soyad}</option>
+                  ))}
+                </Select>
+              </FormGroup>
+              <FormGroup>
+                <Label>Katılımcı</Label>
+                <Select value={gKatilimci} onChange={(e) => setGKatilimci(e.target.value)}>
+                  <option value="ogrenci">Öğrenci</option>
+                  <option value="veli">Veli</option>
+                </Select>
+              </FormGroup>
+              <FormGroup>
+                <Label>Tarih-Saat *</Label>
+                <Input type="datetime-local" value={gTarih} onChange={(e) => setGTarih(e.target.value)} required />
+              </FormGroup>
+              <FormGroup>
+                <Label>Konu *</Label>
+                <Input placeholder="Görüşme konusu" value={gBaslik} onChange={(e) => setGBaslik(e.target.value)} required />
+              </FormGroup>
+              <FormGroup style={{ gridColumn: "1/-1" }}>
+                <Label>Not</Label>
+                <Textarea placeholder="Opsiyonel not" value={gNotlar} onChange={(e) => setGNotlar(e.target.value)} style={{ minHeight: 48 }} />
+              </FormGroup>
+              <div style={{ gridColumn: "1/-1", display: "flex", justifyContent: "flex-end" }}>
+                <Btn variant="primary" type="submit" disabled={gKaydediliyor}>
+                  {gKaydediliyor ? "…" : "Görüşmeyi Planla"}
+                </Btn>
+              </div>
+            </form>
           </Card>
 
           <Card>
-            <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Görüşmeler</h3>
-            {gorusmeler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz görüşme yok.</p>}
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {gorusmeler.map((g) => {
-                return (
-                  <div key={g.id} style={{ padding: "11px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13.5, fontWeight: 500 }}>{g.baslik}</p>
-                        <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 1 }}>
-                          {ogrenciAdi.get(g.ogrenci_id) ?? "Öğrenci"} · {g.katilimci === "veli" ? "👪 Veli" : "🎓 Öğrenci"} ·{" "}
-                          {new Date(g.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                          <Badge variant={DURUM_VAZIAN[g.durum] ?? "gray"}> · {DURUM_VAZIAN[g.durum] === "teal" ? "tamamlandı" : DURUM_VAZIAN[g.durum] === "brick" ? "iptal" : "planlandı"}</Badge>
-                        </p>
-                        {g.notlar && <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)", marginTop: 4, whiteSpace: "pre-wrap" }}>{g.notlar}</p>}
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Görüşmeler</h3>
+            {gorusmeler.length === 0 ? (
+              <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Henüz görüşme yok.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {gorusmeler.map((m) => (
+                  <div key={m.id} style={{ display: "flex", gap: 12, padding: "12px", borderRadius: 8, background: "rgba(15,27,45,0.02)", border: "1px solid rgba(15,27,45,0.07)" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{ogrenciAdi.get(m.ogrenci_id) ?? "Öğrenci"}</span>
+                        <Badge variant="gray">{m.katilimci === "veli" ? "Veli" : "Öğrenci"}</Badge>
+                        <Badge variant={DURUM_VAZIAN[m.durum] ?? "gold"}>{DURUM_ETIKET[m.durum] ?? m.durum}</Badge>
                       </div>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        {g.durum !== "tamamlandi" && (
-                          <Btn variant="primary" size="sm" onClick={() => gorusmeDurumunaGec(g, "tamamlandi")}>Tamamlandı</Btn>
-                        )}
-                        {g.durum !== "iptal" && g.durum !== "tamamlandi" && (
-                          <Btn variant="danger" size="sm" onClick={() => gorusmeDurumunaGec(g, "iptal")}>İptal</Btn>
-                        )}
-                        <Btn variant="ghost" size="sm" onClick={() => gorusmeSil(g.id)}>Sil</Btn>
-                      </div>
+                      <p style={{ fontSize: 13, color: "#0F1B2D" }}>{m.baslik}</p>
+                      <p style={{ fontSize: 11, color: "rgba(15,27,45,0.4)" }}>
+                        {new Date(m.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                      {m.notlar && <p style={{ fontSize: 12, color: "rgba(15,27,45,0.6)", marginTop: 4, whiteSpace: "pre-wrap" }}>{m.notlar}</p>}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+                      {m.durum === "planlandi" && (
+                        <>
+                          <Btn variant="ghost" size="sm" onClick={() => gorusmeDurumunaGec(m, "tamamlandi")}>Tamamlandı</Btn>
+                          <Btn variant="danger" size="sm" onClick={() => gorusmeDurumunaGec(m, "iptal")}>İptal</Btn>
+                        </>
+                      )}
+                      <button className="btn btn-danger btn-sm" onClick={() => gorusmeSil(m.id)} title="Görüşmeyi sil"><Icon name="trash" size={13} /></button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </>
       ) : (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <KPICard label="Toplam tahsilat" value={toplam} sub="₺" />
-            <KPICard label="Ödenen" value={odenen} sub="₺" color="#2A9D8F" />
+          <div className="grid-2">
+            <Card>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 4 }}>Toplam Tahsilat</p>
+              <p className="metric-value" style={{ fontSize: 32, fontWeight: 700 }}>₺{toplam.toLocaleString("tr-TR")}</p>
+            </Card>
+            <Card>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 4 }}>Ödenen</p>
+              <p className="metric-value" style={{ fontSize: 32, fontWeight: 700, color: "#2A9D8F" }}>₺{odenen.toLocaleString("tr-TR")}</p>
+            </Card>
           </div>
 
-          <Card className="tape-accent">
-            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Yeni Ödeme</h3>
-            <Select style={{ width: "100%" }} value={oOgrenciId} onChange={(e) => setOOgrenciId(e.target.value)}>
-              {ogrenciler.map((o) => (
-                <option key={o.id} value={o.id}>{o.ad_soyad}</option>
-              ))}
-            </Select>
-            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-              <Input style={{ width: 130 }} type="number" min="0" step="0.01" placeholder="Tutar (₺)" value={oTutar} onChange={(e) => setOTutar(e.target.value)} />
-              <Input style={{ width: 150 }} type="date" value={oTarih} onChange={(e) => setOTarih(e.target.value)} />
-              <Input style={{ flex: 1, minWidth: 180 }} value={oAciklama} onChange={(e) => setOAciklama(e.target.value)} placeholder="Açıklama (ör. Eylül dönemi)" onKeyDown={(e) => e.key === "Enter" && handleOdemeEkle()} />
-            </div>
-            <Btn onClick={handleOdemeEkle} disabled={oKaydediliyor || !oTutar || Number(oTutar) <= 0} style={{ marginTop: 8, width: "100%" }}>
-              {oKaydediliyor ? "Kaydediliyor…" : "Ödemeyi Kaydet"}
-            </Btn>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Yeni Ödeme</h3>
+            <form onSubmit={handleOdemeEkle} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 2fr auto", gap: 10, alignItems: "flex-end" }}>
+              <FormGroup>
+                <Label>Öğrenci *</Label>
+                <Select value={oOgrenciId} onChange={(e) => setOOgrenciId(e.target.value)}>
+                  {ogrenciler.map((o) => (
+                    <option key={o.id} value={o.id}>{o.ad_soyad}</option>
+                  ))}
+                </Select>
+              </FormGroup>
+              <FormGroup>
+                <Label>Tutar *</Label>
+                <Input type="number" min={0} placeholder="1500" value={oTutar} onChange={(e) => setOTutar(e.target.value)} required />
+              </FormGroup>
+              <FormGroup>
+                <Label>Tarih</Label>
+                <Input type="date" value={oTarih} onChange={(e) => setOTarih(e.target.value)} />
+              </FormGroup>
+              <FormGroup>
+                <Label>Açıklama</Label>
+                <Input placeholder="Ocak ayı" value={oAciklama} onChange={(e) => setOAciklama(e.target.value)} />
+              </FormGroup>
+              <Btn variant="primary" type="submit" size="sm" disabled={oKaydediliyor}>
+                {oKaydediliyor ? "…" : "Kaydet"}
+              </Btn>
+            </form>
           </Card>
 
           <Card>
-            <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Ödemeler</h3>
-            {odemeler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz ödeme kaydı yok.</p>}
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {odemeler.map((od) => (
-                <div key={od.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                  <Checkbox checked={od.odendi} onChange={() => odemeOdendiDegistir(od)} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13.5, fontWeight: 500, color: od.odendi ? "rgba(15,27,45,0.5)" : "#0F1B2D", textDecoration: od.odendi ? "line-through" : "none" }}>
-                      {ogrenciAdi.get(od.ogrenci_id) ?? "Öğrenci"} · {Number(od.tutar).toLocaleString("tr-TR")} ₺
-                    </p>
-                    <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 1 }}>
-                      {od.tarih} {od.aciklama ? `· ${od.aciklama}` : ""}
-                    </p>
-                  </div>
-                  <Btn variant="ghost" size="sm" onClick={() => odemeSil(od.id)}>Sil</Btn>
-                </div>
-              ))}
-            </div>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Ödemeler</h3>
+            {odemeler.length === 0 ? (
+              <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Henüz ödeme kaydı yok.</p>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Öğrenci</th>
+                    <th>Tutar</th>
+                    <th>Tarih</th>
+                    <th>Açıklama</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {odemeler.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <Checkbox checked={p.odendi} onChange={() => odemeOdendiDegistir(p)} />
+                      </td>
+                      <td style={{ fontWeight: 500, textDecoration: p.odendi ? "line-through" : "none", opacity: p.odendi ? 0.6 : 1 }}>
+                        {ogrenciAdi.get(p.ogrenci_id) ?? "Öğrenci"}
+                      </td>
+                      <td className="tabular" style={{ fontWeight: 700 }}>₺{Number(p.tutar).toLocaleString("tr-TR")}</td>
+                      <td style={{ fontSize: 12, color: "rgba(15,27,45,0.5)" }}>{p.tarih}</td>
+                      <td style={{ fontSize: 12, color: "rgba(15,27,45,0.6)" }}>{p.aciklama}</td>
+                      <td>
+                        <button className="btn btn-danger btn-sm" onClick={() => odemeSil(p.id)} title="Ödemeyi sil"><Icon name="trash" size={13} /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </Card>
         </>
       )}

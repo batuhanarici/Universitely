@@ -6,15 +6,22 @@ import {
   sablonOlustur,
   sablonSorulariniKaydet,
 } from "../../lib/queries";
-import { Card, Input, Select, Btn, Badge } from "../../components/ui";
+import { sablonlariGetirDetayli } from "../../lib/denemeQueries";
+import { Card, Input, Select, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
+import { Icon } from "../../components/Icon";
 
-interface SoruSatiri {
-  soru_no: number;
+interface Aralik {
+  id: string;
+  baslangic: number;
+  bitis: number;
   konu_id: string;
   konu_ad: string;
 }
 
+type MevcutSablon = { id: string; ad: string; ders_adi: string };
+
 export default function SablonOlustur() {
+  const { toast, show } = useToast();
   const [dersler, setDersler] = useState<Ders[]>([]);
   const [dersId, setDersId] = useState("");
   const [konular, setKonular] = useState<Konu[]>([]);
@@ -22,15 +29,16 @@ export default function SablonOlustur() {
   const [baslangic, setBaslangic] = useState("");
   const [bitis, setBitis] = useState("");
   const [aralikKonuId, setAralikKonuId] = useState("");
-  const [satirlar, setSatirlar] = useState<SoruSatiri[]>([]);
+  const [araliklar, setAraliklar] = useState<Aralik[]>([]);
+  const [mevcutSablonlar, setMevcutSablonlar] = useState<MevcutSablon[]>([]);
   const [kaydediliyor, setKaydediliyor] = useState(false);
-  const [basariMesaji, setBasariMesaji] = useState("");
 
   useEffect(() => {
     dersleriGetir().then((d) => {
       setDersler(d);
       if (d.length > 0) setDersId(d[0].id);
     });
+    sablonlariGetirDetayli().then(setMevcutSablonlar).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -39,72 +47,98 @@ export default function SablonOlustur() {
       setKonular(k);
       setAralikKonuId(k[0]?.id ?? "");
     });
-    setSatirlar([]);
+    setAraliklar([]);
   }, [dersId]);
 
-  function aralikEkle() {
+  function aralikEkle(e: React.FormEvent) {
+    e.preventDefault();
     const bas = parseInt(baslangic, 10);
     const son = parseInt(bitis, 10);
     if (!bas || !son || son < bas || !aralikKonuId) return;
     const konu = konular.find((k) => k.id === aralikKonuId);
     if (!konu) return;
 
-    const yeniSatirlar: SoruSatiri[] = [];
-    for (let no = bas; no <= son; no++) yeniSatirlar.push({ soru_no: no, konu_id: konu.id, konu_ad: konu.ad });
-
-    setSatirlar((mevcut) => {
-      const filtreli = mevcut.filter((s) => !yeniSatirlar.some((y) => y.soru_no === s.soru_no));
-      return [...filtreli, ...yeniSatirlar].sort((a, b) => a.soru_no - b.soru_no);
+    setAraliklar((mevcut) => {
+      const filtreli = mevcut.filter((a) => !(bas <= a.bitis && son >= a.baslangic));
+      return [
+        ...filtreli,
+        { id: `${bas}-${son}-${Date.now()}`, baslangic: bas, bitis: son, konu_id: konu.id, konu_ad: konu.ad },
+      ].sort((a, b) => a.baslangic - b.baslangic);
     });
     setBaslangic("");
     setBitis("");
   }
 
-  function satirSil(soruNo: number) {
-    setSatirlar((s) => s.filter((x) => x.soru_no !== soruNo));
-  }
+  const totalQ = araliklar.reduce((a, r) => a + (r.bitis - r.baslangic + 1), 0);
 
   async function handleKaydet() {
-    if (!sablonAdi.trim() || satirlar.length === 0) return;
+    if (!sablonAdi.trim() || araliklar.length === 0) return;
     setKaydediliyor(true);
     try {
       const yeniSablon = await sablonOlustur(sablonAdi.trim(), dersId);
-      await sablonSorulariniKaydet(yeniSablon.id, satirlar.map((s) => ({ soru_no: s.soru_no, konu_id: s.konu_id })));
-      setBasariMesaji(`"${sablonAdi}" şablonu ${satirlar.length} soru ile kaydedildi.`);
+      const sorular = araliklar.flatMap((a) => {
+        const rows: { soru_no: number; konu_id: string }[] = [];
+        for (let no = a.baslangic; no <= a.bitis; no++) rows.push({ soru_no: no, konu_id: a.konu_id });
+        return rows;
+      });
+      await sablonSorulariniKaydet(yeniSablon.id, sorular);
+      show(`Şablon kaydedildi: ${totalQ} soru ✓`);
       setSablonAdi("");
-      setSatirlar([]);
+      setAraliklar([]);
+      setMevcutSablonlar(await sablonlariGetirDetayli());
     } finally {
       setKaydediliyor(false);
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
       <div>
-        <h1 className="page-title" style={{ marginBottom: 6 }}>Deneme Şablonu Oluştur</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>
-          Soru no aralıklarını konulara eşleştir. Bu şablonu daha sonra aynı yayının denemelerinde tekrar kullanabilirsin.
+        <h1 className="page-title">Deneme Şablonu Oluştur</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>
+          Soru no aralıklarını konulara eşleştir, şablonu kaydet
         </p>
       </div>
 
-      <Card className="tape-accent">
-        <div style={{ display: "flex", gap: 8 }}>
-          <Input value={sablonAdi} onChange={(e) => setSablonAdi(e.target.value)} placeholder="Şablon adı, örn. Hız Yayınları TYT Matematik" style={{ flex: 1 }} />
-          <Select value={dersId} onChange={(e) => setDersId(e.target.value)} style={{ minWidth: 150 }}>
-            {dersler.map((d) => <option key={d.id} value={d.id}>{d.ad}</option>)}
-          </Select>
+      <Card>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 16 }}>
+          <FormGroup>
+            <Label>Şablon Adı *</Label>
+            <Input placeholder="TYT Standart Şablon" value={sablonAdi} onChange={(e) => setSablonAdi(e.target.value)} />
+          </FormGroup>
+          <FormGroup>
+            <Label>Ders</Label>
+            <Select value={dersId} onChange={(e) => setDersId(e.target.value)}>
+              {dersler.map((d) => (
+                <option key={d.id} value={d.id}>{d.ad}</option>
+              ))}
+            </Select>
+          </FormGroup>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
-          <Input value={baslangic} onChange={(e) => setBaslangic(e.target.value)} placeholder="Başlangıç no" style={{ width: 120 }} />
-          <span style={{ color: "rgba(15,27,45,0.5)" }}>–</span>
-          <Input value={bitis} onChange={(e) => setBitis(e.target.value)} placeholder="Bitiş no" style={{ width: 120 }} />
-          <Select value={aralikKonuId} onChange={(e) => setAralikKonuId(e.target.value)} style={{ flex: 1, minWidth: 150 }}>
-            {konular.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
-          </Select>
-          <Btn onClick={aralikEkle}>Aralık Ekle</Btn>
-        </div>
-
+        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, color: "rgba(15,27,45,0.6)" }}>Soru Aralığı Ekle</h3>
+        <form onSubmit={aralikEkle} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 3fr auto", gap: 10, alignItems: "flex-end" }}>
+          <FormGroup>
+            <Label>Başlangıç No *</Label>
+            <Input type="number" min={1} placeholder="1" value={baslangic} onChange={(e) => setBaslangic(e.target.value)} required />
+          </FormGroup>
+          <FormGroup>
+            <Label>Bitiş No *</Label>
+            <Input type="number" min={1} placeholder="40" value={bitis} onChange={(e) => setBitis(e.target.value)} required />
+          </FormGroup>
+          <FormGroup>
+            <Label>Konu *</Label>
+            <Select value={aralikKonuId} onChange={(e) => setAralikKonuId(e.target.value)} required>
+              {konular.map((k) => (
+                <option key={k.id} value={k.id}>{k.ad}</option>
+              ))}
+            </Select>
+          </FormGroup>
+          <Btn variant="primary" type="submit" size="sm">
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="plus" size={14} /> Ekle</span>
+          </Btn>
+        </form>
         {konular.length === 0 && (
           <p style={{ color: "#C4503A", fontSize: 13, marginTop: 10 }}>
             Bu derste henüz konu yok — önce Ders/Konu Yönetimi ekranından konu ekle.
@@ -112,37 +146,58 @@ export default function SablonOlustur() {
         )}
       </Card>
 
-      {satirlar.length > 0 && (
-        <Card style={{ padding: 0, overflow: "hidden" }}>
-          <table className="data-table" style={{ fontSize: 13.5 }}>
+      {araliklar.length > 0 && (
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Soru Tablosu ({totalQ} soru)</h3>
+          <table className="data-table">
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: 10 }}>Soru No</th>
-                <th style={{ textAlign: "left", padding: 10 }}>Konu</th>
-                <th style={{ padding: 10 }}></th>
+                <th>Başlangıç</th>
+                <th>Bitiş</th>
+                <th>Soru Sayısı</th>
+                <th>Konu</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {satirlar.map((s) => (
-                <tr key={s.soru_no}>
-                  <td className="tabular" style={{ padding: 10 }}>{s.soru_no}</td>
-                  <td style={{ padding: 10 }}>{s.konu_ad}</td>
-                  <td style={{ padding: 10, textAlign: "right" }}>
-                    <Btn variant="ghost" size="sm" onClick={() => satirSil(s.soru_no)}>sil</Btn>
+              {araliklar.map((r) => (
+                <tr key={r.id}>
+                  <td className="tabular">{r.baslangic}</td>
+                  <td className="tabular">{r.bitis}</td>
+                  <td className="tabular" style={{ fontWeight: 600 }}>{r.bitis - r.baslangic + 1}</td>
+                  <td style={{ fontWeight: 500 }}>{r.konu_ad}</td>
+                  <td>
+                    <button className="btn btn-danger btn-sm" onClick={() => setAraliklar((l) => l.filter((x) => x.id !== r.id))} title="Aralığı sil">
+                      <Icon name="trash" size={13} />
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+            <Btn variant="primary" onClick={handleKaydet} disabled={kaydediliyor || !sablonAdi.trim()}>
+              {kaydediliyor ? "Kaydediliyor…" : `Şablonu Kaydet (${totalQ} soru)`}
+            </Btn>
+          </div>
         </Card>
       )}
 
-      <div>
-        <Btn onClick={handleKaydet} disabled={kaydediliyor || !sablonAdi.trim() || satirlar.length === 0}>
-          {kaydediliyor ? "Kaydediliyor…" : `Şablonu Kaydet (${satirlar.length} soru)`}
-        </Btn>
-        {basariMesaji && <Badge variant="teal">{basariMesaji}</Badge>}
-      </div>
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Mevcut Şablonlar</h3>
+        {mevcutSablonlar.length === 0 ? (
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Henüz şablon yok.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {mevcutSablonlar.map((t) => (
+              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                <span style={{ fontWeight: 500 }}>{t.ad}</span>
+                <Badge variant="gray">{t.ders_adi}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

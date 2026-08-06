@@ -465,3 +465,38 @@ select.input { cursor: pointer; }
   .sidebar-label { display: none; }
   .panel-main { padding: 20px 16px; }
 }
+
+/* ── Mobile (≤ 720px) ───────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .panel-main { padding: 16px 12px; }
+
+  .page-title { font-size: 24px; }
+  .section-title { font-size: 18px; }
+  .metric-value { font-size: 26px !important; }
+
+  .card { padding: 16px 14px; }
+  .card-hero { padding: 20px; }
+
+  /* Inline grid forms & layouts stack into a single column */
+  [style*="grid-template-columns:"]:not(.no-stack) {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tables scroll horizontally instead of overflowing the layout */
+  .data-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Small phones (≤ 480px) ─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: 1fr; }
+  .page-title { font-size: 21px; }
+  .section-title { font-size: 17px; }
+  .panel-main { padding: 12px 10px; }
+}
