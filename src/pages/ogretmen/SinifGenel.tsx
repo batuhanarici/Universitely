@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
-import AnimatedNumber from "../../components/AnimatedNumber";
-import ProgressBar from "../../components/ProgressBar";
+import { Card, ProgressBar } from "../../components/ui";
+import { AnimatedNumber } from "../../components/ui";
 
 interface OgrenciOzet {
   ogrenci_id: string;
@@ -89,46 +89,53 @@ export default function SinifGenel() {
   if (satirlar.length === 0) {
     return (
       <div>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Sınıf Genel Durumu</h1>
-        <p style={{ color: "var(--muted)" }}>Henüz hiçbir öğrenci için sonuç girilmemiş.</p>
+        <h1 className="page-title">Sınıf Genel Durumu</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)" }}>Henüz hiçbir öğrenci için sonuç girilmemiş.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Sınıf Genel Durumu</h1>
-
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Öğrenciler (nete göre sıralı)</h2>
-        {ogrenciler.map((o, i) => (
-          <div key={o.ogrenci_id} className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.1 + i * 0.05}s` }}>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{o.ad_soyad}</p>
-              <p style={{ fontSize: 12, color: "var(--muted)" }}>En zayıf konu: {o.enZayifKonu} ({o.enZayifOran}%)</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p className="mono" style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-                <AnimatedNumber value={o.net} decimals={1} />
-              </p>
-              <p className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{o.dogru}D {o.yanlis}Y {o.bos}B</p>
-            </div>
-          </div>
-        ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 className="page-title">Sınıf Genel Durumu</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>{ogrenciler.length} öğrenci · nete göre sıralı</p>
       </div>
 
-      <div className="card stagger-item" style={{ marginTop: 20, animationDelay: "0.15s" }}>
-        <h2 className="card-title">Sınıf Genelinde En Çok Ağırlık Verilmesi Gereken Konular</h2>
-        {konular.map((k, i) => (
-          <div key={k.konu_adi} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.05}s` }}>
-            <span style={{ width: 130, fontSize: 13, color: "var(--ink)", fontWeight: 500 }}>{k.konu_adi}</span>
-            <ProgressBar oran={(k.zayifOgrenciSayisi / ogrenciler.length) * 100} color={k.zayifOgrenciSayisi > 0 ? "var(--yanlis)" : "var(--dogru)"} delay={i * 60} />
-            <span className="mono" style={{ width: 130, textAlign: "right", fontSize: 12, color: "var(--muted)" }}>
-              {k.zayifOgrenciSayisi} / {ogrenciler.length} öğrenci
-            </span>
-          </div>
-        ))}
-      </div>
+      <Card className="tape-accent">
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenciler</h3>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {ogrenciler.map((o) => (
+            <div key={o.ogrenci_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600 }}>{o.ad_soyad}</p>
+                <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)" }}>En zayıf konu: {o.enZayifKonu} ({o.enZayifOran}%)</p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p className="metric-value" style={{ fontSize: 16, fontWeight: 700 }}>
+                  <AnimatedNumber value={o.net} decimals={1} />
+                </p>
+                <p className="tabular" style={{ fontSize: 11, color: "rgba(15,27,45,0.5)" }}>{o.dogru}D {o.yanlis}Y {o.bos}B</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Sınıf Genelinde En Çok Ağırlık Verilmesi Gereken Konular</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {konular.map((k) => (
+            <div key={k.konu_adi} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 140, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k.konu_adi}</span>
+              <div style={{ flex: 1 }}><ProgressBar pct={(k.zayifOgrenciSayisi / ogrenciler.length) * 100} color={k.zayifOgrenciSayisi > 0 ? "#C4503A" : "#2A9D8F"} /></div>
+              <span className="tabular" style={{ width: 120, textAlign: "right", fontSize: 12, color: "rgba(15,27,45,0.5)" }}>
+                {k.zayifOgrenciSayisi} / {ogrenciler.length} öğrenci
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }

@@ -26,33 +26,45 @@ import GorevYonetimi from "./pages/ogretmen/GorevYonetimi";
 import KaynakAta from "./pages/ogretmen/KaynakAta";
 import KonuAta from "./pages/ogretmen/KonuAta";
 import VeliPaneli from "./pages/veli/VeliPaneli";
-import UYArrow from "./components/UYArrow";
+import { PanelLayout } from "./components/Layout";
+import type { NavGroup } from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe";
 
-const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
-  { id: "koc-dashboard", etiket: "Koç Paneli", icon: "🏠" },
-  { id: "koc-ai", etiket: "AI Risk Analizi", icon: "🧠" },
-  { id: "muhasebe", etiket: "Muhasebe", icon: "💰" },
-  { id: "sinif", etiket: "Sınıf Genel Durumu", icon: "📊" },
-  { id: "sinif-analiz", etiket: "Sınıf Analiz", icon: "📈" },
-  { id: "ogrenciler", etiket: "Öğrenciler", icon: "🎓" },
-  { id: "program", etiket: "Haftalık Program", icon: "📅" },
-  { id: "gorev-yonetim", etiket: "Görev Yönetimi", icon: "📝" },
-  { id: "kaynak-ata", etiket: "Kaynak Ata", icon: "📚" },
-  { id: "konu-ata", etiket: "Konu Ata", icon: "🎯" },
-  { id: "ders-konu", etiket: "Ders / Konu Yönetimi", icon: "🗂️" },
-  { id: "sablon", etiket: "Deneme Şablonu Oluştur", icon: "🧩" },
-  { id: "deneme", etiket: "Deneme Oluştur", icon: "🗓️" },
-  { id: "sonuc", etiket: "Sonuç Gir", icon: "✍️" },
-  { id: "toplu-sonuc", etiket: "Toplu Sonuç Gir", icon: "🧮" },
-  { id: "mesajlar", etiket: "Mesajlar", icon: "✉️" },
-  { id: "koc-notlar", etiket: "Koç Notları", icon: "📝" },
-  { id: "gorusme-yonetim", etiket: "Görüşme & Ödeme", icon: "🗓️" },
-  { id: "toplu-bildirim", etiket: "Toplu Bildirim", icon: "📣" },
-  { id: "ogretmen-rapor", etiket: "Sınıf Raporu", icon: "📄" },
+const KOC_NAV: NavGroup[] = [
+  { group: "Genel", items: [
+    { path: "koc-dashboard", label: "Koç Paneli", icon: "home" },
+    { path: "koc-ai", label: "AI Risk", icon: "alert" },
+    { path: "muhasebe", label: "Muhasebe", icon: "money" },
+  ]},
+  { group: "Sınıf", items: [
+    { path: "sinif", label: "Sınıf Genel", icon: "chart" },
+    { path: "sinif-analiz", label: "Sınıf Analiz", icon: "grid" },
+    { path: "ogrenciler", label: "Öğrenciler", icon: "students" },
+    { path: "program", label: "Haftalık Program", icon: "calendar" },
+  ]},
+  { group: "Atama", items: [
+    { path: "gorev-yonetim", label: "Görev Yönetimi", icon: "task" },
+    { path: "kaynak-ata", label: "Kaynak Ata", icon: "resource" },
+    { path: "konu-ata", label: "Konu Ata", icon: "book" },
+    { path: "ders-konu", label: "Ders / Konu", icon: "template" },
+  ]},
+  { group: "Denemeler", items: [
+    { path: "sablon", label: "Deneme Şablonu", icon: "template" },
+    { path: "deneme", label: "Deneme Oluştur", icon: "plus" },
+    { path: "sonuc", label: "Sonuç Gir", icon: "check" },
+    { path: "toplu-sonuc", label: "Toplu Sonuç", icon: "grid" },
+  ]},
+  { group: "İletişim", items: [
+    { path: "mesajlar", label: "Mesajlar", icon: "message" },
+    { path: "koc-notlar", label: "Koç Notları", icon: "note" },
+    { path: "gorusme-yonetim", label: "Görüşme & Ödeme", icon: "meeting" },
+    { path: "toplu-bildirim", label: "Toplu Bildirim", icon: "send" },
+    { path: "ogretmen-rapor", label: "Sınıf Raporu", icon: "report" },
+  ]},
 ];
+
 function OgretmenUygulamasi() {
   const [sekme, setSekme] = useState<Sekme>("koc-dashboard");
   const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
@@ -62,30 +74,22 @@ function OgretmenUygulamasi() {
     setSekme("ogrenci-detay");
   }
 
+  function git(path: string) {
+    if (path === "/") {
+      supabase.auth.signOut();
+      return;
+    }
+    setSekme(path as Sekme);
+  }
+
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <span className="mark"><UYArrow size={20} color="#E4BB60" /></span>
-          <span className="sidebar-logo-text">Universitely</span>
-        </div>
-        <nav className="sidebar-nav">
-          {SEKMELER.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSekme(s.id)}
-              className={`sidebar-item${sekme === s.id ? " active" : ""}`}
-            >
-              <span>{s.icon}</span>
-              <span>{s.etiket}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <button onClick={() => supabase.auth.signOut()}>Çıkış Yap</button>
-        </div>
-      </aside>
-      <main className="main-area">
+    <PanelLayout
+      navConfig={KOC_NAV}
+      roleLabel="Koç Paneli"
+      activePath={sekme === "ogrenci-detay" ? "ogrenciler" : sekme}
+      onNavigate={git}
+    >
+      <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
         {sekme === "sinif" && <SinifGenel />}
         {sekme === "sinif-analiz" && <SinifAnaliz />}
@@ -107,8 +111,8 @@ function OgretmenUygulamasi() {
         {sekme === "ogretmen-rapor" && <OgretmenRapor />}
         {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
         {sekme === "muhasebe" && <Muhasebe />}
-      </main>
-    </div>
+      </div>
+    </PanelLayout>
   );
 }
 

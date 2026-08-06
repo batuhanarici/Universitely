@@ -5,13 +5,14 @@ import {
   odemeleriGetir, odemeEkle, odemeOdendiGuncelle, odemeSil,
 } from "../../lib/kocAraclariQueries";
 import type { Gorusme, Odeme } from "../../types/database";
+import { Card, Select, Input, Btn, Badge, Checkbox, KPICard, Tabs } from "../../components/ui";
 
 type Sekme = "gorusmeler" | "odemeler";
 
-const DURUM_ETIKET: Record<string, { metin: string; renk: string }> = {
-  planlandi: { metin: "planlandı", renk: "var(--gold-dim)" },
-  tamamlandi: { metin: "tamamlandı", renk: "var(--dogru)" },
-  iptal: { metin: "iptal", renk: "var(--yanlis)" },
+const DURUM_VAZIAN: Record<string, "gold" | "teal" | "brick"> = {
+  planlandi: "gold",
+  tamamlandi: "teal",
+  iptal: "brick",
 };
 
 function bugunIso(): string {
@@ -111,124 +112,123 @@ export default function GorusmeYonetimi() {
   const odenen = odemeler.filter((o) => o.odendi).reduce((a, o) => a + Number(o.tutar), 0);
   const toplam = odemeler.reduce((a, o) => a + Number(o.tutar), 0);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Görüşme & Ödeme Yönetimi</h1>
+    <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title">Görüşme & Ödeme Yönetimi</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Velilerle görüşmeleri planlayın, tahsilatları takip edin</p>
+      </div>
 
-      <div className="stagger-item" style={{ display: "flex", gap: 8, marginBottom: 16, animationDelay: "0.05s" }}>
-        <button onClick={() => setSekme("gorusmeler")} className={`btn${sekme === "gorusmeler" ? " btn-primary" : ""}`}>Görüşmeler</button>
-        <button onClick={() => setSekme("odemeler")} className={`btn${sekme === "odemeler" ? " btn-primary" : ""}`}>Ödemeler</button>
+      <div style={{ maxWidth: 420 }}>
+        <Tabs tabs={["Görüşmeler", "Ödemeler"]} active={sekme === "gorusmeler" ? "Görüşmeler" : "Ödemeler"} onChange={(t) => setSekme(t === "Görüşmeler" ? "gorusmeler" : "odemeler")} />
       </div>
 
       {ogrenciler.length === 0 ? (
-        <div className="card stagger-item">
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz öğrencin yok.</p>
-        </div>
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz öğrencin yok.</p>
+        </Card>
       ) : sekme === "gorusmeler" ? (
         <>
-          <div className="card stagger-item" style={{ animationDelay: "0.1s" }}>
-            <h2 className="card-title">Yeni Görüşme</h2>
-            <select className="input" style={{ width: "100%" }} value={gOgrenciId} onChange={(e) => setGOgrenciId(e.target.value)}>
+          <Card className="tape-accent">
+            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Yeni Görüşme</h3>
+            <Select style={{ width: "100%" }} value={gOgrenciId} onChange={(e) => setGOgrenciId(e.target.value)}>
               {ogrenciler.map((o) => (
                 <option key={o.id} value={o.id}>{o.ad_soyad}</option>
               ))}
-            </select>
+            </Select>
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <select className="input" style={{ width: 140 }} value={gKatilimci} onChange={(e) => setGKatilimci(e.target.value)}>
+              <Select style={{ width: 140 }} value={gKatilimci} onChange={(e) => setGKatilimci(e.target.value)}>
                 <option value="ogrenci">Öğrenci</option>
                 <option value="veli">Veli</option>
-              </select>
-              <input className="input" style={{ flex: 1 }} type="datetime-local" value={gTarih} onChange={(e) => setGTarih(e.target.value)} />
+              </Select>
+              <Input style={{ flex: 1 }} type="datetime-local" value={gTarih} onChange={(e) => setGTarih(e.target.value)} />
             </div>
-            <input className="input" style={{ width: "100%", marginTop: 8 }} value={gBaslik} onChange={(e) => setGBaslik(e.target.value)} placeholder="Görüşme konusu" onKeyDown={(e) => e.key === "Enter" && handleGorusmeEkle()} />
-            <input className="input" style={{ width: "100%", marginTop: 8 }} value={gNotlar} onChange={(e) => setGNotlar(e.target.value)} placeholder="Not (isteğe bağlı)" onKeyDown={(e) => e.key === "Enter" && handleGorusmeEkle()} />
-            <button onClick={handleGorusmeEkle} disabled={gKaydediliyor || !gBaslik.trim() || !gTarih} className="btn btn-primary" style={{ marginTop: 8, width: "100%" }}>
+            <Input style={{ width: "100%", marginTop: 8 }} value={gBaslik} onChange={(e) => setGBaslik(e.target.value)} placeholder="Görüşme konusu" onKeyDown={(e) => e.key === "Enter" && handleGorusmeEkle()} />
+            <Input style={{ width: "100%", marginTop: 8 }} value={gNotlar} onChange={(e) => setGNotlar(e.target.value)} placeholder="Not (isteğe bağlı)" onKeyDown={(e) => e.key === "Enter" && handleGorusmeEkle()} />
+            <Btn onClick={handleGorusmeEkle} disabled={gKaydediliyor || !gBaslik.trim() || !gTarih} style={{ marginTop: 8, width: "100%" }}>
               {gKaydediliyor ? "Kaydediliyor…" : "Görüşmeyi Planla"}
-            </button>
-          </div>
+            </Btn>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-            <h2 className="card-title">Görüşmeler</h2>
-            {gorusmeler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz görüşme yok.</p>}
-            {gorusmeler.map((g, i) => {
-              const d = DURUM_ETIKET[g.durum] ?? { metin: g.durum, renk: "var(--muted)" };
-              return (
-                <div key={g.id} className="stagger-item" style={{ padding: "11px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.03}s` }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{g.baslik}</p>
-                      <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>
-                        {ogrenciAdi.get(g.ogrenci_id) ?? "Öğrenci"} · {g.katilimci === "veli" ? "👪 Veli" : "🎓 Öğrenci"} ·{" "}
-                        {new Date(g.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                        <span style={{ color: d.renk, fontWeight: 600 }}> · {d.metin}</span>
-                      </p>
-                      {g.notlar && <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, whiteSpace: "pre-wrap" }}>{g.notlar}</p>}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      {g.durum !== "tamamlandi" && (
-                        <button onClick={() => gorusmeDurumunaGec(g, "tamamlandi")} className="btn" style={{ padding: "5px 10px", background: "var(--dogru)", color: "#fff", fontSize: 11.5 }}>Tamamlandı</button>
-                      )}
-                      {g.durum !== "iptal" && g.durum !== "tamamlandi" && (
-                        <button onClick={() => gorusmeDurumunaGec(g, "iptal")} className="btn" style={{ padding: "5px 10px", background: "var(--yanlis)", color: "#fff", fontSize: 11.5 }}>İptal</button>
-                      )}
-                      <button onClick={() => gorusmeSil(g.id)} style={{ border: "none", background: "none", color: "var(--muted)", fontSize: 12 }}>Sil</button>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Görüşmeler</h3>
+            {gorusmeler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz görüşme yok.</p>}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {gorusmeler.map((g) => {
+                return (
+                  <div key={g.id} style={{ padding: "11px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13.5, fontWeight: 500 }}>{g.baslik}</p>
+                        <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 1 }}>
+                          {ogrenciAdi.get(g.ogrenci_id) ?? "Öğrenci"} · {g.katilimci === "veli" ? "👪 Veli" : "🎓 Öğrenci"} ·{" "}
+                          {new Date(g.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          <Badge variant={DURUM_VAZIAN[g.durum] ?? "gray"}> · {DURUM_VAZIAN[g.durum] === "teal" ? "tamamlandı" : DURUM_VAZIAN[g.durum] === "brick" ? "iptal" : "planlandı"}</Badge>
+                        </p>
+                        {g.notlar && <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)", marginTop: 4, whiteSpace: "pre-wrap" }}>{g.notlar}</p>}
+                      </div>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        {g.durum !== "tamamlandi" && (
+                          <Btn variant="primary" size="sm" onClick={() => gorusmeDurumunaGec(g, "tamamlandi")}>Tamamlandı</Btn>
+                        )}
+                        {g.durum !== "iptal" && g.durum !== "tamamlandi" && (
+                          <Btn variant="danger" size="sm" onClick={() => gorusmeDurumunaGec(g, "iptal")}>İptal</Btn>
+                        )}
+                        <Btn variant="ghost" size="sm" onClick={() => gorusmeSil(g.id)}>Sil</Btn>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </Card>
         </>
       ) : (
         <>
-          <div className="stagger-item" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, animationDelay: "0.1s" }}>
-            <div className="card" style={{ marginTop: 0, textAlign: "center" }}>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>{toplam.toLocaleString("tr-TR")} ₺</p>
-              <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>toplam tahsilat</p>
-            </div>
-            <div className="card" style={{ marginTop: 0, textAlign: "center" }}>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "var(--dogru)" }}>{odenen.toLocaleString("tr-TR")} ₺</p>
-              <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>ödenen</p>
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <KPICard label="Toplam tahsilat" value={toplam} sub="₺" />
+            <KPICard label="Ödenen" value={odenen} sub="₺" color="#2A9D8F" />
           </div>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-            <h2 className="card-title">Yeni Ödeme</h2>
-            <select className="input" style={{ width: "100%" }} value={oOgrenciId} onChange={(e) => setOOgrenciId(e.target.value)}>
+          <Card className="tape-accent">
+            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Yeni Ödeme</h3>
+            <Select style={{ width: "100%" }} value={oOgrenciId} onChange={(e) => setOOgrenciId(e.target.value)}>
               {ogrenciler.map((o) => (
                 <option key={o.id} value={o.id}>{o.ad_soyad}</option>
               ))}
-            </select>
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <input className="input" style={{ width: 130 }} type="number" min="0" step="0.01" placeholder="Tutar (₺)" value={oTutar} onChange={(e) => setOTutar(e.target.value)} />
-              <input className="input" style={{ width: 150 }} type="date" value={oTarih} onChange={(e) => setOTarih(e.target.value)} />
-              <input className="input" style={{ flex: 1 }} value={oAciklama} onChange={(e) => setOAciklama(e.target.value)} placeholder="Açıklama (ör. Eylül dönemi)" onKeyDown={(e) => e.key === "Enter" && handleOdemeEkle()} />
+            </Select>
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <Input style={{ width: 130 }} type="number" min="0" step="0.01" placeholder="Tutar (₺)" value={oTutar} onChange={(e) => setOTutar(e.target.value)} />
+              <Input style={{ width: 150 }} type="date" value={oTarih} onChange={(e) => setOTarih(e.target.value)} />
+              <Input style={{ flex: 1, minWidth: 180 }} value={oAciklama} onChange={(e) => setOAciklama(e.target.value)} placeholder="Açıklama (ör. Eylül dönemi)" onKeyDown={(e) => e.key === "Enter" && handleOdemeEkle()} />
             </div>
-            <button onClick={handleOdemeEkle} disabled={oKaydediliyor || !oTutar || Number(oTutar) <= 0} className="btn btn-primary" style={{ marginTop: 8, width: "100%" }}>
+            <Btn onClick={handleOdemeEkle} disabled={oKaydediliyor || !oTutar || Number(oTutar) <= 0} style={{ marginTop: 8, width: "100%" }}>
               {oKaydediliyor ? "Kaydediliyor…" : "Ödemeyi Kaydet"}
-            </button>
-          </div>
+            </Btn>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
-            <h2 className="card-title">Ödemeler</h2>
-            {odemeler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz ödeme kaydı yok.</p>}
-            {odemeler.map((od, i) => (
-              <div key={od.id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.25 + i * 0.03}s` }}>
-                <input type="checkbox" checked={od.odendi} onChange={() => odemeOdendiDegistir(od)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13.5, fontWeight: 500, color: od.odendi ? "var(--muted)" : "var(--ink)", textDecoration: od.odendi ? "line-through" : "none" }}>
-                    {ogrenciAdi.get(od.ogrenci_id) ?? "Öğrenci"} · {Number(od.tutar).toLocaleString("tr-TR")} ₺
-                  </p>
-                  <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>
-                    {od.tarih} {od.aciklama ? `· ${od.aciklama}` : ""}
-                  </p>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Ödemeler</h3>
+            {odemeler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz ödeme kaydı yok.</p>}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {odemeler.map((od) => (
+                <div key={od.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                  <Checkbox checked={od.odendi} onChange={() => odemeOdendiDegistir(od)} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 500, color: od.odendi ? "rgba(15,27,45,0.5)" : "#0F1B2D", textDecoration: od.odendi ? "line-through" : "none" }}>
+                      {ogrenciAdi.get(od.ogrenci_id) ?? "Öğrenci"} · {Number(od.tutar).toLocaleString("tr-TR")} ₺
+                    </p>
+                    <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 1 }}>
+                      {od.tarih} {od.aciklama ? `· ${od.aciklama}` : ""}
+                    </p>
+                  </div>
+                  <Btn variant="ghost" size="sm" onClick={() => odemeSil(od.id)}>Sil</Btn>
                 </div>
-                <button onClick={() => odemeSil(od.id)} style={{ border: "none", background: "none", color: "var(--muted)", fontSize: 12 }}>Sil</button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Card>
         </>
       )}
     </div>

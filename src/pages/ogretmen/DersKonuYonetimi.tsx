@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Ders, Konu } from "../../types/database";
 import { dersleriGetir, dersEkle, konulariGetir, konuEkle } from "../../lib/queries";
+import { Card, Input, Btn } from "../../components/ui";
 
 export default function DersKonuYonetimi() {
   const [dersler, setDersler] = useState<Ders[]>([]);
@@ -42,58 +43,60 @@ export default function DersKonuYonetimi() {
   if (yukleniyor) return <p>Yükleniyor…</p>;
 
   return (
-    <div>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Ders / Konu Yönetimi</h1>
+    <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title">Ders / Konu Yönetimi</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Ders ekleyin ve konuları düzenleyin</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Dersler</h2>
+      <Card className="tape-accent">
+        <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Dersler</h3>
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          <input
+          <Input
             value={yeniDersAdi}
             onChange={(e) => setYeniDersAdi(e.target.value)}
             placeholder="örn. Matematik"
-            className="input"
             style={{ flex: 1 }}
             onKeyDown={(e) => e.key === "Enter" && handleDersEkle()}
           />
-          <button onClick={handleDersEkle} className="btn btn-primary">Ekle</button>
+          <Btn onClick={handleDersEkle}>Ekle</Btn>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {dersler.map((d) => (
-            <button
+            <Btn
               key={d.id}
+              size="sm"
+              variant={d.id === seciliDersId ? "primary" : "ghost"}
               onClick={() => setSeciliDersId(d.id)}
-              className={`chip${d.id === seciliDersId ? " active" : ""}`}
             >
               {d.ad}
-            </button>
+            </Btn>
           ))}
         </div>
-      </div>
+      </Card>
 
       {seciliDersId && (
-        <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-          <h2 className="card-title">Konular — {dersler.find((d) => d.id === seciliDersId)?.ad}</h2>
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Konular — {dersler.find((d) => d.id === seciliDersId)?.ad}</h3>
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-            <input
+            <Input
               value={yeniKonuAdi}
               onChange={(e) => setYeniKonuAdi(e.target.value)}
               placeholder="örn. Türev"
-              className="input"
               style={{ flex: 1 }}
               onKeyDown={(e) => e.key === "Enter" && handleKonuEkle()}
             />
-            <button onClick={handleKonuEkle} className="btn btn-primary">Ekle</button>
+            <Btn onClick={handleKonuEkle}>Ekle</Btn>
           </div>
           <div>
-            {konular.map((k, i) => (
-              <div key={k.id} className="stagger-item" style={{ padding: "8px 0", borderBottom: "1px solid #f2f2f2", fontSize: 13.5, animationDelay: `${0.15 + i * 0.04}s` }}>
+            {konular.map((k) => (
+              <div key={k.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(15,27,45,0.06)", fontSize: 13.5 }}>
                 {k.ad}
               </div>
             ))}
-            {konular.length === 0 && <p style={{ color: "var(--muted)" }}>Henüz konu eklenmedi.</p>}
+            {konular.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)" }}>Henüz konu eklenmedi.</p>}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

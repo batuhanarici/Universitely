@@ -4,6 +4,7 @@ import { mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesa
 import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
 import type { Mesaj, Ogrenci, VeliAlici } from "../../types/database";
+import { Card, Select, Input, Btn } from "../../components/ui";
 
 interface Alici {
   id: string;
@@ -72,27 +73,30 @@ export default function OgretmenMesajlar() {
   if (yukleniyor) return <p>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 620 }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Mesajlar</h1>
+    <div style={{ maxWidth: 620, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title">Mesajlar</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Öğrenciler ve velilerle yazışın</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
+      <Card className="tape-accent">
         <div ref={altRef} style={{ height: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: "4px 2px" }}>
-          {mesajlar.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz mesaj yok.</p>}
+          {mesajlar.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz mesaj yok.</p>}
           {mesajlar.map((m) => {
             const benimki = m.gonderici_id === ben;
             return (
               <div key={m.id} style={{ display: "flex", justifyContent: benimki ? "flex-end" : "flex-start" }}>
                 <div style={{
                   maxWidth: "78%", padding: "8px 12px", borderRadius: 12,
-                  background: benimki ? "var(--ink)" : "var(--paper-dim)",
-                  color: benimki ? "var(--gold-glow)" : "var(--ink-text)",
+                  background: benimki ? "#0F1B2D" : "#EFE9DC",
+                  color: benimki ? "#E4BB60" : "#0F1B2D",
                   fontSize: 13.5, lineHeight: 1.5,
                 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: benimki ? "rgba(255,255,255,0.5)" : "var(--muted)", marginBottom: 3 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: benimki ? "rgba(255,255,255,0.5)" : "rgba(15,27,45,0.5)", marginBottom: 3 }}>
                     {gondericiAdi(m.gonderici_id)}
                   </p>
                   <p>{m.icerik}</p>
-                  <p style={{ fontSize: 10, color: benimki ? "rgba(255,255,255,0.4)" : "var(--muted)", marginTop: 4 }}>
+                  <p style={{ fontSize: 10, color: benimki ? "rgba(255,255,255,0.4)" : "rgba(15,27,45,0.5)", marginTop: 4 }}>
                     {new Date(m.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
@@ -100,16 +104,16 @@ export default function OgretmenMesajlar() {
             );
           })}
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <select className="input" style={{ width: 200 }} value={aliciId} onChange={(e) => setAliciId(e.target.value)}>
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          <Select style={{ width: 220 }} value={aliciId} onChange={(e) => setAliciId(e.target.value)}>
             {aliciListesi.map((a) => (
               <option key={a.id} value={a.id}>{a.tur === "veli" ? "👪 " : "🎓 "}{a.ad}</option>
             ))}
-          </select>
-          <input className="input" style={{ flex: 1 }} value={girdi} onChange={(e) => setGirdi(e.target.value)} placeholder="Mesajını yaz…" onKeyDown={(e) => e.key === "Enter" && handleGonder()} />
-          <button onClick={handleGonder} disabled={gonderiliyor || !girdi.trim() || !aliciId} className="btn btn-primary">Gönder</button>
+          </Select>
+          <Input style={{ flex: 1, minWidth: 180 }} value={girdi} onChange={(e) => setGirdi(e.target.value)} placeholder="Mesajını yaz…" onKeyDown={(e) => e.key === "Enter" && handleGonder()} />
+          <Btn onClick={handleGonder} disabled={gonderiliyor || !girdi.trim() || !aliciId}>Gönder</Btn>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

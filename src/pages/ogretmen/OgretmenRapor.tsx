@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocSonuclariniGetir } from "../../lib/kocAraclariQueries";
-import AnimatedNumber from "../../components/AnimatedNumber";
-import ProgressBar from "../../components/ProgressBar";
 import { pdfYazdir, csvIndir } from "../../lib/exportUtils";
+import { Card, KPICard, ProgressBar, Btn } from "../../components/ui";
 
 function bugunIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -120,87 +119,76 @@ export default function OgretmenRapor() {
     csvIndir("sinif-haftalik-rapor", satirlar);
   }
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Sınıf Haftalık Rapor</h1>
+    <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <h1 className="page-title" style={{ marginBottom: 4 }}>Sınıf Haftalık Rapor</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14 }}>Son 7 gün · {rapor.ilk} → {rapor.bugun}</p>
+        </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={pdfIndir} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>PDF</button>
-          <button onClick={csvIndirHandle} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>CSV</button>
+          <Btn variant="gold" size="sm" onClick={pdfIndir}>PDF</Btn>
+          <Btn variant="gold" size="sm" onClick={csvIndirHandle}>CSV</Btn>
         </div>
       </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 10 }}>
-          Son 7 gün · {rapor.ilk} → {rapor.bugun}
-        </p>
-        {rapor.denemeSayisi === 0 ? (
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Bu hafta girilen deneme sonucu yok.</p>
-        ) : (
-          <div className="stagger-item" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-            <div className="card" style={{ marginTop: 0, textAlign: "center" }}>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}><AnimatedNumber value={ogrenciler.length} /></p>
-              <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>öğrenci</p>
-            </div>
-            <div className="card" style={{ marginTop: 0, textAlign: "center" }}>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}><AnimatedNumber value={rapor.denemeSayisi} /></p>
-              <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>deneme sonucu</p>
-            </div>
-            <div className="card" style={{ marginTop: 0, textAlign: "center" }}>
-              <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-                {rapor.ortalamaNet !== null ? <AnimatedNumber value={Math.round(rapor.ortalamaNet * 10) / 10} decimals={1} /> : "—"} net
-              </p>
-              <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>sınıf ortalaması</p>
-            </div>
-          </div>
-        )}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <KPICard label="Öğrenci" value={ogrenciler.length} />
+        <KPICard label="Deneme sonucu" value={rapor.denemeSayisi} />
+        <KPICard label="Sınıf ortalaması" value={rapor.ortalamaNet !== null ? Math.round(rapor.ortalamaNet * 10) / 10 : 0} decimals={1} />
       </div>
 
-      {rapor.dersler.length > 0 && (
-        <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-          <h2 className="card-title">Ders Bazlı Başarı (hafta)</h2>
-          {rapor.dersler.map((d, i) => (
-            <div key={d.ad} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}>
-              <span style={{ width: 120, fontSize: 13, color: "var(--ink)" }}>{d.ad}</span>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${d.yuzde}%`, background: d.yuzde < 55 ? "var(--yanlis)" : d.yuzde >= 80 ? "var(--dogru)" : "var(--gold-dim)" }} />
-              </div>
-              <span className="mono" style={{ width: 42, textAlign: "right", fontSize: 12.5, color: "var(--muted)" }}>{d.yuzde}%</span>
-            </div>
-          ))}
-        </div>
+      {rapor.denemeSayisi === 0 && (
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu hafta girilen deneme sonucu yok.</p>
+        </Card>
       )}
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-        <h2 className="card-title">Öğrenci Sıralaması</h2>
-        {rapor.ogrencilerRapor.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bu hafta verisi olan öğrenci yok.</p>}
-        {rapor.ogrencilerRapor.map((o, i) => {
-          const ort = o.denemeler.length ? o.denemeler.reduce((a, d) => a + d.net, 0) / o.denemeler.length : 0;
-          return (
-            <div key={o.ogrenci_id} className="stagger-item" style={{ padding: "10px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.04}s` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span className="mono" style={{ width: 22, fontSize: 12.5, color: "var(--muted)" }}>{i + 1}.</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{o.ad_soyad}</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 3 }}>
-                    {o.denemeler.map((d) => (
-                      <span key={d.ad} className="chip" style={{ fontSize: 10.5 }}>{d.ad} · {d.net} net</span>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ width: 130 }}>
-                  <ProgressBar oran={Math.min(Math.max((ort / 30) * 100, 0), 100)} color="var(--gold-dim)" delay={300} />
-                </div>
-                <span className="mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-                  {o.denemeler.length ? Math.round(ort * 10) / 10 : "—"} net
-                </span>
+      {rapor.dersler.length > 0 && (
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Ders Bazlı Başarı (hafta)</h3>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {rapor.dersler.map((d) => (
+              <div key={d.ad} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                <span style={{ width: 120, fontSize: 13 }}>{d.ad}</span>
+                <div style={{ flex: 1 }}><ProgressBar pct={d.yuzde} color={d.yuzde < 55 ? "#C4503A" : d.yuzde >= 80 ? "#2A9D8F" : "#A07C20"} /></div>
+                <span className="tabular" style={{ width: 42, textAlign: "right", fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>{d.yuzde}%</span>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Öğrenci Sıralaması</h3>
+        {rapor.ogrencilerRapor.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu hafta verisi olan öğrenci yok.</p>}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {rapor.ogrencilerRapor.map((o, i) => {
+            const ort = o.denemeler.length ? o.denemeler.reduce((a, d) => a + d.net, 0) / o.denemeler.length : 0;
+            return (
+              <div key={o.ogrenci_id} style={{ padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span className="tabular" style={{ width: 22, fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>{i + 1}.</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 500 }}>{o.ad_soyad}</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 3 }}>
+                      {o.denemeler.map((d) => (
+                        <span key={d.ad} className="badge badge-gray" style={{ fontSize: 10.5 }}>{d.ad} · {d.net} net</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ width: 130 }}><ProgressBar pct={Math.min(Math.max((ort / 30) * 100, 0), 100)} color="#A07C20" /></div>
+                  <span className="tabular" style={{ fontSize: 14, fontWeight: 700 }}>
+                    {o.denemeler.length ? Math.round(ort * 10) / 10 : "—"} net
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
     </div>
   );
 }

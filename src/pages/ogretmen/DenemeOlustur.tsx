@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DenemeSablonu, Deneme, DenemeTuru } from "../../types/database";
 import { sablonlariGetirDetayli, denemeOlustur, denemeleriGetir } from "../../lib/denemeQueries";
+import { Card, Input, Select, Btn, Badge } from "../../components/ui";
 
 type SablonDetayli = DenemeSablonu & { ders_adi: string };
 type DenemeDetayli = Deneme & { sablon_adi: string };
@@ -10,6 +11,8 @@ const TURLER: { deger: DenemeTuru; etiket: string }[] = [
   { deger: "ayt", etiket: "AYT" },
   { deger: "brans", etiket: "Branş" },
 ];
+
+const TUR_VAZIAN: Record<string, "gold" | "teal" | "brick"> = { tyt: "gold", ayt: "teal", brans: "brick" };
 
 export default function DenemeOlustur() {
   const [sablonlar, setSablonlar] = useState<SablonDetayli[]>([]);
@@ -48,49 +51,56 @@ export default function DenemeOlustur() {
   if (yukleniyor) return <p>Yükleniyor…</p>;
 
   return (
-    <div>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Deneme Oluştur</h1>
-
-      {sablonlar.length === 0 ? (
-        <p style={{ color: "var(--yanlis)" }}>Önce en az bir deneme şablonu oluşturman lazım — "Deneme Şablonu Oluştur" ekranına git.</p>
-      ) : (
-        <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder='Deneme adı, örn. "Hız Yayınları TYT Deneme 4"' className="input" />
-            <div style={{ display: "flex", gap: 10 }}>
-              <select value={sablonId} onChange={(e) => setSablonId(e.target.value)} className="input" style={{ flex: 1 }}>
-                {sablonlar.map((s) => <option key={s.id} value={s.id}>{s.ad} ({s.ders_adi})</option>)}
-              </select>
-              <select value={tur} onChange={(e) => setTur(e.target.value as DenemeTuru)} className="input" style={{ width: 110 }}>
-                {TURLER.map((t) => <option key={t.deger} value={t.deger}>{t.etiket}</option>)}
-              </select>
-              <input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} className="input" />
-            </div>
-            <button onClick={handleKaydet} disabled={kaydediliyor || !ad.trim()} className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
-              {kaydediliyor ? "Kaydediliyor…" : "Denemeyi Oluştur"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="card stagger-item" style={{ marginTop: 20, animationDelay: "0.1s" }}>
-        <h2 className="card-title">Oluşturulan Denemeler</h2>
-        {denemeler.length === 0 && <p style={{ color: "var(--muted)" }}>Henüz deneme yok.</p>}
-        {denemeler.map((d, i) => (
-          <div key={d.id} className="stagger-item" style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}>
-            <div>
-              <p style={{ fontSize: 14 }}>{d.ad}</p>
-              <p style={{ fontSize: 12, color: "var(--muted)" }}>{d.sablon_adi}</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              {d.tur && <span className="chip" style={{ padding: "2px 8px", fontSize: 11 }}>{d.tur.toUpperCase()}</span>}
-              <p className="mono" style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{d.tarih}</p>
-            </div>
-          </div>
-        ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title">Deneme Oluştur</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Şablondan yeni deneme kaydı oluşturun</p>
       </div>
 
-      <p style={{ marginTop: 16, fontSize: 12.5, color: "var(--muted)" }}>
+      {sablonlar.length === 0 ? (
+        <Card>
+          <p style={{ color: "#C4503A" }}>Önce en az bir deneme şablonu oluşturman lazım — "Deneme Şablonu Oluştur" ekranına git.</p>
+        </Card>
+      ) : (
+        <Card className="tape-accent">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Input value={ad} onChange={(e) => setAd(e.target.value)} placeholder='Deneme adı, örn. "Hız Yayınları TYT Deneme 4"' />
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Select value={sablonId} onChange={(e) => setSablonId(e.target.value)} style={{ flex: 1, minWidth: 220 }}>
+                {sablonlar.map((s) => <option key={s.id} value={s.id}>{s.ad} ({s.ders_adi})</option>)}
+              </Select>
+              <Select value={tur} onChange={(e) => setTur(e.target.value as DenemeTuru)} style={{ width: 110 }}>
+                {TURLER.map((t) => <option key={t.deger} value={t.deger}>{t.etiket}</option>)}
+              </Select>
+              <Input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} style={{ minWidth: 140 }} />
+            </div>
+            <Btn onClick={handleKaydet} disabled={kaydediliyor || !ad.trim()} style={{ alignSelf: "flex-start" }}>
+              {kaydediliyor ? "Kaydediliyor…" : "Denemeyi Oluştur"}
+            </Btn>
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Oluşturulan Denemeler</h3>
+        {denemeler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)" }}>Henüz deneme yok.</p>}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {denemeler.map((d) => (
+            <div key={d.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+              <div>
+                <p style={{ fontSize: 14 }}>{d.ad}</p>
+                <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)" }}>{d.sablon_adi}</p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                {d.tur && <Badge variant={TUR_VAZIAN[d.tur] ?? "gray"}>{d.tur.toUpperCase()}</Badge>}
+                <p className="tabular" style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", marginTop: 4 }}>{d.tarih}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>
         Not: Şu an sadece deneme kaydı oluşturuluyor. Soru sonuçlarının (D/Y/B) girilmesi, optik okuyucu import modülü hazır olunca otomatik yapılacak.
       </p>
     </div>

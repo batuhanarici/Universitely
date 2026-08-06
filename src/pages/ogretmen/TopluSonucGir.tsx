@@ -10,6 +10,7 @@ import {
   type TopluSonucGirdisi,
 } from "../../lib/sonucQueries";
 import type { Deneme } from "../../types/database";
+import { Card, Select, Input, Textarea, Btn, Badge } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
 type Mod = "grid" | "yapistir";
@@ -17,9 +18,9 @@ type Mod = "grid" | "yapistir";
 const SIRADAKI: Record<SoruDurumu, SoruDurumu | null> = { dogru: "yanlis", yanlis: "bos", bos: null };
 
 const HUCRENIN_RENGI: Record<SoruDurumu, string> = {
-  dogru: "var(--dogru)",
-  yanlis: "var(--yanlis)",
-  bos: "var(--bos)",
+  dogru: "#2A9D8F",
+  yanlis: "#C4503A",
+  bos: "#8C8780",
 };
 
 const ORNEK = `Ayşe Yılmaz;DDYYBDDBDDY
@@ -183,24 +184,27 @@ export default function TopluSonucGir() {
     return soruNumaralari.some((n) => satir[n] !== undefined);
   }).length;
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   if (denemeler.length === 0) {
-    return <p style={{ textAlign: "center", marginTop: 60, color: "var(--yanlis)" }}>Önce bir deneme oluşturman lazım.</p>;
+    return <p style={{ textAlign: "center", marginTop: 60, color: "#C4503A" }}>Önce bir deneme oluşturman lazım.</p>;
   }
 
   return (
-    <div style={{ maxWidth: 920, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Toplu Sonuç Gir</h1>
+    <div style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div>
+        <h1 className="page-title">Toplu Sonuç Gir</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Grid veya kopyala-yapıştır ile toplu cevap girişi</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
+      <Card className="tape-accent">
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <select className="input" style={{ flex: 2, minWidth: 220 }} value={denemeId} onChange={(e) => setDenemeId(e.target.value)}>
+          <Select style={{ flex: 2, minWidth: 220 }} value={denemeId} onChange={(e) => setDenemeId(e.target.value)}>
             {denemeler.map((d) => (
               <option key={d.id} value={d.id}>{d.ad} · {d.tur ?? "brans"}</option>
             ))}
-          </select>
-          <div style={{ display: "flex", gap: 4, background: "rgba(0,0,0,0.05)", padding: 4, borderRadius: 10, flex: 1, minWidth: 260 }}>
+          </Select>
+          <div style={{ display: "flex", gap: 4, background: "rgba(15,27,45,0.05)", padding: 4, borderRadius: 10, flex: 1, minWidth: 260 }}>
             {(
               [
                 { id: "grid", etiket: "Sınıf Grid" },
@@ -212,9 +216,9 @@ export default function TopluSonucGir() {
                 onClick={() => setMod(m.id)}
                 style={{
                   flex: 1, padding: "8px 0", borderRadius: 7, border: "none", fontSize: 12.5, fontWeight: 600,
-                  background: mod === m.id ? "var(--gold)" : "transparent",
-                  color: mod === m.id ? "var(--ink)" : "var(--muted)",
-                  transition: "all 0.2s var(--ease)", cursor: "pointer",
+                  background: mod === m.id ? "#E4BB60" : "transparent",
+                  color: mod === m.id ? "#0F1B2D" : "rgba(15,27,45,0.5)",
+                  transition: "all 0.2s ease", cursor: "pointer",
                 }}
               >
                 {m.etiket}
@@ -224,9 +228,8 @@ export default function TopluSonucGir() {
         </div>
         {sorular.length === 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-            <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Şablon yok — soru sayısı:</span>
-            <input
-              className="input"
+            <span style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)" }}>Şablon yok — soru sayısı:</span>
+            <Input
               type="number"
               min={1}
               max={200}
@@ -236,47 +239,46 @@ export default function TopluSonucGir() {
             />
           </div>
         )}
-      </div>
+      </Card>
 
       {mod === "yapistir" && (
-        <div className="card stagger-item" style={{ marginTop: 12, animationDelay: "0.08s" }}>
-          <h2 className="card-title">Optik Dizi Yapıştır</h2>
-          <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 8 }}>
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Optik Dizi Yapıştır</h3>
+          <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.5)", marginBottom: 8 }}>
             Her satır: <span className="mono">Ad Soyad; DDYYBDD…</span> (D=doğru, Y=yanlış, diğer=boş). Bir karakter bir soru.
           </p>
-          <textarea
-            className="input"
+          <Textarea
             rows={5}
             value={pasteMetin}
             onChange={(e) => setPasteMetin(e.target.value)}
             placeholder={ORNEK}
-            style={{ width: "100%", resize: "vertical", fontFamily: "var(--font-mono)" }}
+            style={{ width: "100%", fontFamily: "var(--font-mono)" }}
           />
-          <button onClick={yapistirVeGridiDoldur} disabled={!pasteMetin.trim()} className="btn btn-primary" style={{ marginTop: 8 }}>
+          <Btn onClick={yapistirVeGridiDoldur} disabled={!pasteMetin.trim()} size="sm" style={{ marginTop: 8 }}>
             Grid'e Aktar
-          </button>
-        </div>
+          </Btn>
+        </Card>
       )}
 
-      <div className="card stagger-item" style={{ marginTop: 12, animationDelay: "0.1s" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <h2 className="card-title" style={{ marginBottom: 0 }}>
-            Cevap Gridi <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>({doluOgrenciSayisi} öğrenci dolduruldu · hücreye tıklayınca D→Y→B döner)</span>
-          </h2>
-          <button onClick={handleKaydet} disabled={kaydediliyor || doluOgrenciSayisi === 0} className="btn btn-primary">
+      <Card style={{ padding: 0, overflow: "hidden" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px" }}>
+          <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>
+            Cevap Gridi <span className="tabular" style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>({doluOgrenciSayisi} öğrenci dolduruldu · hücreye tıklayınca D→Y→B döner)</span>
+          </h3>
+          <Btn onClick={handleKaydet} disabled={kaydediliyor || doluOgrenciSayisi === 0} size="sm">
             {kaydediliyor ? "Kaydediliyor…" : "Kaydet"}
-          </button>
+          </Btn>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: "auto", padding: "0 20px 16px" }}>
           <table style={{ borderCollapse: "collapse", minWidth: 600 }}>
             <thead>
               <tr>
-                <th style={{ position: "sticky", left: 0, background: "white", zIndex: 2, textAlign: "left", padding: "6px 10px", fontSize: 12, color: "var(--muted)", borderBottom: "2px solid var(--paper-dim)" }}>
+                <th style={{ position: "sticky", left: 0, background: "white", zIndex: 2, textAlign: "left", padding: "6px 10px", fontSize: 12, color: "rgba(15,27,45,0.5)", borderBottom: "2px solid rgba(15,27,45,0.08)" }}>
                   Öğrenci
                 </th>
                 {soruNumaralari.map((n) => (
-                  <th key={n} style={{ padding: "4px 2px", fontSize: 10.5, color: "var(--muted)", borderBottom: "2px solid var(--paper-dim)", minWidth: 30 }} title={konuHaritasi.get(n)}>
+                  <th key={n} style={{ padding: "4px 2px", fontSize: 10.5, color: "rgba(15,27,45,0.5)", borderBottom: "2px solid rgba(15,27,45,0.08)", minWidth: 30 }} title={konuHaritasi.get(n)}>
                     {n}
                   </th>
                 ))}
@@ -288,13 +290,13 @@ export default function TopluSonucGir() {
                 const dolu = soruNumaralari.filter((n) => satir[n] !== undefined).length;
                 return (
                   <tr key={o.id}>
-                    <td style={{ position: "sticky", left: 0, background: "white", zIndex: 1, padding: "4px 10px", fontSize: 12.5, color: "var(--ink)", whiteSpace: "nowrap", borderBottom: "1px solid #f2f2f2" }}>
+                    <td style={{ position: "sticky", left: 0, background: "white", zIndex: 1, padding: "4px 10px", fontSize: 12.5, whiteSpace: "nowrap", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
                       {o.ad_soyad}
-                      <span className="mono" style={{ marginLeft: 6, fontSize: 10.5, color: dolu === soruNumaralari.length ? "var(--dogru)" : "var(--muted)" }}>
+                      <span className="tabular" style={{ marginLeft: 6, fontSize: 10.5, color: dolu === soruNumaralari.length ? "#2A9D8F" : "rgba(15,27,45,0.5)" }}>
                         {dolu}/{soruNumaralari.length}
                       </span>
                       {dolu > 0 && (
-                        <button onClick={() => satiriTemizle(o.id)} style={{ marginLeft: 6, border: "none", background: "none", color: "var(--yanlis)", fontSize: 11, cursor: "pointer" }}>
+                        <button onClick={() => satiriTemizle(o.id)} style={{ marginLeft: 6, border: "none", background: "none", color: "#C4503A", fontSize: 11, cursor: "pointer" }}>
                           temizle
                         </button>
                       )}
@@ -302,14 +304,14 @@ export default function TopluSonucGir() {
                     {soruNumaralari.map((n) => {
                       const durum = satir[n];
                       return (
-                        <td key={n} style={{ padding: 2, borderBottom: "1px solid #f2f2f2" }}>
+                        <td key={n} style={{ padding: 2, borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
                           <button
                             onClick={() => hucreyiTikla(o.id, n)}
                             style={{
                               width: 26, height: 26, borderRadius: 6, border: "1px solid #e3e3e3",
                               background: durum ? HUCRENIN_RENGI[durum] : "white",
                               color: durum ? "white" : "#bbb",
-                              fontWeight: 700, fontSize: 11, cursor: "pointer", transition: "all 0.12s var(--ease)",
+                              fontWeight: 700, fontSize: 11, cursor: "pointer", transition: "all 0.12s ease",
                             }}
                           >
                             {durum === "dogru" ? "D" : durum === "yanlis" ? "Y" : durum === "bos" ? "B" : "·"}
@@ -324,9 +326,11 @@ export default function TopluSonucGir() {
           </table>
         </div>
 
-        {mesaj && <p style={{ marginTop: 10, color: "var(--dogru)", fontSize: 13 }}>{mesaj}</p>}
-        {hata && <p style={{ marginTop: 10, color: "var(--yanlis)", fontSize: 13 }}>{hata}</p>}
-      </div>
+        <div style={{ padding: "0 20px 16px" }}>
+          {mesaj && <Badge variant="teal" >{mesaj}</Badge>}
+          {hata && <Badge variant="brick" >{hata}</Badge>}
+        </div>
+      </Card>
     </div>
   );
 }

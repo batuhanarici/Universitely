@@ -6,6 +6,7 @@ import {
   sablonOlustur,
   sablonSorulariniKaydet,
 } from "../../lib/queries";
+import { Card, Input, Select, Btn, Badge } from "../../components/ui";
 
 interface SoruSatiri {
   soru_no: number;
@@ -78,41 +79,43 @@ export default function SablonOlustur() {
   }
 
   return (
-    <div>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 6 }}>Deneme Şablonu Oluştur</h1>
-      <p className="stagger-item" style={{ color: "var(--muted)", fontSize: 13, marginBottom: 20, animationDelay: "0.03s" }}>
-        Soru no aralıklarını konulara eşleştir. Bu şablonu daha sonra aynı yayının denemelerinde tekrar kullanabilirsin.
-      </p>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title" style={{ marginBottom: 6 }}>Deneme Şablonu Oluştur</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>
+          Soru no aralıklarını konulara eşleştir. Bu şablonu daha sonra aynı yayının denemelerinde tekrar kullanabilirsin.
+        </p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.06s" }}>
+      <Card className="tape-accent">
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={sablonAdi} onChange={(e) => setSablonAdi(e.target.value)} placeholder="Şablon adı, örn. Hız Yayınları TYT Matematik" className="input" style={{ flex: 1 }} />
-          <select value={dersId} onChange={(e) => setDersId(e.target.value)} className="input">
+          <Input value={sablonAdi} onChange={(e) => setSablonAdi(e.target.value)} placeholder="Şablon adı, örn. Hız Yayınları TYT Matematik" style={{ flex: 1 }} />
+          <Select value={dersId} onChange={(e) => setDersId(e.target.value)} style={{ minWidth: 150 }}>
             {dersler.map((d) => <option key={d.id} value={d.id}>{d.ad}</option>)}
-          </select>
+          </Select>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 14, alignItems: "center" }}>
-          <input value={baslangic} onChange={(e) => setBaslangic(e.target.value)} placeholder="Başlangıç no" className="input" style={{ width: 110 }} />
-          <span style={{ color: "var(--muted)" }}>–</span>
-          <input value={bitis} onChange={(e) => setBitis(e.target.value)} placeholder="Bitiş no" className="input" style={{ width: 110 }} />
-          <select value={aralikKonuId} onChange={(e) => setAralikKonuId(e.target.value)} className="input" style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
+          <Input value={baslangic} onChange={(e) => setBaslangic(e.target.value)} placeholder="Başlangıç no" style={{ width: 120 }} />
+          <span style={{ color: "rgba(15,27,45,0.5)" }}>–</span>
+          <Input value={bitis} onChange={(e) => setBitis(e.target.value)} placeholder="Bitiş no" style={{ width: 120 }} />
+          <Select value={aralikKonuId} onChange={(e) => setAralikKonuId(e.target.value)} style={{ flex: 1, minWidth: 150 }}>
             {konular.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
-          </select>
-          <button onClick={aralikEkle} className="btn btn-primary">Aralık Ekle</button>
+          </Select>
+          <Btn onClick={aralikEkle}>Aralık Ekle</Btn>
         </div>
 
         {konular.length === 0 && (
-          <p style={{ color: "var(--yanlis)", fontSize: 13, marginTop: 10 }}>
+          <p style={{ color: "#C4503A", fontSize: 13, marginTop: 10 }}>
             Bu derste henüz konu yok — önce Ders/Konu Yönetimi ekranından konu ekle.
           </p>
         )}
-      </div>
+      </Card>
 
       {satirlar.length > 0 && (
-        <div className="card stagger-item" style={{ marginTop: 16, padding: 0, overflow: "hidden", animationDelay: "0.1s" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-            <thead style={{ background: "var(--paper-dim)" }}>
+        <Card style={{ padding: 0, overflow: "hidden" }}>
+          <table className="data-table" style={{ fontSize: 13.5 }}>
+            <thead>
               <tr>
                 <th style={{ textAlign: "left", padding: 10 }}>Soru No</th>
                 <th style={{ textAlign: "left", padding: 10 }}>Konu</th>
@@ -121,29 +124,25 @@ export default function SablonOlustur() {
             </thead>
             <tbody>
               {satirlar.map((s) => (
-                <tr key={s.soru_no} style={{ borderTop: "1px solid #f0f0f0" }}>
-                  <td className="mono" style={{ padding: 10 }}>{s.soru_no}</td>
+                <tr key={s.soru_no}>
+                  <td className="tabular" style={{ padding: 10 }}>{s.soru_no}</td>
                   <td style={{ padding: 10 }}>{s.konu_ad}</td>
                   <td style={{ padding: 10, textAlign: "right" }}>
-                    <button onClick={() => satirSil(s.soru_no)} style={{ color: "var(--yanlis)", border: "none", background: "none" }}>sil</button>
+                    <Btn variant="ghost" size="sm" onClick={() => satirSil(s.soru_no)}>sil</Btn>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
 
-      <button
-        onClick={handleKaydet}
-        disabled={kaydediliyor || !sablonAdi.trim() || satirlar.length === 0}
-        className="btn btn-primary"
-        style={{ marginTop: 16 }}
-      >
-        {kaydediliyor ? "Kaydediliyor…" : `Şablonu Kaydet (${satirlar.length} soru)`}
-      </button>
-
-      {basariMesaji && <p style={{ marginTop: 12, color: "var(--dogru)", fontSize: 13.5 }}>{basariMesaji}</p>}
+      <div>
+        <Btn onClick={handleKaydet} disabled={kaydediliyor || !sablonAdi.trim() || satirlar.length === 0}>
+          {kaydediliyor ? "Kaydediliyor…" : `Şablonu Kaydet (${satirlar.length} soru)`}
+        </Btn>
+        {basariMesaji && <Badge variant="teal">{basariMesaji}</Badge>}
+      </div>
     </div>
   );
 }

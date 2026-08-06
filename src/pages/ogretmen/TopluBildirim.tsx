@@ -3,6 +3,7 @@ import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
 import { mesajGonder } from "../../lib/mesajQueries";
 import type { Ogrenci, VeliAlici } from "../../types/database";
+import { Card, Textarea, Btn, Checkbox, Badge } from "../../components/ui";
 
 interface Secim {
   ogrenciler: Set<string>;
@@ -89,30 +90,33 @@ export default function TopluBildirim() {
     }
   }
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Toplu Bildirim</h1>
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title">Toplu Bildirim</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Öğrencilere ve velilere toplu mesaj gönderin</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Alıcılar</h2>
+      <Card className="tape-accent">
+        <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Alıcılar</h3>
         {ogrenciler.length === 0 && veliler.length === 0 ? (
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz öğrenci veya velin yok.</p>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz öğrenci veya velin yok.</p>
         ) : (
           <>
             {ogrenciler.length > 0 && (
               <>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>Öğrenciler ({ogrenciler.length})</p>
-                  <button onClick={tumOgrenciler} style={{ border: "none", background: "none", color: "var(--ink)", fontSize: 11.5, cursor: "pointer", textDecoration: "underline" }}>
+                  <p className="mono" style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>Öğrenciler ({ogrenciler.length})</p>
+                  <button onClick={tumOgrenciler} style={{ border: "none", background: "none", fontSize: 11.5, cursor: "pointer", textDecoration: "underline" }}>
                     {secim.ogrenciler.size === ogrenciler.length ? "Temizle" : "Tümünü Seç"}
                   </button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 12 }}>
                   {ogrenciler.map((o) => (
-                    <label key={o.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--ink)", cursor: "pointer", padding: "3px 0" }}>
-                      <input type="checkbox" checked={secim.ogrenciler.has(o.id)} onChange={() => toggleOgrenci(o.id)} style={{ accentColor: "var(--gold-dim)", width: 15, height: 15 }} />
+                    <label key={o.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer", padding: "3px 0" }}>
+                      <Checkbox checked={secim.ogrenciler.has(o.id)} onChange={() => toggleOgrenci(o.id)} />
                       {o.ad_soyad}
                     </label>
                   ))}
@@ -122,16 +126,16 @@ export default function TopluBildirim() {
             {veliler.length > 0 && (
               <>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>Veliler ({veliler.length})</p>
-                  <button onClick={tumVeliler} style={{ border: "none", background: "none", color: "var(--ink)", fontSize: 11.5, cursor: "pointer", textDecoration: "underline" }}>
+                  <p className="mono" style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>Veliler ({veliler.length})</p>
+                  <button onClick={tumVeliler} style={{ border: "none", background: "none", fontSize: 11.5, cursor: "pointer", textDecoration: "underline" }}>
                     {secim.veliler.size === veliler.length ? "Temizle" : "Tümünü Seç"}
                   </button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
                   {veliler.map((v) => (
-                    <label key={v.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--ink)", cursor: "pointer", padding: "3px 0" }}>
-                      <input type="checkbox" checked={secim.veliler.has(v.id)} onChange={() => toggleVeli(v.id)} style={{ accentColor: "var(--gold-dim)", width: 15, height: 15 }} />
-                      {v.ad_soyad} <span className="mono" style={{ fontSize: 10.5, color: "var(--muted)" }}>({v.ogrenci_adi})</span>
+                    <label key={v.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer", padding: "3px 0" }}>
+                      <Checkbox checked={secim.veliler.has(v.id)} onChange={() => toggleVeli(v.id)} />
+                      {v.ad_soyad} <span className="tabular" style={{ fontSize: 10.5, color: "rgba(15,27,45,0.5)" }}>({v.ogrenci_adi})</span>
                     </label>
                   ))}
                 </div>
@@ -139,28 +143,26 @@ export default function TopluBildirim() {
             )}
           </>
         )}
-      </div>
+      </Card>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-        <h2 className="card-title">Mesaj</h2>
-        <textarea
-          className="input"
-          style={{ width: "100%", minHeight: 90, resize: "vertical" }}
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Mesaj</h3>
+        <Textarea
+          style={{ width: "100%" }}
           value={mesaj}
           onChange={(e) => setMesaj(e.target.value)}
           placeholder="Tüm seçilenlere gönderilecek mesaj…"
         />
-        <button
+        <Btn
           onClick={handleGonder}
           disabled={gonderiliyor || !mesaj.trim() || secilenSayi === 0}
-          className="btn btn-primary"
           style={{ marginTop: 10, width: "100%" }}
         >
           {gonderiliyor ? "Gönderiliyor…" : `${secilenSayi > 0 ? `${secilenSayi} alıcıya ` : ""}Gönder`}
-        </button>
-        {sonuc && <p className="mono" style={{ color: "var(--dogru)", fontSize: 12.5, marginTop: 10 }}>{sonuc}</p>}
-        {hata && <p className="mono" style={{ color: "var(--yanlis)", fontSize: 12.5, marginTop: 10 }}>{hata}</p>}
-      </div>
+        </Btn>
+        {sonuc && <Badge variant="teal" >{sonuc}</Badge>}
+        {hata && <Badge variant="brick" >{hata}</Badge>}
+      </Card>
     </div>
   );
 }

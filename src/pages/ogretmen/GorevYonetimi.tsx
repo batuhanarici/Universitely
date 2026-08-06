@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { ogrenciGorevleriGetir, gorevAta, gorevSil, gorevKontrolEt, gorevGeriBildirimYaz } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
+import { Card, Select, Input, Btn, Checkbox, Badge } from "../../components/ui";
 
 function bugunIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -76,91 +77,90 @@ export default function GorevYonetimi() {
     await gorevSil(id);
   }
 
-  function durum(g: Gorev): { metin: string; renk: string } {
-    if (!g.tamamlandi) return { metin: "bekliyor", renk: "var(--muted)" };
-    if (!g.kontrol_edildi) return { metin: "onay bekliyor", renk: "var(--gold-dim)" };
-    return { metin: "onaylandı", renk: "var(--dogru)" };
+  function durum(g: Gorev): { metin: string; variant: "gray" | "gold" | "teal" } {
+    if (!g.tamamlandi) return { metin: "bekliyor", variant: "gray" };
+    if (!g.kontrol_edildi) return { metin: "onay bekliyor", variant: "gold" };
+    return { metin: "onaylandı", variant: "teal" };
   }
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Görev Yönetimi</h1>
+    <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <h1 className="page-title">Görev Yönetimi</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Görev ata, onayla ve geri bildirim yaz</p>
+      </div>
 
       {ogrenciler.length === 0 ? (
-        <div className="card stagger-item">
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz öğrencin yok.</p>
-        </div>
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz öğrencin yok.</p>
+        </Card>
       ) : (
         <>
-          <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-            <h2 className="card-title">Öğrenci</h2>
-            <select className="input" style={{ width: "100%" }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Öğrenci</h3>
+            <Select style={{ width: "100%" }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
               {ogrenciler.map((o) => (
                 <option key={o.id} value={o.id}>{o.ad_soyad}</option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-            <h2 className="card-title">Görev Ata</h2>
-            <input className="input" style={{ width: "100%" }} value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder="Görev açıklaması" onKeyDown={(e) => e.key === "Enter" && handleAta()} />
+          <Card className="tape-accent">
+            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Görev Ata</h3>
+            <Input style={{ width: "100%" }} value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder="Görev açıklaması" onKeyDown={(e) => e.key === "Enter" && handleAta()} />
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <input className="input" type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} style={{ flex: 1 }} />
-              <button onClick={handleAta} disabled={!baslik.trim()} className="btn btn-primary">Ata</button>
+              <Input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} style={{ flex: 1 }} />
+              <Btn onClick={handleAta} disabled={!baslik.trim()}>Ata</Btn>
             </div>
-          </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-            <h2 className="card-title">Görevler ve Kontrol</h2>
-            {gorevler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bu öğrencinin görevi yok.</p>}
-            {gorevler.map((g, i) => {
-              const d = durum(g);
-              return (
-                <div key={g.id} className="stagger-item" style={{ padding: "11px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.03}s` }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.6 : 1 }}>
-                        {g.baslik}
-                      </p>
-                      <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>
-                        {g.tarih} · <span className="chip" style={{ fontSize: 10.5 }}>{TIP_ETIKET[g.tip] ?? g.tip}</span>
-                        {g.tamamlandi && (
-                          <span style={{ color: d.renk, fontWeight: 600 }}> · {d.metin}</span>
-                        )}
-                      </p>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 8, fontSize: 16 }}>Görevler ve Kontrol</h3>
+            {gorevler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu öğrencinin görevi yok.</p>}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {gorevler.map((g) => {
+                const d = durum(g);
+                return (
+                  <div key={g.id} style={{ padding: "11px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13.5, fontWeight: 500, textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.6 : 1 }}>
+                          {g.baslik}
+                        </p>
+                        <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 1 }}>
+                          {g.tarih} · <Badge variant="gray">{TIP_ETIKET[g.tip] ?? g.tip}</Badge>
+                          {g.tamamlandi && (
+                            <Badge variant={d.variant} >· {d.metin}</Badge>
+                          )}
+                        </p>
+                      </div>
+                      <Btn variant="ghost" size="sm" onClick={() => handleSil(g.id)}>Sil</Btn>
                     </div>
-                    <button onClick={() => handleSil(g.id)} style={{ border: "none", background: "none", color: "var(--yanlis)", fontSize: 12 }}>Sil</button>
+
+                    {g.tamamlandi && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, cursor: "pointer" }}>
+                          <Checkbox checked={g.kontrol_edildi} onChange={() => toggleKontrol(g)} />
+                          Onayla
+                        </label>
+                        <Input
+                          style={{ flex: 1, minWidth: 200 }}
+                          placeholder="Geri bildirim…"
+                          value={geriBildirimler[g.id] ?? ""}
+                          onChange={(e) => setGeriBildirimler((gb) => ({ ...gb, [g.id]: e.target.value }))}
+                        />
+                        <Btn variant="gold" size="sm" onClick={() => geriBildirimiKaydet(g)} disabled={kaydediliyor[g.id]}>
+                          {kaydediliyor[g.id] ? "…" : "Kaydet"}
+                        </Btn>
+                      </div>
+                    )}
                   </div>
-
-                  {g.tamamlandi && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--ink)", cursor: "pointer" }}>
-                        <input type="checkbox" checked={g.kontrol_edildi} onChange={() => toggleKontrol(g)} style={{ accentColor: "var(--gold-dim)", width: 15, height: 15 }} />
-                        Onayla
-                      </label>
-                      <input
-                        className="input"
-                        style={{ flex: 1, minWidth: 200 }}
-                        placeholder="Geri bildirim…"
-                        value={geriBildirimler[g.id] ?? ""}
-                        onChange={(e) => setGeriBildirimler((gb) => ({ ...gb, [g.id]: e.target.value }))}
-                      />
-                      <button
-                        onClick={() => geriBildirimiKaydet(g)}
-                        disabled={kaydediliyor[g.id]}
-                        className="btn"
-                        style={{ padding: "6px 12px", background: "var(--ink)", color: "var(--gold-glow)", fontSize: 12 }}
-                      >
-                        {kaydediliyor[g.id] ? "…" : "Kaydet"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </Card>
         </>
       )}
     </div>

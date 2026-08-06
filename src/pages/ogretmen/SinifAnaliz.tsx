@@ -6,14 +6,15 @@ import {
 import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import type { Deneme, DenemeTuru } from "../../types/database";
+import { Card, Select, ProgressBar, Badge } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
 
-const TEAL = "var(--dogru)";
-const RUST = "var(--yanlis)";
-const BOS = "var(--bos)";
-const GOLD = "var(--gold-dim)";
-const INK = "#222831";
+const TEAL = "#2A9D8F";
+const RUST = "#C4503A";
+const BOS = "#B8B2A6";
+const GOLD = "#E4BB60";
+const INK = "#0F1B2D";
 
 function net(dogru: number, yanlis: number): number {
   return Math.round((dogru - yanlis / 4) * 10) / 10;
@@ -167,44 +168,47 @@ export default function SinifAnaliz() {
 
   const maxNet = Math.max(...karsilastirma.map((k) => k.net), 0);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Sınıf Analiz</h1>
+      <div>
+        <h1 className="page-title">Sınıf Analiz</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Net trendi, sıralama ve ders bazlı başarı analizi</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Filtreler</h2>
+      <Card style={{ marginTop: 20 }}>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Filtreler</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <select className="input" style={{ flex: 1, minWidth: 140 }} value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)}>
+          <Select style={{ flex: 1, minWidth: 140 }} value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)}>
             <option value="tumu">Tüm türler</option>
             <option value="tyt">TYT</option>
             <option value="ayt">AYT</option>
             <option value="brans">Branş</option>
-          </select>
-          <select className="input" style={{ flex: 1, minWidth: 140 }} value={dersFiltre} onChange={(e) => setDersFiltre(e.target.value)}>
+          </Select>
+          <Select style={{ flex: 1, minWidth: 140 }} value={dersFiltre} onChange={(e) => setDersFiltre(e.target.value)}>
             <option value="tumu">Tüm dersler</option>
             {dersler.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
-          </select>
-          <select className="input" style={{ flex: 1, minWidth: 160 }} value={denemeFiltre} onChange={(e) => setDenemeFiltre(e.target.value)}>
+          </Select>
+          <Select style={{ flex: 1, minWidth: 160 }} value={denemeFiltre} onChange={(e) => setDenemeFiltre(e.target.value)}>
             <option value="tumu">Tüm denemeler</option>
             {denemeler.map((d) => (
               <option key={d.id} value={d.id}>{d.ad}</option>
             ))}
-          </select>
+          </Select>
         </div>
-      </div>
+      </Card>
 
       {filtreliSatirlar.length === 0 ? (
-        <div className="card stagger-item" style={{ marginTop: 16 }}>
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Bu filtrelerle sonuç bulunamadı.</p>
-        </div>
+        <Card style={{ marginTop: 16 }}>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu filtrelerle sonuç bulunamadı.</p>
+        </Card>
       ) : (
         <>
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-            <h2 className="card-title">Net Trendi</h2>
+          <Card style={{ marginTop: 16 }}>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Net Trendi</h3>
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -220,27 +224,27 @@ export default function SinifAnaliz() {
                 <Line type="monotone" dataKey="Sınıf ort." stroke={GOLD} strokeWidth={3} dot={{ r: 3, fill: GOLD }} animationDuration={700} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-            <h2 className="card-title">Öğrenci Sıralaması</h2>
-            {ogrenciOzetleri.map((o, i) => (
-              <div key={o.ad} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.03}s` }}>
-                <span className="mono" style={{ width: 26, fontSize: 13, color: i === 0 ? "var(--gold-dim)" : "var(--muted)", fontWeight: 700 }}>#{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{o.ad}</p>
-                  <p className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{o.dogru}D {o.yanlis}Y {o.bos}B</p>
+          <Card style={{ marginTop: 16 }}>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenci Sıralaması</h3>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {ogrenciOzetleri.map((o, i) => (
+                <div key={o.ad} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                  <span className="tabular" style={{ width: 26, fontSize: 13, color: i === 0 ? "#A07C20" : "rgba(15,27,45,0.5)", fontWeight: 700 }}>#{i + 1}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 600 }}>{o.ad}</p>
+                    <p className="tabular" style={{ fontSize: 11, color: "rgba(15,27,45,0.5)" }}>{o.dogru}D {o.yanlis}Y {o.bos}B</p>
+                  </div>
+                  <div style={{ width: 120 }}><ProgressBar pct={maxNet === 0 ? 0 : Math.max(0, (o.net / maxNet) * 100)} color={GOLD} /></div>
+                  <span className="tabular" style={{ width: 54, textAlign: "right", fontSize: 15, fontWeight: 700 }}>{o.net}</span>
                 </div>
-                <div className="progress-track" style={{ width: 120 }}>
-                  <div className="progress-fill" style={{ width: `${maxNet === 0 ? 0 : Math.max(0, (o.net / maxNet) * 100)}%`, background: GOLD }} />
-                </div>
-                <span className="mono" style={{ width: 54, textAlign: "right", fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{o.net}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
-            <h2 className="card-title">Ders Başarı Analizi</h2>
+          <Card style={{ marginTop: 16 }}>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Ders Başarı Analizi</h3>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={dersAnalizi}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -255,20 +259,18 @@ export default function SinifAnaliz() {
             </ResponsiveContainer>
             <div style={{ marginTop: 10 }}>
               {dersAnalizi.map((d) => (
-                <div key={d.ders} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #f2f2f2" }}>
-                  <span style={{ width: 140, fontSize: 12.5, color: "var(--ink)", fontWeight: 500 }}>{d.ders}</span>
-                  <div className="progress-track" style={{ flex: 1 }}>
-                    <div className="progress-fill" style={{ width: `${d.oran}%`, background: d.oran < 55 ? RUST : d.oran >= 80 ? TEAL : GOLD }} />
-                  </div>
-                  <span className="mono" style={{ width: 44, textAlign: "right", fontSize: 12, color: "var(--muted)" }}>{d.oran}%</span>
-                  {d.oran < 55 && <span className="badge-weak">zayıf</span>}
+                <div key={d.ders} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                  <span style={{ width: 140, fontSize: 12.5, fontWeight: 500 }}>{d.ders}</span>
+                  <div style={{ flex: 1 }}><ProgressBar pct={d.oran} color={d.oran < 55 ? RUST : d.oran >= 80 ? TEAL : GOLD} /></div>
+                  <span className="tabular" style={{ width: 44, textAlign: "right", fontSize: 12, color: "rgba(15,27,45,0.5)" }}>{d.oran}%</span>
+                  {d.oran < 55 && <Badge variant="brick">zayıf</Badge>}
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.25s" }}>
-            <h2 className="card-title">Öğrenci Karşılaştırma (net)</h2>
+          <Card style={{ marginTop: 16 }}>
+            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenci Karşılaştırma (net)</h3>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={karsilastirma}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -278,10 +280,10 @@ export default function SinifAnaliz() {
                 <Bar dataKey="net" name="Net" fill={INK} radius={[4, 4, 0, 0]} animationDuration={700} />
               </BarChart>
             </ResponsiveContainer>
-            <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
+            <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 6 }}>
               {denemeFiltre === "tumu" ? "Ortalama net (filtrelenen denemelerde sonucu olanlardan)" : "Seçilen denemedeki net"}
             </p>
-          </div>
+          </Card>
         </>
       )}
     </div>

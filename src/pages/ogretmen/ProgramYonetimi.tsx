@@ -3,6 +3,7 @@ import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueri
 import { haftalikProgramGetir, haftalikProgramKaydet } from "../../lib/programQueries";
 import { gorevSil } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
+import { Card, Select, Input, Textarea, Btn, Checkbox } from "../../components/ui";
 
 const GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
@@ -103,87 +104,82 @@ export default function ProgramYonetimi() {
     await gorevSil(id);
   }
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Haftalık Program</h1>
+    <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div>
+        <h1 className="page-title">Haftalık Program</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Hafta: {gunler[0].tarih} – {bitis}</p>
+      </div>
 
       {ogrenciler.length === 0 ? (
-        <div className="card stagger-item">
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>
             Henüz öğrencin yok. "Öğrenciler" sekmesinden davet kodu oluşturup öğrenci ekleyebilirsin.
           </p>
-        </div>
+        </Card>
       ) : (
         <>
-          <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-            <h2 className="card-title">Öğrenci &amp; Hafta</h2>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Öğrenci &amp; Hafta</h3>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <select className="input" style={{ flex: 1, minWidth: 180 }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
+              <Select style={{ flex: 1, minWidth: 180 }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
                 {ogrenciler.map((o) => (
                   <option key={o.id} value={o.id}>{o.ad_soyad}</option>
                 ))}
-              </select>
-              <input
-                className="input"
+              </Select>
+              <Input
                 type="date"
                 value={haftaTarih}
                 onChange={(e) => setHaftaTarih(e.target.value || bugunIso())}
                 style={{ flex: 1, minWidth: 150 }}
               />
             </div>
-            <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-              Hafta: {gunler[0].tarih} – {bitis}
-            </p>
-          </div>
+          </Card>
 
           {gunler.map((gun, i) => {
             const liste = gunGorevleri.get(gun.tarih) ?? [];
             return (
-              <div key={gun.tarih} className="card stagger-item" style={{ marginTop: 12, animationDelay: `${0.1 + i * 0.04}s` }}>
+              <Card key={gun.tarih} className="tape-accent">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <h2 className="card-title" style={{ marginBottom: 0 }}>
-                    {gun.etiket} <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>· {tarihEtiketi(gun.tarih)}</span>
-                  </h2>
-                  <span className="mono" style={{ fontSize: 11.5, color: liste.some((g) => g.tamamlandi && !g.kontrol_edildi) ? "var(--gold-dim)" : "var(--muted)" }}>
+                  <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>
+                    {gun.etiket} <span className="mono" style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>· {tarihEtiketi(gun.tarih)}</span>
+                  </h3>
+                  <span className="tabular" style={{ fontSize: 11.5, color: liste.some((g) => g.tamamlandi && !g.kontrol_edildi) ? "#A07C20" : "rgba(15,27,45,0.5)" }}>
                     {liste.filter((g) => g.tamamlandi).length}/{liste.length}
                   </span>
                 </div>
 
-                {liste.map((g) => (
-                  <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px solid #f2f2f2" }}>
-                    <input type="checkbox" checked={g.tamamlandi} readOnly style={{ accentColor: "var(--gold-dim)", width: 15, height: 15 }} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 13.5, color: "var(--ink)", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.5 : 1 }}>{g.baslik}</p>
-                      {g.tamamlandi && (
-                        <p style={{ fontSize: 11.5, color: g.kontrol_edildi ? "var(--dogru)" : "var(--gold-dim)" }}>
-                          {g.kontrol_edildi ? "✓ koç onayladı" : "koç onayı bekleniyor"}
-                        </p>
-                      )}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {liste.map((g) => (
+                    <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                      <Checkbox checked={g.tamamlandi} readOnly />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: 13.5, textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.5 : 1 }}>{g.baslik}</p>
+                        {g.tamamlandi && (
+                          <p style={{ fontSize: 11.5, color: g.kontrol_edildi ? "#2A9D8F" : "#A07C20" }}>
+                            {g.kontrol_edildi ? "✓ koç onayladı" : "koç onayı bekleniyor"}
+                          </p>
+                        )}
+                      </div>
+                      <Btn variant="ghost" size="sm" onClick={() => handleSil(g.id)}>Sil</Btn>
                     </div>
-                    <button onClick={() => handleSil(g.id)} style={{ border: "none", background: "none", color: "var(--yanlis)", fontSize: 12 }}>Sil</button>
-                  </div>
-                ))}
-                {liste.length === 0 && <p style={{ color: "var(--muted)", fontSize: 12.5 }}>Görev yok.</p>}
+                  ))}
+                  {liste.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 12.5 }}>Görev yok.</p>}
+                </div>
 
-                <textarea
-                  className="input"
+                <Textarea
                   rows={2}
                   placeholder={"Görev ekle — her satıra bir görev"}
                   value={yeniGorevler[i] ?? ""}
                   onChange={(e) => setYeniGorevler((y) => ({ ...y, [i]: e.target.value }))}
-                  style={{ width: "100%", marginTop: 8, resize: "vertical" }}
+                  style={{ width: "100%", marginTop: 8 }}
                 />
-                <button
-                  onClick={() => gunGorevleriniEkle(i)}
-                  disabled={!(yeniGorevler[i] ?? "").trim()}
-                  className="btn btn-primary"
-                  style={{ marginTop: 6 }}
-                >
+                <Btn onClick={() => gunGorevleriniEkle(i)} disabled={!(yeniGorevler[i] ?? "").trim()} size="sm" style={{ marginTop: 6 }}>
                   Ekle
-                </button>
-              </div>
+                </Btn>
+              </Card>
             );
           })}
         </>

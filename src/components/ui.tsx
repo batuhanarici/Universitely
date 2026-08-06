@@ -1,0 +1,167 @@
+import { useEffect, useState } from 'react';
+import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import { useCountUp, useInView } from '../lib/designUtils';
+
+// ── AnimatedNumber ─────────────────────────────────────────────────────────
+export function AnimatedNumber({ value, decimals = 0, className = '' }: {
+  value: number; decimals?: number; className?: string;
+}) {
+  const { ref, inView } = useInView();
+  const count = useCountUp(value, 900, inView);
+  return (
+    <span ref={ref} className={`tabular ${className}`}>
+      {count.toFixed(decimals)}
+    </span>
+  );
+}
+
+// ── ProgressBar ────────────────────────────────────────────────────────────
+export function ProgressBar({ pct, color = '#2A9D8F', className = '' }: {
+  pct: number; color?: string; className?: string;
+}) {
+  const { ref, inView } = useInView();
+  const [width, setWidth] = useState(0);
+  useEffect(() => { if (inView) setTimeout(() => setWidth(pct), 50); }, [inView, pct]);
+  return (
+    <div ref={ref} className={`progress-track ${className}`}>
+      <div className="progress-fill" style={{ width: `${width}%`, background: color, transition: 'width 700ms cubic-bezier(0.22,1,0.36,1)' }} />
+    </div>
+  );
+}
+
+// ── Badge ──────────────────────────────────────────────────────────────────
+export function Badge({ children, variant = 'gray' }: {
+  children: ReactNode;
+  variant?: 'gold' | 'teal' | 'brick' | 'gray' | 'ink';
+}) {
+  return <span className={`badge badge-${variant}`}>{children}</span>;
+}
+
+// ── EmptyState ─────────────────────────────────────────────────────────────
+export function EmptyState({ icon, title, desc, action }: {
+  icon: ReactNode; title: string; desc: string; action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-8 text-center anim-fade">
+      <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.6 }}>{icon}</div>
+      <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: '#0F1B2D', marginBottom: 8 }}>{title}</p>
+      <p style={{ fontSize: 13, color: 'rgba(15,27,45,0.5)', maxWidth: 300, marginBottom: action ? 16 : 0 }}>{desc}</p>
+      {action}
+    </div>
+  );
+}
+
+// ── KPICard ────────────────────────────────────────────────────────────────
+export function KPICard({ label, value, sub, color = '#0F1B2D', decimals = 0 }: {
+  label: string; value: number; sub?: string; color?: string; decimals?: number;
+}) {
+  return (
+    <div className="card tape-accent" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(15,27,45,0.4)', marginBottom: 4 }}>{label}</p>
+      <p className="metric-value" style={{ fontSize: 36, fontWeight: 700, color, lineHeight: 1 }}>
+        <AnimatedNumber value={value} decimals={decimals} />
+      </p>
+      {sub && <p style={{ fontSize: 12, color: 'rgba(15,27,45,0.5)', marginTop: 4 }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ── Card wrapper ───────────────────────────────────────────────────────────
+export function Card({ children, className = '', style = {} }: {
+  children: ReactNode; className?: string; style?: CSSProperties;
+}) {
+  return <div className={`card ${className}`} style={style}>{children}</div>;
+}
+
+// ── SectionTitle ───────────────────────────────────────────────────────────
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return <h2 className="section-title" style={{ marginBottom: 16 }}>{children}</h2>;
+}
+
+// ── Input ──────────────────────────────────────────────────────────────────
+export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={`input ${props.className ?? ''}`} />;
+}
+export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={`input ${props.className ?? ''}`} style={{ resize: 'vertical', minHeight: 72, ...(props.style ?? {}) }} />;
+}
+export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={`input ${props.className ?? ''}`} />;
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────────
+export function Btn({ children, variant = 'primary', size = 'md', ...props }: {
+  children: ReactNode;
+  variant?: 'primary' | 'gold' | 'ghost' | 'danger';
+  size?: 'sm' | 'md';
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...props} className={`btn btn-${variant} ${size === 'sm' ? 'btn-sm' : ''} ${props.className ?? ''}`}>
+      {children}
+    </button>
+  );
+}
+
+// ── Label ──────────────────────────────────────────────────────────────────
+export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
+  return (
+    <label htmlFor={htmlFor} style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(15,27,45,0.5)', marginBottom: 5 }}>
+      {children}
+    </label>
+  );
+}
+
+// ── FormGroup ──────────────────────────────────────────────────────────────
+export function FormGroup({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 4, ...style }}>{children}</div>;
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+export function Tabs({ tabs, active, onChange }: {
+  tabs: string[]; active: string; onChange: (t: string) => void;
+}) {
+  return (
+    <div className="tabs">
+      {tabs.map(t => (
+        <button key={t} className={`tab-btn ${active === t ? 'active' : ''}`} onClick={() => onChange(t)}>{t}</button>
+      ))}
+    </div>
+  );
+}
+
+// ── Checkbox ───────────────────────────────────────────────────────────────
+export function Checkbox(props: InputHTMLAttributes<HTMLInputElement>) {
+  return <input type="checkbox" {...props} className="checkbox" />;
+}
+
+// ── StatusDot ──────────────────────────────────────────────────────────────
+export function StatusDot({ active }: { active: boolean }) {
+  return (
+    <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? '#2A9D8F' : '#9A9FA8', display: 'inline-block', flexShrink: 0 }} />
+  );
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+export function Toast({ msg, visible }: { msg: string; visible: boolean }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 24, left: '50%', transform: `translateX(-50%) translateY(${visible ? 0 : 12}px)`,
+      opacity: visible ? 1 : 0, transition: 'all 250ms ease',
+      background: '#0F1B2D', color: '#F4EFE4', padding: '10px 20px', borderRadius: 8,
+      fontSize: 13, fontWeight: 600, zIndex: 9999, pointerEvents: 'none',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
+    }}>
+      {msg}
+    </div>
+  );
+}
+
+// ── useToast ───────────────────────────────────────────────────────────────
+export function useToast() {
+  const [state, setState] = useState({ msg: '', visible: false });
+  function show(msg: string) {
+    setState({ msg, visible: true });
+    setTimeout(() => setState(s => ({ ...s, visible: false })), 2200);
+  }
+  return { toast: <Toast msg={state.msg} visible={state.visible} />, show };
+}
