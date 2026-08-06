@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
-import UYArrow from "../../components/UYArrow";
+import { StudentLayout } from "../../components/Layout";
 import Dashboard from "./Dashboard";
 import Profil from "./Profil";
 import Calisma from "./Calisma";
@@ -20,107 +20,43 @@ import Karsilastirma from "./Karsilastirma";
 import Motivasyon from "./Motivasyon";
 
 type Sekme =
-  | "dashboard" | "profil" | "calisma" | "konular" | "gorevler"
-  | "kaynaklar" | "denemeler" | "analiz" | "yanlislar" | "tekrar"
-  | "takvim" | "mesaj" | "bildirimler" | "oneri" | "rapor"
-  | "karsilastirma" | "motivasyon";
-
-interface SekmeTanimi {
-  id: Sekme;
-  etiket: string;
-  icon: string;
-}
-
-const GRUPLAR: { grup: string; sekmeler: SekmeTanimi[] }[] = [
-  {
-    grup: "Genel",
-    sekmeler: [
-      { id: "dashboard", etiket: "Günlük", icon: "📊" },
-      { id: "profil", etiket: "Profil", icon: "🎯" },
-    ],
-  },
-  {
-    grup: "Çalışma",
-    sekmeler: [
-      { id: "calisma", etiket: "Çalışma", icon: "⏱️" },
-      { id: "konular", etiket: "Konular", icon: "📚" },
-      { id: "kaynaklar", etiket: "Kaynaklar", icon: "📖" },
-      { id: "gorevler", etiket: "Görevler", icon: "✅" },
-      { id: "takvim", etiket: "Takvim", icon: "📅" },
-    ],
-  },
-  {
-    grup: "Ölçme",
-    sekmeler: [
-      { id: "denemeler", etiket: "Denemeler", icon: "🗓️" },
-      { id: "analiz", etiket: "Analiz", icon: "📈" },
-      { id: "yanlislar", etiket: "Yanlışlar", icon: "❌" },
-      { id: "tekrar", etiket: "Tekrar Planı", icon: "🔁" },
-      { id: "karsilastirma", etiket: "Karşılaştırma", icon: "⚔️" },
-    ],
-  },
-  {
-    grup: "Koç & Sistem",
-    sekmeler: [
-      { id: "oneri", etiket: "AI Koçum", icon: "🧠" },
-      { id: "rapor", etiket: "Haftalık Rapor", icon: "📄" },
-      { id: "motivasyon", etiket: "Motivasyon", icon: "🏆" },
-      { id: "mesaj", etiket: "Mesajlar", icon: "✉️" },
-      { id: "bildirimler", etiket: "Bildirimler", icon: "🔔" },
-    ],
-  },
-];
+  | "/student/dashboard" | "/student/profile" | "/student/study" | "/student/subjects" | "/student/tasks"
+  | "/student/resources" | "/student/exams" | "/student/analysis" | "/student/wrongs" | "/student/repetition"
+  | "/student/calendar" | "/student/messages" | "/student/notifications" | "/student/ai-coach" | "/student/weekly-report"
+  | "/student/compare" | "/student/motivation";
 
 export default function OgrenciPaneli() {
-  const [sekme, setSekme] = useState<Sekme>("dashboard");
+  const [sekme, setSekme] = useState<Sekme>("/student/dashboard");
+
+  const git = (path: string) => {
+    if (path === "/") {
+      supabase.auth.signOut();
+      return;
+    }
+    setSekme(path as Sekme);
+  };
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <span className="mark"><UYArrow size={20} color="#E4BB60" /></span>
-          <span className="sidebar-logo-text">Universitely</span>
-        </div>
-        <nav className="sidebar-nav">
-          {GRUPLAR.map((g) => (
-            <div key={g.grup}>
-              <p className="sidebar-grup">{g.grup}</p>
-              {g.sekmeler.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setSekme(s.id)}
-                  className={`sidebar-item${sekme === s.id ? " active" : ""}`}
-                >
-                  <span>{s.icon}</span>
-                  <span>{s.etiket}</span>
-                </button>
-              ))}
-            </div>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <button onClick={() => supabase.auth.signOut()}>Çıkış Yap</button>
-        </div>
-      </aside>
-      <main className="main-area">
-        {sekme === "dashboard" && <Dashboard />}
-        {sekme === "profil" && <Profil />}
-        {sekme === "calisma" && <Calisma />}
-        {sekme === "konular" && <Konular />}
-        {sekme === "kaynaklar" && <Kaynaklar />}
-        {sekme === "denemeler" && <Denemeler />}
-        {sekme === "analiz" && <Analiz />}
-        {sekme === "yanlislar" && <Yanlislar />}
-        {sekme === "tekrar" && <Tekrar />}
-        {sekme === "takvim" && <Takvim />}
-        {sekme === "mesaj" && <Mesaj />}
-        {sekme === "bildirimler" && <Bildirimler />}
-        {sekme === "oneri" && <Oneriler />}
-        {sekme === "rapor" && <HaftalikRapor />}
-        {sekme === "karsilastirma" && <Karsilastirma />}
-        {sekme === "motivasyon" && <Motivasyon />}
-        {sekme === "gorevler" && <Gorevler />}
-      </main>
-    </div>
+    <StudentLayout activePath={sekme} onNavigate={git}>
+      <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {sekme === "/student/dashboard" && <Dashboard />}
+        {sekme === "/student/profile" && <Profil />}
+        {sekme === "/student/study" && <Calisma />}
+        {sekme === "/student/subjects" && <Konular />}
+        {sekme === "/student/resources" && <Kaynaklar />}
+        {sekme === "/student/exams" && <Denemeler />}
+        {sekme === "/student/analysis" && <Analiz />}
+        {sekme === "/student/wrongs" && <Yanlislar />}
+        {sekme === "/student/repetition" && <Tekrar />}
+        {sekme === "/student/calendar" && <Takvim />}
+        {sekme === "/student/messages" && <Mesaj />}
+        {sekme === "/student/notifications" && <Bildirimler />}
+        {sekme === "/student/ai-coach" && <Oneriler />}
+        {sekme === "/student/weekly-report" && <HaftalikRapor />}
+        {sekme === "/student/compare" && <Karsilastirma />}
+        {sekme === "/student/motivation" && <Motivasyon />}
+        {sekme === "/student/tasks" && <Gorevler />}
+      </div>
+    </StudentLayout>
   );
 }

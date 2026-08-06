@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { calismalariGetir, calismaEkle, calismaSil, type CalismaKaydiDetayli } from "../../lib/calismaQueries";
-import AnimatedNumber from "../../components/AnimatedNumber";
+import { Card, Btn, Input, Label, FormGroup, AnimatedNumber, useToast } from "../../components/ui";
+import { Icon } from "../../components/Icon";
 
 const POMODORO_DK = 25;
 
@@ -29,6 +30,7 @@ function son7Gun(): { etiket: string; iso: string }[] {
 }
 
 export default function Calisma() {
+  const { toast, show } = useToast();
   const [kayitlar, setKayitlar] = useState<CalismaKaydiDetayli[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
 
@@ -74,8 +76,9 @@ export default function Calisma() {
     try {
       const yeni = await calismaEkle({ sure_dk: POMODORO_DK, soru_sayisi: null });
       setKayitlar((k) => [yeni as CalismaKaydiDetayli, ...k]);
+      show("25 dakika tamamlandı! Çalışma kaydedildi. 🎉");
     } catch {
-      // kayıt eklenemedi — kullanıcıya sessiz kalma
+      show("Pomodoro kaydı eklenemedi.");
     } finally {
       setKaydediliyor(false);
     }
@@ -98,7 +101,8 @@ export default function Calisma() {
     setPomodoroBitti(false);
   }
 
-  async function handleManuelEkle() {
+  async function handleManuelEkle(e: React.FormEvent) {
+    e.preventDefault();
     const dk = Number(sureDk);
     if (!dk || dk <= 0) return;
     const yeni = await calismaEkle({
@@ -110,6 +114,7 @@ export default function Calisma() {
     setSureDk("");
     setSoruSayisi("");
     setNotMetni("");
+    show("Çalışma kaydedildi ✓");
   }
 
   async function handleSil(id: string) {
@@ -131,105 +136,125 @@ export default function Calisma() {
     return gunler.map((g) => ({ etiket: g.etiket, sure: map.get(g.iso)!.sure, soru: map.get(g.iso)!.soru }));
   }, [kayitlar]);
 
-  const toplamHafta = useMemo(() => kayitlar.reduce((a, k) => a + k.sure_dk, 0), [kayitlar]);
-  const toplamSoru = useMemo(() => kayitlar.reduce((a, k) => a + (k.soru_sayisi ?? 0), 0), [kayitlar]);
+  const toplamHafta = useMemo(() => haftalikVeri.reduce((a, d) => a + d.sure, 0), [haftalikVeri]);
+  const toplamSoru = useMemo(() => haftalikVeri.reduce((a, d) => a + d.soru, 0), [haftalikVeri]);
 
   const DAIRE_YARI = 56;
   const DAIRE_CEVRE = 2 * Math.PI * DAIRE_YARI;
   const ilerleme = kalanMs / (POMODORO_DK * 60 * 1000);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Çalışma</h1>
-
-      <div className="stagger-item" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, animationDelay: "0.05s" }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-          <h2 className="card-title" style={{ alignSelf: "flex-start" }}>Pomodoro</h2>
-          <div style={{ position: "relative", width: 128, height: 128, margin: "6px 0 4px" }}>
-            <svg width={128} height={128} viewBox="0 0 128 128">
-              <circle cx={64} cy={64} r={DAIRE_YARI} fill="none" stroke="var(--paper-dim)" strokeWidth={9} />
-              <circle
-                cx={64} cy={64} r={DAIRE_YARI} fill="none"
-                stroke={kalanMs <= 5 * 60 * 1000 && calisiyor ? "var(--yanlis)" : "var(--gold-dim)"}
-                strokeWidth={9} strokeLinecap="round"
-                strokeDasharray={DAIRE_CEVRE}
-                strokeDashoffset={DAIRE_CEVRE * (1 - ilerleme)}
-                transform="rotate(-90 64 64)"
-                style={{ transition: "stroke-dashoffset 1s linear, stroke 0.3s" }}
-              />
-            </svg>
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <span className="mono" style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)" }}>{formatSaniye(kalanMs)}</span>
-              <span style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2 }}>{calisiyor ? "çalışıyor" : "hazır"}</span>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-            {!calisiyor ? (
-              <button onClick={baslat} className="btn btn-primary">{pomodoroBitti ? "Tekrar Başlat" : "Başlat"}</button>
-            ) : (
-              <button onClick={duraklat} className="btn btn-gold">Duraklat</button>
-            )}
-            <button onClick={sifirla} className="btn" style={{ background: "var(--paper-dim)", color: "var(--ink)" }}>Sıfırla</button>
-          </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 10 }}>
-            {pomodoroBitti
-              ? kaydediliyor ? "Kayıt ekleniyor…" : "25 dk tamamlandı — çalışma kaydına eklendi."
-              : `${POMODORO_DK} dakika tamamlanınca otomatik kaydedilir.`}
-          </p>
-        </div>
-
-        <div className="card">
-          <h2 className="card-title">Çalışma Ekle</h2>
-          <label className="fld">Süre (dk)</label>
-          <input className="input" value={sureDk} onChange={(e) => setSureDk(e.target.value)} type="number" min={1} placeholder="örn. 60" />
-          <label className="fld">Çözülen Soru Sayısı</label>
-          <input className="input" value={soruSayisi} onChange={(e) => setSoruSayisi(e.target.value)} type="number" min={0} placeholder="opsiyonel" />
-          <label className="fld">Not</label>
-          <input className="input" value={notMetni} onChange={(e) => setNotMetni(e.target.value)} placeholder="opsiyonel" />
-          <button onClick={handleManuelEkle} disabled={!sureDk || Number(sureDk) <= 0} className="btn btn-primary" style={{ marginTop: 14 }}>
-            Kaydet
-          </button>
-        </div>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+      <div>
+        <h1 className="page-title">Çalışma</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Pomodoro zamanlayıcı ve çalışma geçmişi</p>
       </div>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <h2 className="card-title" style={{ marginBottom: 0 }}>Son 7 Gün</h2>
-          <div style={{ display: "flex", gap: 14 }}>
-            <span className="mono" style={{ fontSize: 12.5, color: "var(--muted)" }}>
-              <span style={{ color: "var(--ink)", fontWeight: 700 }}><AnimatedNumber value={toplamHafta} /></span> dk
-            </span>
-            <span className="mono" style={{ fontSize: 12.5, color: "var(--muted)" }}>
-              <span style={{ color: "var(--ink)", fontWeight: 700 }}><AnimatedNumber value={toplamSoru} /></span> soru
-            </span>
+      <div className="grid-2">
+        <Card className="tape-accent" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "28px 20px" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)" }}>Pomodoro Zamanlayıcı</p>
+          <svg width={140} height={140} style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={70} cy={70} r={DAIRE_YARI} fill="none" stroke="rgba(15,27,45,0.08)" strokeWidth={8} />
+            <circle
+              cx={70} cy={70} r={DAIRE_YARI} fill="none"
+              stroke={pomodoroBitti ? "#2A9D8F" : "#E4BB60"} strokeWidth={8}
+              strokeDasharray={DAIRE_CEVRE}
+              strokeDashoffset={DAIRE_CEVRE * (1 - ilerleme)}
+              strokeLinecap="round"
+              style={{ transition: "stroke-dashoffset 0.9s linear" }}
+            />
+            <text x={70} y={74} textAnchor="middle" dominantBaseline="middle"
+              style={{ fill: "#0F1B2D", fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 600, transform: "rotate(90deg)", transformOrigin: "70px 70px" }}>
+              {formatSaniye(kalanMs)}
+            </text>
+          </svg>
+          <p style={{ fontSize: 12, fontWeight: 600, color: calisiyor ? "#2A9D8F" : pomodoroBitti ? "#2A9D8F" : "rgba(15,27,45,0.4)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            {pomodoroBitti ? "✓ Tamamlandı" : calisiyor ? "Çalışılıyor…" : kaydediliyor ? "Kaydediliyor…" : "Hazır"}
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Btn variant="primary" onClick={calisiyor ? duraklat : baslat}>
+              {calisiyor ? "Duraklat" : pomodoroBitti ? "Tekrar Başlat" : "Başlat"}
+            </Btn>
+            <Btn variant="ghost" onClick={sifirla}>Sıfırla</Btn>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Çalışma Ekle</h3>
+          <form onSubmit={handleManuelEkle} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <FormGroup>
+              <Label>Süre (dk) *</Label>
+              <Input type="number" min={1} placeholder="45" value={sureDk} onChange={(e) => setSureDk(e.target.value)} required />
+            </FormGroup>
+            <FormGroup>
+              <Label>Çözülen Soru Sayısı</Label>
+              <Input type="number" min={0} placeholder="0" value={soruSayisi} onChange={(e) => setSoruSayisi(e.target.value)} />
+            </FormGroup>
+            <FormGroup>
+              <Label>Not</Label>
+              <Input placeholder="Konu veya açıklama" value={notMetni} onChange={(e) => setNotMetni(e.target.value)} />
+            </FormGroup>
+            <Btn variant="primary" type="submit">Kaydet</Btn>
+          </form>
+        </Card>
+      </div>
+
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Son 7 Gün</h3>
+          <div style={{ display: "flex", gap: 20, textAlign: "right" }}>
+            <div>
+              <p style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Toplam</p>
+              <p className="metric-value" style={{ fontSize: 22, fontWeight: 700 }}>{Math.round(toplamHafta / 60)}h {toplamHafta % 60}dk</p>
+            </div>
+            <div>
+              <p style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Soru</p>
+              <p className="metric-value" style={{ fontSize: 22, fontWeight: 700 }}><AnimatedNumber value={toplamSoru} /></p>
+            </div>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={haftalikVeri}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-            <XAxis dataKey="etiket" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-            <Tooltip formatter={(v: any) => `${v} dk`} />
-            <Bar dataKey="sure" name="Süre (dk)" fill="var(--gold-dim)" radius={[4, 4, 0, 0]} animationDuration={700} />
+        <ResponsiveContainer width="100%" height={140}>
+          <BarChart data={haftalikVeri} barSize={28}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" />
+            <XAxis dataKey="etiket" tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: "#0F1B2D", border: "none", borderRadius: 8, color: "#F4EFE4", fontSize: 12 }} formatter={(v) => [`${v} dk`]} />
+            <Bar dataKey="sure" fill="#E4BB60" radius={[3, 3, 0, 0]} animationDuration={700} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </Card>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-        <h2 className="card-title">Kayıtlar</h2>
-        {kayitlar.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz çalışma kaydı yok.</p>}
-        {kayitlar.map((k) => (
-          <div key={k.id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f2f2f2" }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>{k.sure_dk} dk{k.soru_sayisi ? ` · ${k.soru_sayisi} soru` : ""}</p>
-              <p style={{ fontSize: 11.5, color: "var(--muted)" }}>{k.tarih}{k.konu_adi ? ` · ${k.konu_adi}` : ""}{k.not ? ` · ${k.not}` : ""}</p>
-            </div>
-            <button onClick={() => handleSil(k.id)} style={{ border: "none", background: "none", color: "var(--yanlis)", fontSize: 12 }}>Sil</button>
-          </div>
-        ))}
-      </div>
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Kayıtlar</h3>
+        {kayitlar.length === 0 ? (
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)", fontStyle: "italic", marginTop: 12 }}>Henüz çalışma kaydı yok.</p>
+        ) : (
+          <table className="data-table" style={{ marginTop: 12 }}>
+            <thead>
+              <tr>
+                <th>Tarih</th><th>Süre</th><th>Soru</th><th>Not</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {kayitlar.map((k) => (
+                <tr key={k.id}>
+                  <td style={{ fontSize: 12, color: "rgba(15,27,45,0.5)" }}>{k.tarih}</td>
+                  <td className="tabular" style={{ fontWeight: 600 }}>{k.sure_dk} dk</td>
+                  <td className="tabular">{k.soru_sayisi ?? "—"}</td>
+                  <td style={{ color: "rgba(15,27,45,0.6)", fontSize: 12 }}>{k.not ?? "—"}</td>
+                  <td>
+                    <button className="btn btn-danger btn-sm" onClick={() => handleSil(k.id)}>
+                      <Icon name="trash" size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
     </div>
   );
 }

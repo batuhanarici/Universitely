@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { konularVeDersler, konuIlerlemeleriGetir, konuIlerlemeIsaretle, type KonuDersBilgisi } from "../../lib/konuIlerlemeQueries";
 import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries";
 import type { KonuIlerleme } from "../../types/database";
+import { Card, Badge, ProgressBar, Checkbox, AnimatedNumber } from "../../components/ui";
 
 function zayifKonuIdleri(sonuclar: SonucDetay[]): Set<string> {
   const map = new Map<string, { dogru: number; toplam: number }>();
@@ -16,6 +17,10 @@ function zayifKonuIdleri(sonuclar: SonucDetay[]): Set<string> {
     if (deger.toplam > 0 && (deger.dogru / deger.toplam) * 100 < 55) zayif.add(id);
   }
   return zayif;
+}
+
+function yuzde(a: number, b: number): number {
+  return b === 0 ? 0 : Math.round((a / b) * 100);
 }
 
 export default function Konular() {
@@ -67,56 +72,86 @@ export default function Konular() {
     [konular, ilerlemeHaritasi, zayiflar]
   );
   const tamamlananSayisi = konular.filter((k) => ilerlemeHaritasi.get(k.id)?.tamamlandi).length;
-  const ilerlemeYuzde = konular.length === 0 ? 0 : Math.round((tamamlananSayisi / konular.length) * 100);
+  const ilerlemeYuzde = yuzde(tamamlananSayisi, konular.length);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 620, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Konular</h1>
-        <span className="mono" style={{ fontSize: 13, color: "var(--muted)" }}>
-          <span style={{ color: "var(--ink)", fontWeight: 700 }}>{tamamlananSayisi}</span>/{konular.length} tamamlandı ({ilerlemeYuzde}%)
-        </span>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 className="page-title">Konular</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Konuları tamamlandı olarak işaretle</p>
+      </div>
+
+      <div className="card tape-accent" style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)" }}>Genel İlerleme</p>
+          <span className="metric-value" style={{ fontSize: 48, fontWeight: 700, color: "#0F1B2D", lineHeight: 1 }}>
+            <AnimatedNumber value={ilerlemeYuzde} />%
+          </span>
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", marginTop: 4 }}>{tamamlananSayisi} / {konular.length} konu tamamlandı</p>
+        </div>
+        <div style={{ flex: 1 }}>
+          <ProgressBar pct={ilerlemeYuzde} color="#2A9D8F" />
+        </div>
       </div>
 
       {eksikler.length > 0 && (
-        <div className="card stagger-item" style={{ animationDelay: "0.05s", borderLeft: "4px solid var(--yanlis)" }}>
-          <h2 className="card-title">Eksik / Ağırlık Verilmesi Gerekenler</h2>
-          {eksikler.map((k, i) => (
-            <div key={k.id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.1 + i * 0.04}s` }}>
-              <input type="checkbox" checked={!!ilerlemeHaritasi.get(k.id)?.tamamlandi} onChange={() => toggle(k.id)} style={{ accentColor: "var(--gold-dim)", width: 15, height: 15 }} />
-              <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", textDecoration: ilerlemeHaritasi.get(k.id)?.tamamlandi ? "line-through" : "none", opacity: ilerlemeHaritasi.get(k.id)?.tamamlandi ? 0.5 : 1 }}>{k.ad}</span>
-              <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{k.ders_adi}</span>
-              {zayiflar.has(k.id) && <span className="badge-weak">Zayıf</span>}
-            </div>
-          ))}
-        </div>
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Eksik / Ağırlık Verilmesi Gerekenler</h3>
+          <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
+            {eksikler.map((k) => {
+              const durum = ilerlemeHaritasi.get(k.id);
+              return (
+                <label key={k.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px", cursor: "pointer" }}>
+                  <Checkbox checked={!!durum?.tamamlandi} onChange={() => toggle(k.id)} />
+                  <span style={{ flex: 1, fontSize: 13, textDecoration: durum?.tamamlandi ? "line-through" : "none", color: durum?.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>
+                    {durum?.tamamlandi ? "✓ " : ""}{k.ad}
+                  </span>
+                  <Badge variant="gray">{k.ders_adi}</Badge>
+                  {zayiflar.has(k.id) && <Badge variant="brick">Zayıf</Badge>}
+                </label>
+              );
+            })}
+          </div>
+        </Card>
       )}
-
-      {dersGrubu.map(([dersAdi, konularListesi], gi) => (
-        <div key={dersAdi} className="card stagger-item" style={{ marginTop: 16, animationDelay: `${0.1 + gi * 0.05}s` }}>
-          <h2 className="card-title">{dersAdi}</h2>
-          {konularListesi.map((k, i) => {
-            const durum = ilerlemeHaritasi.get(k.id);
-            const zayif = zayiflar.has(k.id);
-            return (
-              <div key={k.id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.03}s` }}>
-                <input type="checkbox" checked={!!durum?.tamamlandi} onChange={() => toggle(k.id)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
-                <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)", fontWeight: durum?.tamamlandi ? 400 : 500, textDecoration: durum?.tamamlandi ? "line-through" : "none", opacity: durum?.tamamlandi ? 0.5 : 1 }}>{k.ad}</span>
-                {zayif && !durum?.tamamlandi && <span className="badge-weak">Zayıf</span>}
-                {durum?.tamamlandi && <span style={{ fontSize: 11, color: "var(--dogru)", fontWeight: 600 }}>✓</span>}
-              </div>
-            );
-          })}
-        </div>
-      ))}
 
       {konular.length === 0 && (
-        <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz konu tanımlanmamış — öğretmenin konu eklediğinde burada listelenecek.</p>
-        </div>
+        <Card>
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)", fontStyle: "italic" }}>
+            Henüz konu tanımlanmamış — öğretmenin konu eklediğinde burada listelenecek.
+          </p>
+        </Card>
       )}
+
+      {dersGrubu.map(([dersAdi, konularListesi]) => {
+        const dersTamamlanan = konularListesi.filter((k) => ilerlemeHaritasi.get(k.id)?.tamamlandi).length;
+        return (
+          <Card key={dersAdi}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>{dersAdi}</h3>
+              <span className="tabular" style={{ fontSize: 13, color: "rgba(15,27,45,0.5)" }}>{dersTamamlanan}/{konularListesi.length}</span>
+            </div>
+            <ProgressBar pct={yuzde(dersTamamlanan, konularListesi.length)} color="#E4BB60" />
+            <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden", marginTop: 10 }}>
+              {konularListesi.map((k) => {
+                const durum = ilerlemeHaritasi.get(k.id);
+                const zayif = zayiflar.has(k.id);
+                return (
+                  <label key={k.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px", cursor: "pointer" }}>
+                    <Checkbox checked={!!durum?.tamamlandi} onChange={() => toggle(k.id)} />
+                    <span style={{ flex: 1, fontSize: 13, textDecoration: durum?.tamamlandi ? "line-through" : "none", color: durum?.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>
+                      {durum?.tamamlandi ? "✓ " : ""}{k.ad}
+                    </span>
+                    {zayif && <Badge variant="brick">Zayıf</Badge>}
+                  </label>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 }

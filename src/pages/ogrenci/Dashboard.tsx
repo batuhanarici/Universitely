@@ -9,16 +9,15 @@ import {
   type SonucDetay,
   type TekrarKaydi,
 } from "../../lib/ogrenciQueries";
-import { gorevleriGetir } from "../../lib/gorevQueries";
+import { gorevleriGetir, gorevTamamla } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
-import AnimatedNumber from "../../components/AnimatedNumber";
-import ProgressBar from "../../components/ProgressBar";
-import UYArrow from "../../components/UYArrow";
+import { AnimatedNumber, ProgressBar, Badge, Card, Checkbox, EmptyState, useToast } from "../../components/ui";
+import { useAuth } from "../../lib/AuthContext";
 
-const TEAL = "var(--dogru)";
-const RUST = "var(--yanlis)";
-const BOS = "var(--bos)";
-const GOLD = "var(--gold-dim)";
+const TEAL = "#2A9D8F";
+const RUST = "#C4503A";
+const BOS = "#9A9FA8";
+const GOLD = "#E4BB60";
 
 interface KonuOzet {
   konu_adi: string;
@@ -58,14 +57,24 @@ function haftaBasiIso(): string {
   return d.toISOString().slice(0, 10);
 }
 
-function motivasyonMesaji(kalanTekrar: number, zayifKonular: KonuOzet[], sonNet: number, oncekiNet: number | null): string {
-  if (kalanTekrar >= 5) return `Tekrar havuzunda ${kalanTekrar} soru bekliyor — bugün onları eritebilirsin.`;
-  if (zayifKonular.length > 0) return `Zayıf görünen ${zayifKonular[0].konu_adi} konusuna bugün ağırlık verebilirsin.`;
-  if (oncekiNet !== null && sonNet < oncekiNet) return "Netin biraz düştü, panik yok — küçük ve düzenli adımlarla toparlarsın.";
-  return "Bugün de küçük bir adım at; düzen, büyük sıçramalardan güçlüdür.";
+function tesvik(kalanTekrar: number, zayifKonular: KonuOzet[]): string {
+  const zayif = zayifKonular[0];
+  if (kalanTekrar >= 5) return `Tekrar havuzunda <strong>${kalanTekrar} soru</strong> bekliyor. Bugün onları eritebilirsin.`;
+  if (zayif) return `Tekrar havuzunda <strong>${kalanTekrar} soru</strong> bekliyor. ${zayif.konu_adi}'ya ağırlık ver.`;
+  return "Tekrar havuzunda <strong>0 soru</strong> bekliyor. Güzel gidiyorsun, bugünü de bitir!";
+}
+
+function tarihSatiiri(): string {
+  const d = new Date();
+  const gun = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+  const hafta = d.toLocaleDateString("tr-TR", { weekday: "long" });
+  const buyuk = hafta.charAt(0).toUpperCase() + hafta.slice(1);
+  return `${gun} · ${buyuk}`;
 }
 
 export default function Dashboard() {
+  const { session } = useAuth();
+  const { toast, show } = useToast();
   const [sonuclar, setSonuclar] = useState<SonucDetay[]>([]);
   const [havuz, setHavuz] = useState<TekrarKaydi[]>([]);
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
@@ -111,6 +120,8 @@ export default function Dashboard() {
     return Math.round((onceki.dogru - onceki.yanlis / 4) * 10) / 10;
   }, [denemeBazliOzet]);
 
+  const sonDeneme = denemeBazliOzet[denemeBazliOzet.length - 1];
+
   const bugun = bugunIso();
   const haftaBasi = haftaBasiIso();
   const bugunkuGorevler = useMemo(() => gorevler.filter((g) => g.tarih === bugun), [gorevler, bugun]);
@@ -120,7 +131,7 @@ export default function Dashboard() {
   );
 
   const tamamlananBugun = bugunkuGorevler.filter((g) => g.tamamlandi).length;
-  const tamamlanmaYuzdesi = bugunkuGorevler.length === 0
+  const bugunYuzde = bugunkuGorevler.length === 0
     ? 0
     : Math.round((tamamlananBugun / bugunkuGorevler.length) * 100);
   const haftalikTamamlanan = haftalikGorevler.filter((g) => g.tamamlandi).length;
@@ -128,124 +139,171 @@ export default function Dashboard() {
     ? 0
     : Math.round((haftalikTamamlanan / haftalikGorevler.length) * 100);
 
+  async function toggleGorev(g: Gorev) {
+    const yeniDurum = !g.tamamlandi;
+    setGorevler((gs) => gs.map((x) => (x.id === g.id ? { ...x, tamamlandi: yeniDurum } : x)));
+    await gorevTamamla(g.id, yeniDurum);
+  }
+
   async function toggleCozuldu(kayit: TekrarKaydi) {
     const yeniDurum = !kayit.cozuldu;
     setHavuz((h) => h.map((k) => (k.sonuc_id === kayit.sonuc_id ? { ...k, cozuldu: yeniDurum } : k)));
     await tekrarCozulduIsaretle(kayit.sonuc_id, yeniDurum);
+    show("Tekrar kaydedildi ✓");
   }
 
-  if (yukleniyor) return <p style={{ textAlign: "center", marginTop: 80 }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ textAlign: "center", marginTop: 80, color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   const kalanTekrar = havuz.filter((h) => !h.cozuldu).length;
-  const yukseliyor = oncekiNet !== null && sonNet > oncekiNet;
+  const ad = (session?.user.user_metadata?.ad_soyad as string | undefined)?.split(" ")[0];
+  const netDiff = oncekiNet !== null ? +(sonNet - oncekiNet).toFixed(1) : null;
+  const chartData = denemeBazliOzet.map((o) => ({
+    name: o.deneme_adi,
+    dogru: o.dogru,
+    yanlis: o.yanlis,
+    bos: o.bos,
+  }));
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Günlük</h1>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--ink)", padding: "10px 16px", borderRadius: 12 }}>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>Son Net</p>
-            <p className="mono" style={{ fontSize: 20, fontWeight: 700, color: "var(--gold-glow)" }}>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+
+      <div>
+        <h1 className="page-title">Günaydın{ad ? `, ${ad}` : ""} 👋</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>{tarihSatiiri()}</p>
+      </div>
+
+      <div className="card tape-accent" style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center" }}>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 8 }}>
+            Son Net {sonDeneme ? `· ${sonDeneme.deneme_adi}` : ""}
+          </p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+            <span className="metric-value" style={{ fontSize: 56, fontWeight: 700, color: "#0F1B2D", lineHeight: 1 }}>
               <AnimatedNumber value={sonNet} decimals={1} />
-            </p>
+            </span>
+            {netDiff !== null && (
+              <span style={{ fontSize: 20, fontWeight: 600, color: netDiff >= 0 ? TEAL : RUST, display: "flex", alignItems: "center", gap: 4 }}>
+                {netDiff >= 0 ? "↑" : "↓"} {Math.abs(netDiff).toFixed(1)}
+              </span>
+            )}
           </div>
-          {oncekiNet !== null && <UYArrow size={20} color={yukseliyor ? "var(--dogru)" : "var(--yanlis)"} float style={{ transform: yukseliyor ? "none" : "rotate(180deg)" }} />}
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", marginTop: 6 }} dangerouslySetInnerHTML={{ __html: tesvik(kalanTekrar, zayifKonular) }} />
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ width: 80, height: 80, borderRadius: "50%", border: `3px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+            <span style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700 }}>D/Y/B</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#0F1B2D" }}>
+              {sonDeneme ? `${sonDeneme.dogru}/${sonDeneme.yanlis}/${sonDeneme.bos}` : "0/0/0"}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s", borderLeft: "4px solid var(--gold)" }}>
-        <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 6 }}>Bugün</p>
-        <p style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)", fontStyle: "italic" }}>{motivasyonMesaji(kalanTekrar, zayifKonular, sonNet, oncekiNet)}</p>
-      </div>
-
-      <div className="stagger-item" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginTop: 16, animationDelay: "0.1s" }}>
-        <div className="card">
-          <h2 className="card-title">Bugünün Yapılacakları</h2>
-          {bugunkuGorevler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bugün için görev yok.</p>}
-          {bugunkuGorevler.slice(0, 5).map((g) => (
-            <p key={g.id} style={{ fontSize: 13, padding: "6px 0", borderBottom: "1px solid #f2f2f2", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.45 : 1, color: "var(--ink)" }}>
-              {g.baslik}
-            </p>
-          ))}
-        </div>
-        <div className="card">
-          <h2 className="card-title">Tekrar Havuzu</h2>
-          <p className="mono" style={{ fontSize: 30, fontWeight: 700, color: kalanTekrar > 0 ? "var(--yanlis)" : "var(--dogru)" }}>
-            <AnimatedNumber value={kalanTekrar} />
-          </p>
-          <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>{kalanTekrar > 0 ? "soru tekrar edilmeyi bekliyor" : "havuz boş, bravo!"}</p>
-        </div>
-        <div className="card">
-          <h2 className="card-title">Bugünkü Tamamlanma</h2>
-          {bugunkuGorevler.length > 0 && (
-            <p className="mono" style={{ fontSize: 30, fontWeight: 700, color: "var(--ink)" }}>
-              <AnimatedNumber value={tamamlanmaYuzdesi} suffix="%" />
-            </p>
+      <div className="grid-2">
+        <Card>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Bugünün Yapılacakları</h3>
+            <Badge variant="ink">{tamamlananBugun}/{bugunkuGorevler.length}</Badge>
+          </div>
+          {bugunkuGorevler.length === 0 ? (
+            <p style={{ fontSize: 13, color: "rgba(15,27,45,0.4)", fontStyle: "italic" }}>Bugün için görev yok.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {bugunkuGorevler.slice(0, 5).map((g) => (
+                <label key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                  <Checkbox checked={g.tamamlandi} onChange={() => toggleGorev(g)} />
+                  <span style={{ fontSize: 13, textDecoration: g.tamamlandi ? "line-through" : "none", color: g.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>{g.baslik}</span>
+                </label>
+              ))}
+            </div>
           )}
-          <ProgressBar oran={tamamlanmaYuzdesi} color={tamamlanmaYuzdesi >= 70 ? TEAL : GOLD} delay={200} />
-          <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 6 }}>
-            Haftalık hedef: <AnimatedNumber value={haftalikYuzde} suffix="%" /> ({haftalikTamamlanan}/{haftalikGorevler.length} görev)
+        </Card>
+
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 4, fontSize: 16 }}>Bugünkü Tamamlanma</h3>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
+            <span className="metric-value" style={{ fontSize: 40, fontWeight: 700, color: bugunYuzde >= 70 ? TEAL : GOLD }}>
+              <AnimatedNumber value={bugunYuzde} />%
+            </span>
+          </div>
+          <ProgressBar pct={bugunYuzde} color={bugunYuzde >= 70 ? TEAL : GOLD} />
+          <p style={{ fontSize: 12, color: "rgba(15,27,45,0.45)", marginTop: 10 }}>
+            Bu hafta ortalama tamamlanma: <strong style={{ color: "#0F1B2D" }}>{haftalikYuzde}%</strong>
           </p>
-        </div>
+        </Card>
       </div>
 
       {sonuclar.length === 0 ? (
-        <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz sana ait bir deneme sonucu girilmemiş — öğretmenin sonuç girince grafikler burada görünecek.</p>
-        </div>
+        <Card>
+          <EmptyState
+            icon="📊"
+            title="Henüz deneme sonucun yok"
+            desc="Öğretmenin sonuçlarını girdiğinde net, grafik ve tekrar analizlerin burada görünecek."
+          />
+        </Card>
       ) : (
         <>
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-            <h2 className="card-title">Deneme Bazlı Doğru / Yanlış / Boş</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={denemeBazliOzet}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="deneme_adi" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="dogru" name="Doğru" stackId="a" fill={TEAL} animationDuration={800} />
-                <Bar dataKey="yanlis" name="Yanlış" stackId="a" fill={RUST} animationDuration={800} />
-                <Bar dataKey="bos" name="Boş" stackId="a" fill={BOS} radius={[3, 3, 0, 0]} animationDuration={800} />
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Deneme Bazlı D/Y/B</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={chartData} barSize={28} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: "#0F1B2D", border: "none", borderRadius: 8, color: "#F4EFE4", fontSize: 12 }} />
+                <Bar dataKey="dogru" name="Doğru" fill={TEAL} radius={[2, 2, 0, 0]} animationDuration={800} />
+                <Bar dataKey="yanlis" name="Yanlış" fill={RUST} radius={[2, 2, 0, 0]} animationDuration={800} />
+                <Bar dataKey="bos" name="Boş" fill={BOS} radius={[2, 2, 0, 0]} animationDuration={800} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
-            <h2 className="card-title">Konu Bazlı Performans</h2>
-            {konuOzetleri.map((o, i) => {
-              const oran = oranHesapla(o);
-              const zayif = oran < 55;
-              const renk = zayif ? RUST : oran >= 80 ? TEAL : GOLD;
-              return (
-                <div key={o.konu_adi} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.25 + i * 0.05}s` }}>
-                  <div style={{ width: 110, fontSize: 13, color: "var(--ink)", fontWeight: 500 }}>{o.konu_adi}</div>
-                  <ProgressBar oran={oran} color={renk} delay={i * 60} />
-                  <div className="mono" style={{ width: 42, textAlign: "right", fontSize: 13, color: "var(--muted)" }}>
-                    <AnimatedNumber value={oran} suffix="%" />
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Konu Bazlı Performans</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {konuOzetleri.map((o) => {
+                const oran = oranHesapla(o);
+                const zayif = oran < 55;
+                return (
+                  <div key={o.konu_adi}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+                        {o.konu_adi}
+                        {zayif && <Badge variant="brick">Ağırlık ver</Badge>}
+                      </span>
+                      <span className="tabular" style={{ fontSize: 13, fontWeight: 600, color: zayif ? RUST : TEAL }}>{oran}%</span>
+                    </div>
+                    <ProgressBar pct={oran} color={zayif ? RUST : TEAL} />
                   </div>
-                  {zayif && <span className="badge-weak">Ağırlık ver</span>}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.25s" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-              <h2 className="card-title" style={{ marginBottom: 0 }}>Tekrar Havuzu</h2>
-              <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>{kalanTekrar} soru bekliyor</span>
+                );
+              })}
             </div>
-            {havuz.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Tekrar edilecek soru yok.</p>}
-            {havuz.map((k, i) => (
-              <div key={k.sonuc_id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.3 + i * 0.04}s` }}>
-                <input type="checkbox" checked={k.cozuldu} onChange={() => toggleCozuldu(k)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
-                <div style={{ flex: 1, opacity: k.cozuldu ? 0.4 : 1, textDecoration: k.cozuldu ? "line-through" : "none", transition: "opacity 0.2s" }}>
-                  <p style={{ fontSize: 13 }}>{k.deneme_adi} — Soru {k.soru_no}</p>
-                  <p style={{ fontSize: 11, color: "var(--muted)" }}>{k.konu_adi} · {k.tarih}</p>
-                </div>
+          </Card>
+
+          <Card>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Tekrar Havuzu</h3>
+              <span className="metric-value" style={{ fontSize: 28, fontWeight: 700, color: GOLD }}>
+                <AnimatedNumber value={kalanTekrar} />
+              </span>
+            </div>
+            {kalanTekrar === 0 ? (
+              <p style={{ fontSize: 13, color: TEAL, fontWeight: 500 }}>Harika! Tüm tekrarlarını tamamladın. 🎉</p>
+            ) : (
+              <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
+                {havuz.map((k) => (
+                  <label key={k.sonuc_id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px", cursor: "pointer" }}>
+                    <Checkbox checked={k.cozuldu} onChange={() => toggleCozuldu(k)} />
+                    <span style={{ flex: 1, fontSize: 13, textDecoration: k.cozuldu ? "line-through" : "none", color: k.cozuldu ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>
+                      {k.deneme_adi} — Soru {k.soru_no}
+                    </span>
+                    <span style={{ fontSize: 11, color: "rgba(15,27,45,0.4)" }}>{k.tarih}</span>
+                  </label>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </Card>
         </>
       )}
     </div>
