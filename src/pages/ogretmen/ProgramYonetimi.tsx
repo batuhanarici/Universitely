@@ -3,7 +3,7 @@ import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueri
 import { haftalikProgramGetir, haftalikProgramKaydet } from "../../lib/programQueries";
 import { gorevSil } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
-import { Card, Select, Input, Textarea, Btn, Checkbox } from "../../components/ui";
+import { Card, Select, Input, Label, FormGroup, Checkbox, useToast } from "../../components/ui";
 
 const GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
@@ -31,16 +31,8 @@ function gunEkle(tarih: string, n: number): string {
   return formatTarih(d);
 }
 
-function tarihEtiketi(tarih: string): string {
-  const d = new Date(tarih + "T00:00:00");
-  const bugun = new Date();
-  bugun.setHours(0, 0, 0, 0);
-  const fark = Math.round((d.getTime() - bugun.getTime()) / 86400000);
-  if (fark === 0) return "Bugün";
-  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
-}
-
 export default function ProgramYonetimi() {
+  const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
   const [ogrenciId, setOgrenciId] = useState("");
   const [haftaTarih, setHaftaTarih] = useState(bugunIso());
@@ -97,6 +89,7 @@ export default function ProgramYonetimi() {
     );
     setYeniGorevler((y) => ({ ...y, [index]: "" }));
     setGorevler(await haftalikProgramGetir(ogrenciId, baslangic, bitis));
+    show("Görev eklendi ✓");
   }
 
   async function handleSil(id: string) {
@@ -106,84 +99,82 @@ export default function ProgramYonetimi() {
 
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
-  return (
-    <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
-      <div>
+  if (ogrenciler.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {toast}
         <h1 className="page-title">Haftalık Program</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Hafta: {gunler[0].tarih} – {bitis}</p>
-      </div>
-
-      {ogrenciler.length === 0 ? (
         <Card>
           <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>
             Henüz öğrencin yok. "Öğrenciler" sekmesinden davet kodu oluşturup öğrenci ekleyebilirsin.
           </p>
         </Card>
-      ) : (
-        <>
-          <Card>
-            <h3 className="section-title" style={{ marginBottom: 10, fontSize: 16 }}>Öğrenci &amp; Hafta</h3>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Select style={{ flex: 1, minWidth: 180 }} value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
-                {ogrenciler.map((o) => (
-                  <option key={o.id} value={o.id}>{o.ad_soyad}</option>
-                ))}
-              </Select>
-              <Input
-                type="date"
-                value={haftaTarih}
-                onChange={(e) => setHaftaTarih(e.target.value || bugunIso())}
-                style={{ flex: 1, minWidth: 150 }}
-              />
-            </div>
-          </Card>
+      </div>
+    );
+  }
 
-          {gunler.map((gun, i) => {
-            const liste = gunGorevleri.get(gun.tarih) ?? [];
-            return (
-              <Card key={gun.tarih} className="tape-accent">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>
-                    {gun.etiket} <span className="mono" style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)" }}>· {tarihEtiketi(gun.tarih)}</span>
-                  </h3>
-                  <span className="tabular" style={{ fontSize: 11.5, color: liste.some((g) => g.tamamlandi && !g.kontrol_edildi) ? "#A07C20" : "rgba(15,27,45,0.5)" }}>
-                    {liste.filter((g) => g.tamamlandi).length}/{liste.length}
-                  </span>
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+      <div>
+        <h1 className="page-title">Haftalık Program</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>{ogrenciler.find((o) => o.id === ogrenciId)?.ad_soyad} · {baslangic} — {bitis}</p>
+      </div>
+
+      <Card style={{ padding: "14px 20px" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <FormGroup style={{ minWidth: 180 }}>
+            <Label>Öğrenci</Label>
+            <Select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
+              {ogrenciler.map((o) => (
+                <option key={o.id} value={o.id}>{o.ad_soyad}</option>
+              ))}
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label>Hafta Başı</Label>
+            <Input type="date" value={haftaTarih} onChange={(e) => setHaftaTarih(e.target.value || bugunIso())} />
+          </FormGroup>
+        </div>
+      </Card>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, overflowX: "auto", minWidth: 900 }}>
+        {gunler.map((gun, i) => {
+          const liste = gunGorevleri.get(gun.tarih) ?? [];
+          const doneCount = liste.filter((g) => g.tamamlandi).length;
+          return (
+            <div key={gun.tarih} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="card" style={{ padding: "10px", borderTop: "3px solid #E4BB60", minHeight: 200 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0F1B2D" }}>{gun.etiket.slice(0, 3)}</span>
+                  {liste.length > 0 && <span style={{ fontSize: 10, color: "rgba(15,27,45,0.4)" }}>{doneCount}/{liste.length}</span>}
                 </div>
-
-                <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                   {liste.map((g) => (
-                    <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+                    <div key={g.id} style={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
                       <Checkbox checked={g.tamamlandi} readOnly />
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: 13.5, textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.5 : 1 }}>{g.baslik}</p>
-                        {g.tamamlandi && (
-                          <p style={{ fontSize: 11.5, color: g.kontrol_edildi ? "#2A9D8F" : "#A07C20" }}>
-                            {g.kontrol_edildi ? "✓ koç onayladı" : "koç onayı bekleniyor"}
-                          </p>
-                        )}
-                      </div>
-                      <Btn variant="ghost" size="sm" onClick={() => handleSil(g.id)}>Sil</Btn>
+                      <span style={{ flex: 1, fontSize: 11, lineHeight: 1.4, textDecoration: g.tamamlandi ? "line-through" : "none", color: g.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>{g.baslik}</span>
+                      <button
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#C4503A", padding: 0, opacity: 0.5 }}
+                        onClick={() => handleSil(g.id)}
+                        title="Görevi sil"
+                      >×</button>
                     </div>
                   ))}
-                  {liste.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 12.5 }}>Görev yok.</p>}
                 </div>
-
-                <Textarea
-                  rows={2}
-                  placeholder={"Görev ekle — her satıra bir görev"}
+                <textarea
+                  placeholder="Görev ekle…"
                   value={yeniGorevler[i] ?? ""}
                   onChange={(e) => setYeniGorevler((y) => ({ ...y, [i]: e.target.value }))}
-                  style={{ width: "100%", marginTop: 8 }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); gunGorevleriniEkle(i); } }}
+                  style={{ width: "100%", resize: "none", height: 48, fontSize: 11, padding: "4px 6px", border: "1px solid rgba(15,27,45,0.12)", borderRadius: 6, fontFamily: "var(--font-body)", background: "transparent", outline: "none", color: "#0F1B2D" }}
                 />
-                <Btn onClick={() => gunGorevleriniEkle(i)} disabled={!(yeniGorevler[i] ?? "").trim()} size="sm" style={{ marginTop: 6 }}>
-                  Ekle
-                </Btn>
-              </Card>
-            );
-          })}
-        </>
-      )}
+                <button className="btn btn-ghost btn-sm" style={{ width: "100%", marginTop: 4, fontSize: 11 }} onClick={() => gunGorevleriniEkle(i)}>+ Ekle</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

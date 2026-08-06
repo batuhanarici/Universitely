@@ -1,20 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import type { Deneme, DenemeTuru } from "../../types/database";
-import { Card, Select, ProgressBar, Badge } from "../../components/ui";
+import { Card, Select, Label, FormGroup, ProgressBar, Badge } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
 
-const TEAL = "#2A9D8F";
-const RUST = "#C4503A";
-const BOS = "#B8B2A6";
-const GOLD = "#E4BB60";
-const INK = "#0F1B2D";
+const tt = { contentStyle: { background: '#0F1B2D', border: 'none', borderRadius: 8, color: '#F4EFE4', fontSize: 12 } };
+const colors = ['#E4BB60', '#2A9D8F', '#C4503A', '#9A9FA8', '#0F1B2D'];
 
 function net(dogru: number, yanlis: number): number {
   return Math.round((dogru - yanlis / 4) * 10) / 10;
@@ -141,12 +137,9 @@ export default function SinifAnaliz() {
     return Array.from(map.entries())
       .map(([ders, o]) => ({
         ders,
-        dogru: o.dogru,
-        yanlis: o.yanlis,
-        bos: o.bos,
-        oran: o.dogru + o.yanlis + o.bos === 0 ? 0 : Math.round((o.dogru / (o.dogru + o.yanlis + o.bos)) * 100),
+        pct: o.dogru + o.yanlis + o.bos === 0 ? 0 : Math.round((o.dogru / (o.dogru + o.yanlis + o.bos)) * 100),
       }))
-      .sort((a, b) => a.oran - b.oran);
+      .sort((a, b) => a.pct - b.pct);
   }, [filtreliSatirlar]);
 
   const karsilastirma = useMemo(() => {
@@ -167,117 +160,115 @@ export default function SinifAnaliz() {
   }, [filtreliSatirlar, denemeFiltre, ogrenciOzetleri]);
 
   const maxNet = Math.max(...karsilastirma.map((k) => k.net), 0);
+  const ogrenciSatirlari = Array.from(ogrenciHaritasi.entries());
 
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h1 className="page-title">Sınıf Analiz</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Net trendi, sıralama ve ders bazlı başarı analizi</p>
+        <h1 className="page-title">Sınıf Analizi</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Filtrelenebilir çoklu grafik analizi</p>
       </div>
 
-      <Card style={{ marginTop: 20 }}>
-        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Filtreler</h3>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Select style={{ flex: 1, minWidth: 140 }} value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)}>
-            <option value="tumu">Tüm türler</option>
-            <option value="tyt">TYT</option>
-            <option value="ayt">AYT</option>
-            <option value="brans">Branş</option>
-          </Select>
-          <Select style={{ flex: 1, minWidth: 140 }} value={dersFiltre} onChange={(e) => setDersFiltre(e.target.value)}>
-            <option value="tumu">Tüm dersler</option>
-            {dersler.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </Select>
-          <Select style={{ flex: 1, minWidth: 160 }} value={denemeFiltre} onChange={(e) => setDenemeFiltre(e.target.value)}>
-            <option value="tumu">Tüm denemeler</option>
-            {denemeler.map((d) => (
-              <option key={d.id} value={d.id}>{d.ad}</option>
-            ))}
-          </Select>
+      <Card style={{ padding: "14px 20px" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <FormGroup style={{ minWidth: 120 }}>
+            <Label>Tür</Label>
+            <Select value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)}>
+              <option value="tumu">Tümü</option>
+              <option value="tyt">TYT</option>
+              <option value="ayt">AYT</option>
+              <option value="brans">Branş</option>
+            </Select>
+          </FormGroup>
+          <FormGroup style={{ minWidth: 140 }}>
+            <Label>Ders</Label>
+            <Select value={dersFiltre} onChange={(e) => setDersFiltre(e.target.value)}>
+              <option value="tumu">Tümü</option>
+              {dersler.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </Select>
+          </FormGroup>
+          <FormGroup style={{ minWidth: 180 }}>
+            <Label>Deneme</Label>
+            <Select value={denemeFiltre} onChange={(e) => setDenemeFiltre(e.target.value)}>
+              <option value="tumu">Tüm Denemeler</option>
+              {denemeler.map((d) => (
+                <option key={d.id} value={d.id}>{d.ad}</option>
+              ))}
+            </Select>
+          </FormGroup>
         </div>
       </Card>
 
       {filtreliSatirlar.length === 0 ? (
-        <Card style={{ marginTop: 16 }}>
+        <Card>
           <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu filtrelerle sonuç bulunamadı.</p>
         </Card>
       ) : (
         <>
-          <Card style={{ marginTop: 16 }}>
-            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Net Trendi</h3>
-            <ResponsiveContainer width="100%" height={260}>
+          <Card className="tape-accent">
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Net Trendi</h3>
+            <ResponsiveContainer width="100%" height={220}>
               <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="ad" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 12 }} domain={["dataMin - 2", "dataMax + 2"]} />
-                <Tooltip formatter={(v: any) => `${v} net`} />
-                <Legend iconType="plainline" wrapperStyle={{ fontSize: 11 }} />
-                {Object.keys(ogrenciHaritasi).length > 0 && (
-                  Array.from(ogrenciHaritasi.entries()).map(([id, ad]) => (
-                    <Line key={id} type="monotone" dataKey={ad} name={ad} stroke="#cfd6e0" strokeWidth={1.2} dot={false} animationDuration={600} />
-                  ))
-                )}
-                <Line type="monotone" dataKey="Sınıf ort." stroke={GOLD} strokeWidth={3} dot={{ r: 3, fill: GOLD }} animationDuration={700} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" />
+                <XAxis dataKey="ad" tick={{ fontSize: 11, fill: 'rgba(15,27,45,0.4)' }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11, fill: 'rgba(15,27,45,0.4)' }} axisLine={false} tickLine={false} />
+                <Tooltip {...tt} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                {ogrenciSatirlari.map(([id, ad], i) => (
+                  <Line key={id} type="monotone" dataKey={ad} name={ad} stroke={colors[i % colors.length]} strokeWidth={1.5} dot={false} />
+                ))}
+                <Line type="monotone" dataKey="Sınıf ort." stroke={colors[0]} strokeWidth={2.5} strokeDasharray="5 5" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </Card>
 
-          <Card style={{ marginTop: 16 }}>
-            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenci Sıralaması</h3>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {ogrenciOzetleri.map((o, i) => (
-                <div key={o.ad} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                  <span className="tabular" style={{ width: 26, fontSize: 13, color: i === 0 ? "#A07C20" : "rgba(15,27,45,0.5)", fontWeight: 700 }}>#{i + 1}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13.5, fontWeight: 600 }}>{o.ad}</p>
-                    <p className="tabular" style={{ fontSize: 11, color: "rgba(15,27,45,0.5)" }}>{o.dogru}D {o.yanlis}Y {o.bos}B</p>
+          <div className="grid-2">
+            <Card>
+              <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenci Sıralaması</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {ogrenciOzetleri.map((s, i) => (
+                  <div key={s.ad} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "rgba(15,27,45,0.2)", minWidth: 24 }}>{i + 1}</span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{s.ad}</span>
+                    <div style={{ width: 80 }}><ProgressBar pct={maxNet === 0 ? 0 : (s.net / maxNet) * 100} color="#E4BB60" /></div>
+                    <span className="tabular" style={{ fontSize: 14, fontWeight: 700, minWidth: 40 }}>{s.net}</span>
                   </div>
-                  <div style={{ width: 120 }}><ProgressBar pct={maxNet === 0 ? 0 : Math.max(0, (o.net / maxNet) * 100)} color={GOLD} /></div>
-                  <span className="tabular" style={{ width: 54, textAlign: "right", fontSize: 15, fontWeight: 700 }}>{o.net}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+                ))}
+              </div>
+            </Card>
 
-          <Card style={{ marginTop: 16 }}>
-            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Ders Başarı Analizi</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={dersAnalizi}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="ders" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="dogru" name="Doğru" stackId="a" fill={TEAL} animationDuration={700} />
-                <Bar dataKey="yanlis" name="Yanlış" stackId="a" fill={RUST} animationDuration={700} />
-                <Bar dataKey="bos" name="Boş" stackId="a" fill={BOS} radius={[3, 3, 0, 0]} animationDuration={700} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div style={{ marginTop: 10 }}>
-              {dersAnalizi.map((d) => (
-                <div key={d.ders} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-                  <span style={{ width: 140, fontSize: 12.5, fontWeight: 500 }}>{d.ders}</span>
-                  <div style={{ flex: 1 }}><ProgressBar pct={d.oran} color={d.oran < 55 ? RUST : d.oran >= 80 ? TEAL : GOLD} /></div>
-                  <span className="tabular" style={{ width: 44, textAlign: "right", fontSize: 12, color: "rgba(15,27,45,0.5)" }}>{d.oran}%</span>
-                  {d.oran < 55 && <Badge variant="brick">zayıf</Badge>}
-                </div>
-              ))}
-            </div>
-          </Card>
+            <Card>
+              <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Ders Başarı Analizi</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {dersAnalizi.map((s) => (
+                  <div key={s.ders}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 500 }}>
+                        {s.ders}
+                        {s.pct < 55 && <Badge variant="brick">Zayıf</Badge>}
+                      </span>
+                      <span className="tabular" style={{ fontSize: 12, fontWeight: 700, color: s.pct < 55 ? '#C4503A' : '#2A9D8F' }}>{s.pct}%</span>
+                    </div>
+                    <ProgressBar pct={s.pct} color={s.pct < 55 ? '#C4503A' : '#2A9D8F'} />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
 
-          <Card style={{ marginTop: 16 }}>
-            <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenci Karşılaştırma (net)</h3>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={karsilastirma}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="ad" tick={{ fontSize: 10.5 }} interval={0} angle={-25} textAnchor="end" height={70} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v: any) => `${v} net`} />
-                <Bar dataKey="net" name="Net" fill={INK} radius={[4, 4, 0, 0]} animationDuration={700} />
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Öğrenci Net Karşılaştırma</h3>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={karsilastirma} barSize={36}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" />
+                <XAxis dataKey="ad" tick={{ fontSize: 11, fill: 'rgba(15,27,45,0.4)' }} axisLine={false} tickLine={false} interval={0} angle={-25} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11, fill: 'rgba(15,27,45,0.4)' }} axisLine={false} tickLine={false} />
+                <Tooltip {...tt} />
+                <Bar dataKey="net" fill="#0F1B2D" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
             <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.5)", marginTop: 6 }}>

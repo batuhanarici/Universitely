@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
-import { Card, ProgressBar } from "../../components/ui";
-import { AnimatedNumber } from "../../components/ui";
+import { kocOgrencileri } from "../../lib/ogrenciYonetimQueries";
+import { Card, StatusDot } from "../../components/ui";
 
 interface OgrenciOzet {
   ogrenci_id: string;
   ad_soyad: string;
+  aktif: boolean;
   dogru: number;
   yanlis: number;
   bos: number;
@@ -25,7 +26,7 @@ function oranHesapla(dogru: number, yanlis: number, bos: number) {
   return toplam === 0 ? 0 : Math.round((dogru / toplam) * 100);
 }
 
-function ozetleriHesapla(satirlar: SinifSonucSatiri[]) {
+function ozetleriHesapla(satirlar: SinifSonucSatiri[], aktifHaritasi: Map<string, boolean>) {
   const ogrenciMap = new Map<string, { ad_soyad: string; dogru: number; yanlis: number; bos: number }>();
   const ogrenciKonuMap = new Map<string, Map<string, { dogru: number; yanlis: number; bos: number }>>();
   const konuGenelMap = new Map<string, { dogru: number; yanlis: number; bos: number }>();
@@ -55,7 +56,8 @@ function ozetleriHesapla(satirlar: SinifSonucSatiri[]) {
       if (oran < enZayifOran) { enZayifOran = oran; enZayifKonu = konu; }
     }
     return {
-      ogrenci_id: id, ad_soyad: o.ad_soyad, dogru: o.dogru, yanlis: o.yanlis, bos: o.bos,
+      ogrenci_id: id, ad_soyad: o.ad_soyad, aktif: aktifHaritasi.get(id) ?? true,
+      dogru: o.dogru, yanlis: o.yanlis, bos: o.bos,
       net: Math.round((o.dogru - o.yanlis / 4) * 10) / 10,
       enZayifKonu, enZayifOran,
     };
@@ -76,13 +78,22 @@ function ozetleriHesapla(satirlar: SinifSonucSatiri[]) {
 
 export default function SinifGenel() {
   const [satirlar, setSatirlar] = useState<SinifSonucSatiri[]>([]);
+  const [aktifHaritasi, setAktifHaritasi] = useState<Map<string, boolean>>(new Map());
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
-    sinifSonuclariniGetir().then(setSatirlar).finally(() => setYukleniyor(false));
+    Promise.all([sinifSonuclariniGetir(), kocOgrencileri()])
+      .then(([s, o]) => {
+        setSatirlar(s);
+        const map = new Map<string, boolean>();
+        for (const ogr of o) map.set(ogr.id, ogr.aktif);
+        setAktifHaritasi(map);
+      })
+      .catch(() => {})
+      .finally(() => setYukleniyor(false));
   }, []);
 
-  const { ogrenciler, konular } = useMemo(() => ozetleriHesapla(satirlar), [satirlar]);
+  const { ogrenciler, konular } = useMemo(() => ozetleriHesapla(satirlar, aktifHaritasi), [satirlar, aktifHaritasi]);
 
   if (yukleniyor) return <p style={{ textAlign: "center", marginTop: 60 }}>Yükleniyor…</p>;
 
@@ -99,39 +110,54 @@ export default function SinifGenel() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
         <h1 className="page-title">Sınıf Genel Durumu</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>{ogrenciler.length} öğrenci · nete göre sıralı</p>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Nete göre sıralı öğrenci listesi</p>
       </div>
 
-      <Card className="tape-accent">
-        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenciler</h3>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {ogrenciler.map((o) => (
-            <div key={o.ogrenci_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600 }}>{o.ad_soyad}</p>
-                <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)" }}>En zayıf konu: {o.enZayifKonu} ({o.enZayifOran}%)</p>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <p className="metric-value" style={{ fontSize: 16, fontWeight: 700 }}>
-                  <AnimatedNumber value={o.net} decimals={1} />
-                </p>
-                <p className="tabular" style={{ fontSize: 11, color: "rgba(15,27,45,0.5)" }}>{o.dogru}D {o.yanlis}Y {o.bos}B</p>
-              </div>
-            </div>
-          ))}
-        </div>
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenciler — Nete Göre</h3>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ad</th>
+              <th>En Zayıf Konu</th>
+              <th>Net</th>
+              <th>D</th>
+              <th>Y</th>
+              <th>B</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ogrenciler.map((o, i) => (
+              <tr key={o.ogrenci_id}>
+                <td style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "rgba(15,27,45,0.25)" }}>{i + 1}</td>
+                <td>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <StatusDot active={o.aktif} />
+                    <span style={{ fontWeight: 500 }}>{o.ad_soyad}</span>
+                  </div>
+                </td>
+                <td style={{ fontSize: 12, color: "#C4503A" }}>{o.enZayifKonu}</td>
+                <td><span className="metric-value" style={{ fontSize: 20, fontWeight: 700 }}>{o.net}</span></td>
+                <td className="tabular" style={{ color: "#2A9D8F", fontWeight: 600 }}>{o.dogru}</td>
+                <td className="tabular" style={{ color: "#C4503A", fontWeight: 600 }}>{o.yanlis}</td>
+                <td className="tabular" style={{ color: "#9A9FA8", fontWeight: 600 }}>{o.bos}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Card>
 
       <Card>
-        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Sınıf Genelinde En Çok Ağırlık Verilmesi Gereken Konular</h3>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Ağırlık Verilmesi Gereken Konular</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {konular.map((k) => (
-            <div key={k.konu_adi} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 140, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k.konu_adi}</span>
-              <div style={{ flex: 1 }}><ProgressBar pct={(k.zayifOgrenciSayisi / ogrenciler.length) * 100} color={k.zayifOgrenciSayisi > 0 ? "#C4503A" : "#2A9D8F"} /></div>
-              <span className="tabular" style={{ width: 120, textAlign: "right", fontSize: 12, color: "rgba(15,27,45,0.5)" }}>
-                {k.zayifOgrenciSayisi} / {ogrenciler.length} öğrenci
-              </span>
+            <div key={k.konu_adi} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{k.konu_adi}</span>
+              <div style={{ height: 6, width: 120, background: "rgba(15,27,45,0.07)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(k.zayifOgrenciSayisi / ogrenciler.length) * 100}%`, background: "#C4503A", borderRadius: 3 }} />
+              </div>
+              <span style={{ fontSize: 12, color: "rgba(15,27,45,0.5)", minWidth: 60, textAlign: "right" }}>{k.zayifOgrenciSayisi}/{ogrenciler.length} öğrenci</span>
             </div>
           ))}
         </div>
