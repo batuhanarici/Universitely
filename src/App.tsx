@@ -19,6 +19,8 @@ import KocNotlar from "./pages/ogretmen/KocNotlar";
 import GorusmeYonetimi from "./pages/ogretmen/GorusmeYonetimi";
 import TopluBildirim from "./pages/ogretmen/TopluBildirim";
 import OgretmenRapor from "./pages/ogretmen/OgretmenRapor";
+import KocAI from "./pages/ogretmen/KocAI";
+import Muhasebe from "./pages/ogretmen/Muhasebe";
 import ProgramYonetimi from "./pages/ogretmen/ProgramYonetimi";
 import GorevYonetimi from "./pages/ogretmen/GorevYonetimi";
 import KaynakAta from "./pages/ogretmen/KaynakAta";
@@ -27,10 +29,12 @@ import VeliPaneli from "./pages/veli/VeliPaneli";
 import UYArrow from "./components/UYArrow";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor";
+type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe";
 
 const SEKMELER: { id: Sekme; etiket: string; icon: string }[] = [
   { id: "koc-dashboard", etiket: "Koç Paneli", icon: "🏠" },
+  { id: "koc-ai", etiket: "AI Risk Analizi", icon: "🧠" },
+  { id: "muhasebe", etiket: "Muhasebe", icon: "💰" },
   { id: "sinif", etiket: "Sınıf Genel Durumu", icon: "📊" },
   { id: "sinif-analiz", etiket: "Sınıf Analiz", icon: "📈" },
   { id: "ogrenciler", etiket: "Öğrenciler", icon: "🎓" },
@@ -101,6 +105,8 @@ function OgretmenUygulamasi() {
         {sekme === "gorusme-yonetim" && <GorusmeYonetimi />}
         {sekme === "toplu-bildirim" && <TopluBildirim />}
         {sekme === "ogretmen-rapor" && <OgretmenRapor />}
+        {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
+        {sekme === "muhasebe" && <Muhasebe />}
       </main>
     </div>
   );

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
-import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
-import { gorevleriGetir } from "../../lib/gorevQueries";
+import { kocAnalizVerisiniGetir } from "../../lib/kocAiQueries";
+import { kocRiskleriniHesapla, type OgrenciRiski } from "../../lib/aiMotoru";
+import { gorusmeleriGetir } from "../../lib/kocAraclariQueries";
+import type { KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
+import type { Gorusme, KocSonucSatiri, Gorev } from "../../types/database";
 import AnimatedNumber from "../../components/AnimatedNumber";
 
 function bugunIso(): string {
@@ -13,22 +15,35 @@ function oranHesapla(dogru: number, yanlis: number, bos: number) {
   return toplam === 0 ? 0 : Math.round((dogru / toplam) * 100);
 }
 
+const RISK_RENK: Record<string, string> = { yuksek: "var(--yanlis)", orta: "var(--gold-dim)", dusuk: "var(--dogru)" };
+const RISK_METIN: Record<string, string> = { yuksek: "yüksek", orta: "orta", dusuk: "düşük" };
+
 export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: string) => void }) {
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
-  const [satirlar, setSatirlar] = useState<SinifSonucSatiri[]>([]);
-  const [gorevler, setGorevler] = useState<{ ogrenci_id: string; baslik: string; tarih: string; tamamlandi: boolean; kontrol_edildi: boolean; tip: string }[]>([]);
+  const [satirlar, setSatirlar] = useState<KocSonucSatiri[]>([]);
+  const [gorevler, setGorevler] = useState<Gorev[]>([]);
+  const [riskler, setRiskler] = useState<OgrenciRiski[]>([]);
+  const [gorusmeler, setGorusmeler] = useState<Gorusme[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
-    Promise.all([kocOgrencileri(), sinifSonuclariniGetir(), gorevleriGetir()])
-      .then(([o, s, g]) => {
-        setOgrenciler(o);
-        setSatirlar(s);
-        setGorevler(g);
+    Promise.all([kocAnalizVerisiniGetir(), gorusmeleriGetir()])
+      .then(([v, g]) => {
+        setOgrenciler(v.ogrenciler);
+        setSatirlar(v.sonuclar);
+        setGorevler(v.gorevler);
+        setRiskler(kocRiskleriniHesapla(v));
+        setGorusmeler(g);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
+
+  const ogrenciAdi = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const o of ogrenciler) map.set(o.id, o.ad_soyad);
+    return map;
+  }, [ogrenciler]);
 
   const ogrenciOzet = useMemo(() => {
     const ogrenciMap = new Map<string, { dogru: number; yanlis: number; bos: number; konular: Map<string, { dogru: number; yanlis: number; bos: number }> }>();
@@ -40,8 +55,8 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
       if (s.durum === "dogru") o.dogru++;
       else if (s.durum === "yanlis") o.yanlis++;
       else o.bos++;
-      if (!o.konular.has(s.konu_adi)) o.konular.set(s.konu_adi, { dogru: 0, yanlis: 0, bos: 0 });
-      const k = o.konular.get(s.konu_adi)!;
+      if (!o.konular.has(s.konu_adi ?? "—")) o.konular.set(s.konu_adi ?? "—", { dogru: 0, yanlis: 0, bos: 0 });
+      const k = o.konular.get(s.konu_adi ?? "—")!;
       if (s.durum === "dogru") k.dogru++;
       else if (s.durum === "yanlis") k.yanlis++;
       else k.bos++;
@@ -65,6 +80,16 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
     }
     return liste;
   }, [satirlar]);
+
+  const riskliOgrenciler = useMemo(() => riskler.filter((r) => r.aktif).slice(0, 5), [riskler]);
+
+  const yaklasanGorusmeler = useMemo(() => {
+    const simdi = Date.now();
+    return gorusmeler
+      .filter((g) => g.durum === "planlandi" && new Date(g.tarih).getTime() >= simdi)
+      .sort((a, b) => a.tarih.localeCompare(b.tarih))
+      .slice(0, 5);
+  }, [gorusmeler]);
 
   const bugunGorevleri = gorevler.filter((g) => g.tarih === bugunIso());
   const bekleyenGorev = bugunGorevleri.filter((g) => !g.tamamlandi).length;
@@ -97,6 +122,27 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
       </div>
 
       <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
+        <h2 className="card-title">Riskli Öğrenciler</h2>
+        {riskliOgrenciler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Riskli öğrenci yok — herkes düşük riskte.</p>}
+        {riskliOgrenciler.map((r, i) => (
+          <div key={r.ogrenci_id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}>
+            <span style={{ width: 9, height: 9, borderRadius: 99, flexShrink: 0, background: RISK_RENK[r.seviye] }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{r.ad_soyad}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <div className="progress-track" style={{ flex: 1 }}>
+                  <div className="progress-fill" style={{ width: `${Math.max(r.riskSkoru, 2)}%`, background: RISK_RENK[r.seviye] }} />
+                </div>
+                <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>{r.riskSkoru}</span>
+                <span className="chip" style={{ fontSize: 10.5, background: RISK_RENK[r.seviye], color: "#fff" }}>{RISK_METIN[r.seviye]}</span>
+              </div>
+            </div>
+            <button onClick={() => onOgrenciSec(r.ogrenci_id)} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)", padding: "6px 12px", fontSize: 12 }}>Detay</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.12s" }}>
         <h2 className="card-title">Öğrencilerim</h2>
         {ogrenciler.length === 0 && (
           <p style={{ color: "var(--muted)", fontSize: 13 }}>
@@ -109,7 +155,7 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
             <div
               key={o.id}
               className="stagger-item"
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.04}s` }}
             >
               <span
                 style={{
@@ -130,13 +176,30 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
         })}
       </div>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
+      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.14s" }}>
+        <h2 className="card-title">Yaklaşan Görüşmeler</h2>
+        {yaklasanGorusmeler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Planlanmış yaklaşan görüşme yok.</p>}
+        {yaklasanGorusmeler.map((g, i) => (
+          <div key={g.id} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.04}s` }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{g.baslik}</p>
+              <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1 }}>
+                {ogrenciAdi.get(g.ogrenci_id) ?? "Öğrenci"} · {g.katilimci === "veli" ? "👪 Veli" : "🎓 Öğrenci"} ·{" "}
+                {new Date(g.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+            <button onClick={() => onOgrenciSec(g.ogrenci_id)} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)", padding: "6px 12px", fontSize: 12 }}>Detay</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.16s" }}>
         <h2 className="card-title">Bugünün Görevleri</h2>
         {bugunGorevleri.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bugün için atanmış görev yok.</p>}
         {bugunGorevleri.map((g, i) => {
           const o = ogrenciler.find((x) => x.id === g.ogrenci_id);
           return (
-            <div key={i} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.04}s` }}>
+            <div key={i} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.22 + i * 0.04}s` }}>
               <input type="checkbox" checked={g.tamamlandi} readOnly style={{ accentColor: "var(--gold-dim)" }} />
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 13.5, color: "var(--ink)", textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.5 : 1 }}>{g.baslik}</p>
