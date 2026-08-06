@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend,
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries";
+import { Card } from "../../components/ui";
 
-const TEAL = "var(--dogru)";
-const RUST = "var(--yanlis)";
-const BOS = "var(--bos)";
-const GOLD = "var(--gold-dim)";
+const TEAL = "#2A9D8F";
+const RUST = "#C4503A";
+const BOS = "#9A9FA8";
+const GOLD = "#E4BB60";
+
+const tt = { contentStyle: { background: "#0F1B2D", border: "none", borderRadius: 8, color: "#F4EFE4", fontSize: 12 } };
 
 interface KonuYanlis {
   konu_adi: string;
@@ -36,7 +38,7 @@ export default function Analiz() {
     }
     return Array.from(map.values())
       .sort((a, b) => a.tarih.localeCompare(b.tarih))
-      .map((o) => ({ ...o, net: Math.round((o.dogru - o.yanlis / 4) * 10) / 10 }));
+      .map((o) => ({ name: o.deneme_adi, net: Math.round((o.dogru - o.yanlis / 4) * 10) / 10 }));
   }, [sonuclar]);
 
   const dersBazli = useMemo(() => {
@@ -61,8 +63,9 @@ export default function Analiz() {
       else o.bos++;
     }
     return Array.from(map.values())
-      .sort((a, b) => b.yanlis + b.bos - (a.yanlis + a.bos))
-      .slice(0, 10);
+      .sort((a, b) => a.yanlis + a.bos - (b.yanlis + b.bos))
+      .slice(0, 10)
+      .map((o) => ({ name: o.konu_adi, yanlis: o.yanlis, bos: o.bos }));
   }, [sonuclar]);
 
   const konuBazli = useMemo(() => {
@@ -74,76 +77,89 @@ export default function Analiz() {
       if (s.durum === "dogru") o.dogru++;
     }
     return Array.from(map.values()).map((o) => ({
-      konu: o.konu,
-      basari: o.toplam === 0 ? 0 : Math.round((o.dogru / o.toplam) * 100),
-    })).sort((a, b) => a.basari - b.basari);
+      name: o.konu,
+      pct: o.toplam === 0 ? 0 : Math.round((o.dogru / o.toplam) * 100),
+    })).sort((a, b) => a.pct - b.pct);
   }, [sonuclar]);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Analiz</h1>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 className="page-title">Analiz</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Deneme performansı grafikleri</p>
+      </div>
 
       {sonuclar.length === 0 ? (
-        <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz sonuç girilmemiş — öğretmenin sonuç girince analizler burada görünecek.</p>
-        </div>
+        <Card>
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)", fontStyle: "italic" }}>
+            Henüz sonuç girilmemiş — öğretmenin sonuç girince analizler burada görünecek.
+          </p>
+        </Card>
       ) : (
         <>
-          <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-            <h2 className="card-title">Net Trendi</h2>
-            <ResponsiveContainer width="100%" height={220}>
+          <Card className="tape-accent">
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Net Grafiği</h3>
+            <ResponsiveContainer width="100%" height={200}>
               <LineChart data={netTrend}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="deneme_adi" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 12 }} domain={["dataMin - 2", "dataMax + 2"]} />
-                <Tooltip formatter={(v: any) => `${v} net`} />
-                <Line type="monotone" dataKey="net" name="Net" stroke={GOLD} strokeWidth={2.5} dot={{ r: 4, fill: GOLD }} animationDuration={700} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} domain={["auto", "auto"]} />
+                <Tooltip {...tt} />
+                <Line type="monotone" dataKey="net" name="Net" stroke={GOLD} strokeWidth={2.5} dot={{ r: 4, fill: GOLD, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} animationDuration={700} />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-            <h2 className="card-title">Ders Bazlı Doğru / Yanlış / Boş</h2>
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Ders Bazlı D/Y/B</h3>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={dersBazli}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="ders" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="dogru" name="Doğru" stackId="a" fill={TEAL} animationDuration={700} />
-                <Bar dataKey="yanlis" name="Yanlış" stackId="a" fill={RUST} animationDuration={700} />
-                <Bar dataKey="bos" name="Boş" stackId="a" fill={BOS} radius={[3, 3, 0, 0]} animationDuration={700} />
+              <BarChart data={dersBazli} barSize={20} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" />
+                <XAxis dataKey="ders" tick={{ fontSize: 10, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip {...tt} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="dogru" name="Doğru" fill={TEAL} radius={[2, 2, 0, 0]} animationDuration={700} />
+                <Bar dataKey="yanlis" name="Yanlış" fill={RUST} radius={[2, 2, 0, 0]} animationDuration={700} />
+                <Bar dataKey="bos" name="Boş" fill={BOS} radius={[2, 2, 0, 0]} animationDuration={700} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-            <h2 className="card-title">Konu Bazlı Başarı (zayıf → güçlü)</h2>
-            {konuBazli.map((k, i) => (
-              <div key={k.konu} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.2 + i * 0.04}s` }}>
-                <span style={{ width: 130, fontSize: 13, color: "var(--ink)", fontWeight: 500 }}>{k.konu}</span>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{ width: `${k.basari}%`, background: k.basari < 55 ? RUST : k.basari >= 80 ? TEAL : GOLD }} />
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>En Çok Yanlış/Boş Yapılan Konular</h3>
+            {yanlisKonuDagilimi.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#2A9D8F", fontWeight: 500 }}>Yanlış/boş soru yok, bravo! 🎉</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={yanlisKonuDagilimi} layout="vertical" barSize={14} barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,27,45,0.06)" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "rgba(15,27,45,0.4)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 11, fill: "#0F1B2D" }} axisLine={false} tickLine={false} />
+                  <Tooltip {...tt} />
+                  <Bar dataKey="yanlis" name="Yanlış" fill={RUST} radius={[0, 2, 2, 0]} animationDuration={700} />
+                  <Bar dataKey="bos" name="Boş" fill={BOS} radius={[0, 2, 2, 0]} animationDuration={700} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+
+          <Card>
+            <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Konu Bazlı Başarı Yüzdesi</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {konuBazli.map((k) => (
+                <div key={k.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 80, fontSize: 12, fontWeight: 500, color: k.pct < 55 ? RUST : "#0F1B2D" }}>{k.name}</span>
+                  <div style={{ flex: 1, height: 8, background: "rgba(15,27,45,0.07)", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${k.pct}%`, background: k.pct < 55 ? RUST : TEAL, borderRadius: 4, transition: "width 700ms ease" }} />
+                  </div>
+                  <span className="tabular" style={{ fontSize: 13, fontWeight: 600, width: 40, textAlign: "right", color: k.pct < 55 ? RUST : TEAL }}>{k.pct}%</span>
                 </div>
-                <span className="mono" style={{ width: 42, textAlign: "right", fontSize: 13, color: "var(--muted)" }}>{k.basari}%</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
-            <h2 className="card-title">En Çok Yanlış Yapılan Konular</h2>
-            {yanlisKonuDagilimi.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Yanlış/boş soru yok, bravo!</p>}
-            {yanlisKonuDagilimi.map((k, i) => (
-              <div key={k.konu_adi} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.25 + i * 0.04}s` }}>
-                <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)" }}>{k.konu_adi}</span>
-                <span className="mono" style={{ fontSize: 12.5, color: "var(--yanlis)" }}>{k.yanlis}Y</span>
-                <span className="mono" style={{ fontSize: 12.5, color: "var(--bos)" }}>{k.bos}B</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Card>
         </>
       )}
     </div>

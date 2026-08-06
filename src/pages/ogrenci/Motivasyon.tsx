@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motorVerisiniGetir, bugunIso, gunEkle, type MotorVerisi } from "../../lib/oneriMotoru";
 import { denemeleriGetir } from "../../lib/denemeQueries";
-import AnimatedNumber from "../../components/AnimatedNumber";
+import { Card, Badge, AnimatedNumber, ProgressBar } from "../../components/ui";
 
 interface Rozet {
   id: string;
@@ -93,8 +93,8 @@ export default function Motivasyon() {
     } catch {}
   }, [rozetler]);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
-  if (!veri) return <p className="mono" style={{ color: "var(--muted)" }}>Veri yüklenemedi.</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+  if (!veri) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Veri yüklenemedi.</p>;
 
   const streak = streakHesapla(veri.calismalar.map((c) => c.tarih));
   const toplamDk = veri.calismalar.reduce((a, c) => a + c.sure_dk, 0);
@@ -109,63 +109,75 @@ export default function Motivasyon() {
       : "Henüz çalışma kaydın yok. İlk Pomodoro'yu başlat, seri bugün başlasın!";
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Motivasyon</h1>
-
-      <div className="card stagger-item" style={{ animationDelay: "0.05s", textAlign: "center", borderLeft: "4px solid var(--gold)" }}>
-        <div style={{ fontSize: 40, lineHeight: 1 }}>🔥</div>
-        <p style={{ fontSize: 34, fontWeight: 800, color: "var(--ink)", marginTop: 4 }}>
-          <AnimatedNumber value={streak} />
-        </p>
-        <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10 }}>GÜNLÜK ÇALIŞMA SERİSİ</p>
-        <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>{mesaj}</p>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 className="page-title">Motivasyon</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Seriler ve başarı rozetleri</p>
       </div>
 
-      <div className="stagger-item" style={{ display: "flex", gap: 12, marginTop: 16, animationDelay: "0.1s" }}>
-        <div className="card" style={{ marginTop: 0, flex: 1, textAlign: "center" }}>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "var(--gold-dim)" }}><AnimatedNumber value={Math.round(toplamDk / 60)} suffix="s" /></p>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>toplam çalışma</p>
-        </div>
-        <div className="card" style={{ marginTop: 0, flex: 1, textAlign: "center" }}>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "var(--gold-dim)" }}><AnimatedNumber value={kazanilan} suffix={`/${rozetler.length}`} /></p>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>kazanılan rozet</p>
-        </div>
+      <div className="grid-3">
+        <Card className="tape-accent" style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 10 }}>Günlük Seri</p>
+          <p style={{ fontSize: 56, fontWeight: 800, color: "#E4BB60", lineHeight: 1 }}>
+            <AnimatedNumber value={streak} />
+          </p>
+          <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)", marginTop: 8, lineHeight: 1.5 }}>{mesaj}</p>
+        </Card>
+        <Card style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 10 }}>Toplam Çalışma</p>
+          <p style={{ fontSize: 40, fontWeight: 700, color: "#0F1B2D", lineHeight: 1 }}>
+            <AnimatedNumber value={Math.round(toplamDk / 60)} />
+            <span style={{ fontSize: 20, fontWeight: 600, color: "rgba(15,27,45,0.45)" }}> saat</span>
+          </p>
+        </Card>
+        <Card style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 10 }}>Kazanılan Rozet</p>
+          <p style={{ fontSize: 40, fontWeight: 700, color: "#E4BB60", lineHeight: 1 }}>
+            <AnimatedNumber value={kazanilan} />
+            <span style={{ fontSize: 20, fontWeight: 600, color: "rgba(15,27,45,0.45)" }}>/{rozetler.length}</span>
+          </p>
+        </Card>
       </div>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-        <h2 className="card-title">Rozetler</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 6 }}>
-          {rozetler.map((r, i) => (
-            <div
-              key={r.id}
-              className="stagger-item"
-              style={{
-                padding: 12, borderRadius: 12, border: "1px solid #eee",
-                background: r.eldeEdildiMi ? "rgba(228,187,96,0.10)" : "#fafafa",
-                opacity: r.eldeEdildiMi ? 1 : 0.55,
-                animationDelay: `${0.2 + i * 0.03}s`,
-                boxShadow: yeniIdler.includes(r.id) ? "0 0 0 2px var(--gold)" : "none",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 26, filter: r.eldeEdildiMi ? "none" : "grayscale(1)" }}>{r.eldeEdildiMi ? r.ikon : "🔒"}</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>
-                    {r.ad}
-                    {yeniIdler.includes(r.id) && <span style={{ marginLeft: 6, fontSize: 10.5, background: "var(--gold)", color: "#fff", padding: "1px 6px", borderRadius: 999 }}>YENİ</span>}
-                  </p>
-                  <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{r.aciklama}</p>
-                  {r.ilerleme && (
-                    <div className="progress-track" style={{ marginTop: 6 }}>
-                      <div className="progress-fill" style={{ width: `${Math.min(100, Math.round((r.ilerleme[0] / r.ilerleme[1]) * 100))}%`, background: r.eldeEdildiMi ? "var(--gold-dim)" : "#d9d9d9" }} />
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Rozetlerim</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
+          {rozetler.map((r) => {
+            const pct = r.ilerleme ? Math.min(100, Math.round((r.ilerleme[0] / r.ilerleme[1]) * 100)) : 0;
+            return (
+              <div
+                key={r.id}
+                style={{
+                  position: "relative",
+                  padding: 14,
+                  borderRadius: 16,
+                  border: r.eldeEdildiMi ? "1px solid rgba(228,187,96,0.55)" : "1px solid rgba(15,27,45,0.08)",
+                  background: r.eldeEdildiMi ? "rgba(228,187,96,0.07)" : "#FAFAFA",
+                  boxShadow: yeniIdler.includes(r.id) ? "0 0 0 2px rgba(228,187,96,0.5)" : "none",
+                }}
+              >
+                {yeniIdler.includes(r.id) && (
+                  <span style={{ position: "absolute", top: 8, right: 8 }}>
+                    <Badge variant="brick">YENİ</Badge>
+                  </span>
+                )}
+                <div style={{ fontSize: 28, marginBottom: 8, minHeight: 34 }}>{r.eldeEdildiMi ? r.ikon : "🔒"}</div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#0F1B2D", marginBottom: 3 }}>{r.ad}</p>
+                <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.55)", lineHeight: 1.5, marginBottom: r.ilerleme ? 10 : 0 }}>{r.aciklama}</p>
+                {r.ilerleme && (
+                  <div>
+                    <ProgressBar pct={pct} color={r.eldeEdildiMi ? "#E4BB60" : "#D9D9D9"} />
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <span className="tabular" style={{ fontSize: 10, fontWeight: 700, color: "rgba(15,27,45,0.5)" }}>{pct}%</span>
+                      <span className="tabular" style={{ fontSize: 10, fontWeight: 700, color: "rgba(15,27,45,0.4)" }}>{r.ilerleme[0]}/{r.ilerleme[1]}</span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

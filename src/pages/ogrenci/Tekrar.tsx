@@ -1,12 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { tekrarPlanlariniGetir, tekrarPlanEkle, tekrarPlanYapildi, tekrarPlanSil } from "../../lib/tekrarPlanQueries";
 import type { TekrarPlan } from "../../types/database";
+import { Card, Btn, Input, Label, FormGroup, Checkbox, Badge, EmptyState, useToast } from "../../components/ui";
+import { Icon } from "../../components/Icon";
 
 function bugunIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function relativeDate(tarih: string): string {
+  const d = new Date(tarih + "T00:00:00");
+  const bugun = new Date();
+  bugun.setHours(0, 0, 0, 0);
+  const fark = Math.round((d.getTime() - bugun.getTime()) / 86400000);
+  if (fark === 0) return "Bugün";
+  if (fark === 1) return "Yarın";
+  if (fark === -1) return "Dün";
+  return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+}
+
 export default function Tekrar() {
+  const { toast, show } = useToast();
   const [planlar, setPlanlar] = useState<TekrarPlan[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [aciklama, setAciklama] = useState("");
@@ -16,17 +30,20 @@ export default function Tekrar() {
     tekrarPlanlariniGetir().then(setPlanlar).catch(() => {}).finally(() => setYukleniyor(false));
   }, []);
 
-  async function handleEkle() {
+  async function handleEkle(e: React.FormEvent) {
+    e.preventDefault();
     if (!aciklama.trim()) return;
     const yeni = await tekrarPlanEkle(aciklama.trim(), null, planTarihi);
     setPlanlar((p) => [...p, yeni]);
     setAciklama("");
+    show("Tekrar planına eklendi ✓");
   }
 
   async function toggleYapildi(p: TekrarPlan) {
     const yeni = !p.yapildi;
     setPlanlar((ps) => ps.map((x) => (x.id === p.id ? { ...x, yapildi: yeni } : x)));
     await tekrarPlanYapildi(p.id, yeni);
+    show("Kaydedildi ✓");
   }
 
   async function handleSil(id: string) {
@@ -36,54 +53,75 @@ export default function Tekrar() {
 
   const bugun = bugunIso();
   const bugunku = useMemo(() => planlar.filter((p) => p.plan_tarihi === bugun && !p.yapildi), [planlar, bugun]);
-  const yapilmamis = useMemo(() => planlar.filter((p) => p.plan_tarihi !== bugun && !p.yapildi), [planlar, bugun]);
+  const gelecek = useMemo(() => planlar.filter((p) => p.plan_tarihi !== bugun && !p.yapildi), [planlar, bugun]);
   const tamamlananlar = useMemo(() => planlar.filter((p) => p.yapildi), [planlar]);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
-  function Satir({ p, i }: { p: TekrarPlan; i: number }) {
+  function RepItem({ p }: { p: TekrarPlan }) {
     return (
-      <div className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}>
-        <input type="checkbox" checked={p.yapildi} onChange={() => toggleYapildi(p)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 13.5, color: "var(--ink)", textDecoration: p.yapildi ? "line-through" : "none", opacity: p.yapildi ? 0.5 : 1 }}>{p.aciklama}</p>
-          <p style={{ fontSize: 11.5, color: "var(--muted)" }}>{p.plan_tarihi}</p>
-        </div>
-        <button onClick={() => handleSil(p.id)} style={{ border: "none", background: "none", color: "var(--yanlis)", fontSize: 12 }}>Sil</button>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
+        <Checkbox checked={p.yapildi} onChange={() => toggleYapildi(p)} />
+        <span style={{ flex: 1, fontSize: 13, textDecoration: p.yapildi ? "line-through" : "none", color: p.yapildi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>{p.aciklama}</span>
+        <span style={{ fontSize: 11, color: "rgba(15,27,45,0.4)" }}>{relativeDate(p.plan_tarihi)}</span>
+        <button className="btn btn-danger btn-sm" onClick={() => handleSil(p.id)}><Icon name="trash" size={13} /></button>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Tekrar Planı</h1>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+      <div>
+        <h1 className="page-title">Tekrar Planı</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Aralıklı tekrar planla ve tamamla</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Yeni Tekrar Ekle</h2>
-        <input className="input" style={{ width: "100%" }} value={aciklama} onChange={(e) => setAciklama(e.target.value)} placeholder="Tekrar edilecek konu / soru" onKeyDown={(e) => e.key === "Enter" && handleEkle()} />
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          <input className="input" type="date" value={planTarihi} onChange={(e) => setPlanTarihi(e.target.value)} style={{ flex: 1 }} />
-          <button onClick={handleEkle} disabled={!aciklama.trim()} className="btn btn-primary">Ekle</button>
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Yeni Tekrar Ekle</h3>
+        <form onSubmit={handleEkle} style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <FormGroup style={{ flex: 1, minWidth: 220 }}>
+            <Label>Konu / Soru Açıklaması *</Label>
+            <Input placeholder="Fonksiyonlar — TYT q.12" value={aciklama} onChange={(e) => setAciklama(e.target.value)} required />
+          </FormGroup>
+          <FormGroup>
+            <Label>Tarih</Label>
+            <Input type="date" value={planTarihi} onChange={(e) => setPlanTarihi(e.target.value)} />
+          </FormGroup>
+          <Btn variant="primary" type="submit" size="sm"><Icon name="plus" size={14} /> Ekle</Btn>
+        </form>
+      </Card>
+
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Bugün</h3>
+          <Badge variant={bugunku.length > 0 ? "brick" : "teal"}>{bugunku.length} bekliyor</Badge>
         </div>
-      </div>
+        {bugunku.length === 0 ? (
+          <EmptyState icon="✅" title="Bugünkü tekrarlar tamam!" desc="Yarın için plan hazırla." />
+        ) : (
+          <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
+            {bugunku.map((p) => <RepItem key={p.id} p={p} />)}
+          </div>
+        )}
+      </Card>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-        <h2 className="card-title">Bugün ({bugunku.length})</h2>
-        {bugunku.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bugün için tekrar yok.</p>}
-        {bugunku.map((p, i) => <Satir key={p.id} p={p} i={i} />)}
-      </div>
-
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-        <h2 className="card-title">Gelecek Tekrarlar ({yapilmamis.length})</h2>
-        {yapilmamis.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Planlanmış tekrar yok.</p>}
-        {yapilmamis.map((p, i) => <Satir key={p.id} p={p} i={i} />)}
-      </div>
+      {gelecek.length > 0 && (
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Gelecek Tekrarlar</h3>
+          <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
+            {gelecek.map((p) => <RepItem key={p.id} p={p} />)}
+          </div>
+        </Card>
+      )}
 
       {tamamlananlar.length > 0 && (
-        <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
-          <h2 className="card-title">Tamamlananlar ({tamamlananlar.length})</h2>
-          {tamamlananlar.map((p, i) => <Satir key={p.id} p={p} i={i} />)}
-        </div>
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Tamamlananlar</h3>
+          <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden", opacity: 0.6 }}>
+            {tamamlananlar.map((p) => <RepItem key={p.id} p={p} />)}
+          </div>
+        </Card>
       )}
     </div>
   );

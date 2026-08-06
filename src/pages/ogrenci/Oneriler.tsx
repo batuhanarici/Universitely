@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { motorVerisiniGetir, onerileriUret, type Oneri } from "../../lib/oneriMotoru";
+import { Card, Badge, Btn, EmptyState } from "../../components/ui";
 
-const RENK: Record<Oneri["oncelik"], { arka: string; yazi: string; etiket: string }> = {
-  yuksek: { arka: "rgba(255,214,102,0.18)", yazi: "var(--gold-dim)", etiket: "Öncelikli" },
-  orta: { arka: "#f5f2ec", yazi: "#8a6d3b", etiket: "Dikkat" },
-  dusuk: { arka: "rgba(46,183,124,0.12)", yazi: "var(--dogru)", etiket: "İyi Gidiyorsun" },
+const priorityVariant: Record<Oneri["oncelik"], { badge: "brick" | "gold" | "teal"; etiket: string }> = {
+  yuksek: { badge: "brick", etiket: "Öncelikli" },
+  orta: { badge: "gold", etiket: "Dikkat" },
+  dusuk: { badge: "teal", etiket: "İyi Gidiyorsun" },
 };
 
 export default function Oneriler() {
   const [oneriler, setOneriler] = useState<Oneri[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [yenileniyor, setYenileniyor] = useState(false);
+  const [yenilemeAnahtari, setYenilemeAnahtari] = useState(0);
 
   async function yukle(yenile: boolean) {
     if (yenile) setYenileniyor(true);
@@ -22,6 +24,7 @@ export default function Oneriler() {
     } finally {
       setYukleniyor(false);
       setYenileniyor(false);
+      if (yenile) setYenilemeAnahtari((k) => k + 1);
     }
   }
 
@@ -29,45 +32,41 @@ export default function Oneriler() {
     yukle(false);
   }, []);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>AI Koçum</h1>
-        <button onClick={() => yukle(true)} disabled={yenileniyor} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>
-          {yenileniyor ? "Analiz…" : "Yenile"}
-        </button>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1 className="page-title">AI Koçum</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Verilerine dayalı kişisel öneriler</p>
+        </div>
+        <Btn variant="ghost" size="sm" onClick={() => yukle(true)} disabled={yenileniyor}>
+          {yenileniyor ? "Analiz…" : "↻ Yenile"}
+        </Btn>
       </div>
 
-      <p className="stagger-item mono" style={{ color: "var(--muted)", fontSize: 12.5, marginBottom: 16 }}>
-        {oneriler.length === 0
-          ? "Verilerine göre henüz bir öneri üretilemedi. Biraz veri girdikçe (deneme sonucu, çalışma, yanlış) öneriler burada belirecek."
-          : "Verilerine göre üretilen bugünkü odak noktaların."}
-      </p>
-
-      {oneriler.map((on, i) => {
-        const r = RENK[on.oncelik];
-        return (
-          <div
-            key={i}
-            className="card stagger-item"
-            style={{ marginBottom: 12, animationDelay: `${0.05 + i * 0.05}s`, borderLeft: `3px solid ${on.oncelik === "yuksek" ? "var(--gold-dim)" : on.oncelik === "orta" ? "#c8b183" : "var(--dogru)"}` }}
-          >
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <span style={{ fontSize: 22, lineHeight: 1 }}>{on.ikon}</span>
+      {oneriler.length === 0 ? (
+        <Card>
+          <EmptyState icon="🤖" title="Henüz öneri yok" desc="Daha fazla deneme ve çalışma verisi ekledikçe öneriler oluşur." />
+        </Card>
+      ) : (
+        <div key={yenilemeAnahtari} className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {oneriler.map((on, i) => (
+            <Card key={`${yenilemeAnahtari}-${i}`} className="tape-accent" style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ fontSize: 28, flexShrink: 0, marginTop: 2 }}>{on.ikon}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>{on.kategori}</span>
-                  <span className="mono" style={{ fontSize: 11, color: r.yazi, background: r.arka, padding: "2px 8px", borderRadius: 999 }}>{r.etiket}</span>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
+                  <Badge variant="gray">{on.kategori}</Badge>
+                  <Badge variant={priorityVariant[on.oncelik].badge}>{priorityVariant[on.oncelik].etiket}</Badge>
                 </div>
-                <p style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ink)" }}>{on.baslik}</p>
-                <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>{on.detay}</p>
+                <h3 style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 600, color: "#0F1B2D", marginBottom: 6 }}>{on.baslik}</h3>
+                <p style={{ fontSize: 13, color: "rgba(15,27,45,0.65)", lineHeight: 1.6 }}>{on.detay}</p>
               </div>
-            </div>
-          </div>
-        );
-      })}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

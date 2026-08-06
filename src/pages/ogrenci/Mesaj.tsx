@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/AuthContext";
 import { benimOgretmenId, mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
+import { Card, Input, Btn } from "../../components/ui";
 import type { Mesaj } from "../../types/database";
+
+function zamanla(tarih: string): string {
+  return new Date(tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
 
 export default function Mesaj() {
   const { session } = useAuth();
@@ -39,39 +44,57 @@ export default function Mesaj() {
     }
   }
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 620, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Koç'a Mesaj</h1>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 className="page-title">Mesajlar</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Koçunla birebir sohbet</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <div ref={altRef} style={{ height: 360, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: "4px 2px" }}>
-          {mesajlar.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Henüz mesaj yok. Koçuna bir şey sormak için aşağıdan yazabilirsin.</p>}
+      <Card style={{ display: "flex", flexDirection: "column", height: 480, padding: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid rgba(15,27,45,0.08)" }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#0F1B2D", color: "#E4BB60", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>K</div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#0F1B2D" }}>Koçun</p>
+            <p style={{ fontSize: 12, color: "#2A9D8F", display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2A9D8F", display: "inline-block" }} />
+              Çevrimiçi
+            </p>
+          </div>
+        </div>
+
+        <div ref={altRef} style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+          {mesajlar.length === 0 && (
+            <p style={{ color: "rgba(15,27,45,0.45)", fontSize: 13, textAlign: "center", marginTop: 24 }}>Henüz mesaj yok. Koçuna bir şey sormak için aşağıdan yazabilirsin.</p>
+          )}
           {mesajlar.map((m) => {
             const benimki = m.gonderici_id === ben;
             return (
-              <div key={m.id} style={{ display: "flex", justifyContent: benimki ? "flex-end" : "flex-start" }}>
-                <div style={{
-                  maxWidth: "78%", padding: "8px 12px", borderRadius: 12,
-                  background: benimki ? "var(--ink)" : "var(--paper-dim)",
-                  color: benimki ? "var(--gold-glow)" : "var(--ink-text)",
-                  fontSize: 13.5, lineHeight: 1.5,
-                }}>
-                  <p>{m.icerik}</p>
-                  <p style={{ fontSize: 10, color: benimki ? "rgba(255,255,255,0.4)" : "var(--muted)", marginTop: 4 }}>
-                    {benimki ? "Sen" : "Koç"} · {new Date(m.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                  </p>
+              <div key={m.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: benimki ? "flex-end" : "flex-start" }}>
+                {!benimki && (
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#0F1B2D", color: "#E4BB60", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0, marginTop: 8 }}>K</div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: benimki ? "flex-end" : "flex-start", maxWidth: "70%" }}>
+                  <div className={benimki ? "bubble-self" : "bubble-other"}>{m.icerik}</div>
+                  <span style={{ fontSize: 10, color: "rgba(15,27,45,0.4)", marginTop: 4 }}>{zamanla(m.tarih)}</span>
                 </div>
               </div>
             );
           })}
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <input className="input" style={{ flex: 1 }} value={girdi} onChange={(e) => setGirdi(e.target.value)} placeholder="Mesajını yaz…" onKeyDown={(e) => e.key === "Enter" && handleGonder()} />
-          <button onClick={handleGonder} disabled={gonderiliyor || !girdi.trim()} className="btn btn-primary">Gönder</button>
+
+        <div style={{ display: "flex", gap: 8, padding: "14px 20px", borderTop: "1px solid rgba(15,27,45,0.08)" }}>
+          <Input
+            value={girdi}
+            onChange={(e) => setGirdi(e.target.value)}
+            placeholder="Mesajını yaz…"
+            onKeyDown={(e) => e.key === "Enter" && handleGonder()}
+          />
+          <Btn onClick={handleGonder} disabled={gonderiliyor || !girdi.trim()}>Gönder</Btn>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import { csvIndir } from "../../lib/exportUtils";
 import type { Deneme, DenemeTuru } from "../../types/database";
+import { Card, Btn } from "../../components/ui";
 
 interface DenemeOzet {
   id: string;
@@ -18,8 +19,6 @@ interface Grup {
   baslik: string;
   denemeler: DenemeOzet[];
 }
-
-const GOLD = "var(--gold-dim)";
 
 export default function Karsilastirma() {
   const [sonuclar, setSonuclar] = useState<SonucDetay[]>([]);
@@ -99,27 +98,28 @@ export default function Karsilastirma() {
     return satirlar;
   }, [gruplar]);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Deneme Karşılaştırma</h1>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1 className="page-title">Karşılaştırma</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Aynı şablon bazında ders net karşılaştırması</p>
+        </div>
         {gruplar.length > 0 && (
-          <button onClick={() => csvIndir("deneme_karsilastirma", csvSatirlari)} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>
-            CSV indir
-          </button>
+          <Btn variant="ghost" size="sm" onClick={() => csvIndir("karsilastirma", csvSatirlari)}>CSV İndir</Btn>
         )}
       </div>
 
       {gruplar.length === 0 ? (
-        <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-          <p style={{ color: "var(--muted)", fontSize: 13 }}>
-            Karşılaştırma için aynı şablondan en az 2 deneme gerekli. Öğretmenin aynı şablonla 2. denemeyi oluşturup sonuç girince burada ders bazlı net karşılaştırması görünecek.
+        <Card>
+          <p style={{ fontSize: 14, color: "rgba(15,27,45,0.6)" }}>
+            Aynı şablondan en az 2 deneme gereklidir. Öğretmenin aynı şablonla 2. denemeyi oluşturup sonuç girince burada ders bazlı net karşılaştırması görünecek.
           </p>
-        </div>
+        </Card>
       ) : (
-        gruplar.map((g, gi) => {
+        gruplar.map((g) => {
           const enIyiIndex = g.denemeler.reduce((best, o, i) => (o.net > g.denemeler[best].net ? i : best), 0);
           const dersler: string[] = [];
           for (const o of g.denemeler) {
@@ -128,19 +128,16 @@ export default function Karsilastirma() {
             }
           }
           return (
-            <div key={gi} className="card stagger-item" style={{ marginBottom: 16, animationDelay: `${0.05 + gi * 0.05}s`, overflowX: "auto" }}>
-              <h2 className="card-title">
-                {g.baslik}
-                <span className="mono" style={{ fontWeight: 400, fontSize: 12, color: "var(--muted)", marginLeft: 8 }}>{g.denemeler.length} deneme</span>
-              </h2>
-              <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 420, marginTop: 8 }}>
+            <Card key={g.baslik} style={{ overflowX: "auto" }}>
+              <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>{g.baslik}</h3>
+              <table className="data-table">
                 <thead>
                   <tr>
-                    <th style={thStil}>Ders</th>
+                    <th>Ders</th>
                     {g.denemeler.map((o, i) => (
-                      <th key={o.id} style={{ ...thStil, background: i === enIyiIndex ? "rgba(228,187,96,0.18)" : "#f7f4ec" }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700 }}>{o.ad}</div>
-                        <div className="mono" style={{ fontSize: 11, fontWeight: 400, color: "var(--muted)" }}>{o.tarih}</div>
+                      <th key={o.id} style={{ color: i === enIyiIndex ? "#A07C20" : undefined }}>
+                        {o.ad.split(" ").slice(-1)[0]} · {o.tarih.slice(5)}
+                        {i === enIyiIndex && " 🏅"}
                       </th>
                     ))}
                   </tr>
@@ -148,21 +145,21 @@ export default function Karsilastirma() {
                 <tbody>
                   {dersler.map((ders) => (
                     <tr key={ders}>
-                      <td style={tdStil}>{ders}</td>
-                      {g.denemeler.map((o) => {
+                      <td style={{ fontWeight: 500 }}>{ders}</td>
+                      {g.denemeler.map((o, i) => {
                         const net = o.dersNet.get(ders);
                         return (
-                          <td key={o.id} style={{ ...tdStil, textAlign: "center", color: net === undefined ? "var(--muted)" : net < 0 ? "var(--yanlis)" : "var(--ink)" }}>
+                          <td key={o.id} className="tabular" style={{ background: i === enIyiIndex ? "rgba(228,187,96,0.06)" : undefined, fontWeight: 600, color: net === undefined ? "rgba(15,27,45,0.4)" : net < 0 ? "#C4503A" : "#0F1B2D" }}>
                             {net === undefined ? "—" : net}
                           </td>
                         );
                       })}
                     </tr>
                   ))}
-                  <tr>
-                    <td style={{ ...tdStil, fontWeight: 700 }}>Toplam Net</td>
+                  <tr style={{ fontWeight: 700 }}>
+                    <td>Toplam Net</td>
                     {g.denemeler.map((o, i) => (
-                      <td key={o.id} style={{ ...tdStil, textAlign: "center", fontWeight: 700, color: i === enIyiIndex ? "#8a6a1f" : "var(--ink)", background: i === enIyiIndex ? "rgba(228,187,96,0.18)" : "transparent" }}>
+                      <td key={o.id} className="tabular metric-value" style={{ fontSize: 18, background: i === enIyiIndex ? "rgba(228,187,96,0.08)" : undefined, color: i === enIyiIndex ? "#A07C20" : "#0F1B2D" }}>
                         {o.net}
                         {i === enIyiIndex && <span style={{ marginLeft: 4 }}>🏅</span>}
                       </td>
@@ -170,29 +167,16 @@ export default function Karsilastirma() {
                   </tr>
                 </tbody>
               </table>
-            </div>
+            </Card>
           );
         })
       )}
+
       {gruplar.length > 0 && (
-        <p className="stagger-item mono" style={{ color: "var(--muted)", fontSize: 12, animationDelay: "0.3s" }}>
+        <p style={{ fontSize: 12, color: "rgba(15,27,45,0.4)" }}>
           🏅 ile en yüksek toplam net vurgulanır. Aynı şablondaki denemeler yan yana görünür.
         </p>
       )}
     </div>
   );
 }
-
-const thStil: React.CSSProperties = {
-  textAlign: "left",
-  padding: "8px 10px",
-  fontSize: 13,
-  color: "var(--ink)",
-  borderBottom: "2px solid " + GOLD,
-};
-const tdStil: React.CSSProperties = {
-  padding: "8px 10px",
-  fontSize: 12.5,
-  borderBottom: "1px solid #f2f2f2",
-  color: "var(--ink)",
-};

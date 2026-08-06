@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries";
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import type { DenemeTuru } from "../../types/database";
-import AnimatedNumber from "../../components/AnimatedNumber";
+import { Card, Badge, Btn } from "../../components/ui";
 import { csvIndir } from "../../lib/exportUtils";
 
 const TURLER: { deger: DenemeTuru; etiket: string }[] = [
@@ -10,6 +10,8 @@ const TURLER: { deger: DenemeTuru; etiket: string }[] = [
   { deger: "ayt", etiket: "AYT" },
   { deger: "brans", etiket: "Branş" },
 ];
+
+const badgeVariant: Record<string, "gold" | "teal" | "gray"> = { tyt: "gold", ayt: "teal", brans: "gray" };
 
 interface DenemeOzet {
   id: string;
@@ -20,6 +22,10 @@ interface DenemeOzet {
   yanlis: number;
   bos: number;
   net: number;
+}
+
+function formatTarih(tarih: string): string {
+  return new Date(tarih + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function Denemeler() {
@@ -66,15 +72,6 @@ export default function Denemeler() {
     return list.sort((a, b) => b.tarih.localeCompare(a.tarih));
   }, [sonuclar]);
 
-  const turlerMevcut = useMemo(() => {
-    const set = new Set<DenemeTuru>();
-    for (const o of denemeOzetleri) {
-      const t = turHarita.get(o.id);
-      if (t) set.add(t);
-    }
-    return set;
-  }, [denemeOzetleri, turHarita]);
-
   const gorunenler = useMemo(() => {
     return denemeOzetleri.filter((o) => {
       const t = turHarita.get(o.id) ?? null;
@@ -82,54 +79,90 @@ export default function Denemeler() {
     });
   }, [denemeOzetleri, turHarita, filtre]);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   function csvIndirTikla() {
-    const satirlar: (string | number)[][] = [["Deneme", "Ders", "Tarih", "Doğru", "Yanlış", "Boş", "Net"]];
+    const satirlar: (string | number)[][] = [["Deneme", "Tür", "Ders", "Tarih", "Doğru", "Yanlış", "Boş", "Net"]];
     for (const o of gorunenler) {
-      satirlar.push([o.deneme_adi, o.ders_adi, o.tarih, o.dogru, o.yanlis, o.bos, o.net]);
+      satirlar.push([o.deneme_adi, turHarita.get(o.id) ?? "", o.ders_adi, o.tarih, o.dogru, o.yanlis, o.bos, o.net]);
     }
-    csvIndir("denemelerim", satirlar);
+    csvIndir("denemeler", satirlar);
   }
 
   return (
-    <div style={{ maxWidth: 660, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Denemelerim</h1>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1 className="page-title">Denemeler</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Tüm deneme sonuçları</p>
+        </div>
         {gorunenler.length > 0 && (
-          <button onClick={csvIndirTikla} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>CSV indir</button>
+          <Btn variant="ghost" size="sm" onClick={csvIndirTikla}>CSV İndir</Btn>
         )}
       </div>
 
-      {turlerMevcut.size > 0 && (
-        <div className="stagger-item" style={{ display: "flex", gap: 6, marginBottom: 16, animationDelay: "0.05s" }}>
-          <button onClick={() => setFiltre("tumu")} className={`chip${filtre === "tumu" ? " active" : ""}`}>Tümü</button>
-          {TURLER.map((t) => turlerMevcut.has(t.deger) && (
-            <button key={t.deger} onClick={() => setFiltre(t.deger)} className={`chip${filtre === t.deger ? " active" : ""}`}>{t.etiket}</button>
-          ))}
-        </div>
-      )}
-
-      <div className="card stagger-item" style={{ animationDelay: "0.1s" }}>
-        {gorunenler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bu filtrede deneme yok.</p>}
-        {gorunenler.map((o, i) => (
-          <div key={o.id} className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{o.deneme_adi}</p>
-                {turHarita.get(o.id) && <span className="chip" style={{ padding: "1px 7px", fontSize: 10.5 }}>{turHarita.get(o.id)!.toUpperCase()}</span>}
-              </div>
-              <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>{o.ders_adi} · {o.tarih} · {o.dogru}D {o.yanlis}Y {o.bos}B</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p className="mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>
-                <AnimatedNumber value={o.net} decimals={1} />
-              </p>
-              <p style={{ fontSize: 10.5, color: "var(--muted)" }}>net</p>
-            </div>
-          </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button
+          onClick={() => setFiltre("tumu")}
+          style={{
+            padding: "6px 14px", borderRadius: 8,
+            border: filtre === "tumu" ? "1.5px solid #E4BB60" : "1.5px solid rgba(15,27,45,0.15)",
+            background: filtre === "tumu" ? "rgba(228,187,96,0.12)" : "transparent",
+            fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600,
+            color: filtre === "tumu" ? "#A07C20" : "#0F1B2D", cursor: "pointer",
+          }}
+        >
+          Tümü
+        </button>
+        {TURLER.map((t) => (
+          <button
+            key={t.deger}
+            onClick={() => setFiltre(t.deger)}
+            style={{
+              padding: "6px 14px", borderRadius: 8,
+              border: filtre === t.deger ? "1.5px solid #E4BB60" : "1.5px solid rgba(15,27,45,0.15)",
+              background: filtre === t.deger ? "rgba(228,187,96,0.12)" : "transparent",
+              fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600,
+              color: filtre === t.deger ? "#A07C20" : "#0F1B2D", cursor: "pointer",
+            }}
+          >
+            {t.etiket}
+          </button>
         ))}
       </div>
+
+      <Card>
+        {gorunenler.length === 0 ? (
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)", fontStyle: "italic" }}>
+            {denemeOzetleri.length === 0 ? "Henüz deneme sonucu girilmemiş — öğretmenin sonuç girince burada görünecek." : "Bu filtrede deneme yok."}
+          </p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr><th>Deneme</th><th>Tür</th><th>Ders</th><th>Tarih</th><th>D</th><th>Y</th><th>B</th><th>Net</th></tr>
+            </thead>
+            <tbody>
+              {gorunenler.map((o) => {
+                const tur = turHarita.get(o.id);
+                return (
+                  <tr key={o.id}>
+                    <td style={{ fontWeight: 500 }}>{o.deneme_adi}</td>
+                    <td>{tur ? <Badge variant={badgeVariant[tur] || "gray"}>{tur.toUpperCase()}</Badge> : "—"}</td>
+                    <td style={{ fontSize: 12, color: "rgba(15,27,45,0.6)" }}>{o.ders_adi}</td>
+                    <td style={{ fontSize: 12, color: "rgba(15,27,45,0.6)" }}>{formatTarih(o.tarih)}</td>
+                    <td className="tabular" style={{ color: "#2A9D8F", fontWeight: 600 }}>{o.dogru}</td>
+                    <td className="tabular" style={{ color: "#C4503A", fontWeight: 600 }}>{o.yanlis}</td>
+                    <td className="tabular" style={{ color: "#9A9FA8", fontWeight: 600 }}>{o.bos}</td>
+                    <td>
+                      <span className="metric-value" style={{ fontSize: 18, fontWeight: 700, color: "#0F1B2D" }}>{o.net}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Card>
     </div>
   );
 }

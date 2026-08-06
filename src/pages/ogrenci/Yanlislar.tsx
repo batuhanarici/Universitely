@@ -3,8 +3,11 @@ import { yanlislariGetir, yanlisEkle, yanlisCozulduIsaretle, yanlisSil } from ".
 import { konularVeDersler, type KonuDersBilgisi } from "../../lib/konuIlerlemeQueries";
 import { tekrarPlanEkle } from "../../lib/tekrarPlanQueries";
 import type { YanlisArsivi } from "../../types/database";
+import { Card, Btn, Input, Label, FormGroup, Select, Checkbox, EmptyState, Badge, useToast } from "../../components/ui";
+import { Icon } from "../../components/Icon";
 
 export default function Yanlislar() {
+  const { toast, show } = useToast();
   const [kayitlar, setKayitlar] = useState<YanlisArsivi[]>([]);
   const [konular, setKonular] = useState<KonuDersBilgisi[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -31,8 +34,9 @@ export default function Yanlislar() {
     return map;
   }, [konular]);
 
-  async function handleEkle() {
-    if (!aciklama.trim() && !kaynakAdi.trim()) return;
+  async function handleEkle(e: React.FormEvent) {
+    e.preventDefault();
+    if (!aciklama.trim()) return;
     const yeni = await yanlisEkle({
       konu_id: konuId || null,
       kaynak_adi: kaynakAdi.trim() || null,
@@ -41,10 +45,12 @@ export default function Yanlislar() {
       aciklama: aciklama.trim() || null,
     });
     setKayitlar((k) => [yeni, ...k]);
+    setKonuId("");
     setKaynakAdi("");
     setSayfaNo("");
     setSoruNo("");
     setAciklama("");
+    show("Yanlış eklendi ✓");
   }
 
   async function toggleCozuldu(k: YanlisArsivi) {
@@ -59,6 +65,7 @@ export default function Yanlislar() {
       k.id,
       new Date().toISOString().slice(0, 10)
     );
+    show("Tekrar planına eklendi ✓");
   }
 
   async function handleSil(id: string) {
@@ -69,66 +76,88 @@ export default function Yanlislar() {
   const cozulmeyenler = kayitlar.filter((k) => !k.cozuldu);
   const cozulenler = kayitlar.filter((k) => k.cozuldu);
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
-
-  function Satir({ k, i }: { k: YanlisArsivi; i: number }) {
-    const konu = k.konu_id ? konuHaritasi.get(k.konu_id) : null;
-    return (
-      <div className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.15 + i * 0.04}s` }}>
-        <input type="checkbox" checked={k.cozuldu} onChange={() => toggleCozuldu(k)} style={{ accentColor: "var(--gold-dim)", width: 16, height: 16 }} />
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 13.5, color: "var(--ink)", textDecoration: k.cozuldu ? "line-through" : "none", opacity: k.cozuldu ? 0.5 : 1 }}>
-            {k.aciklama || "Açıklamasız yanlış"}
-            {k.soru_no ? ` (Soru ${k.soru_no})` : ""}
-          </p>
-          <p style={{ fontSize: 11.5, color: "var(--muted)" }}>
-            {konu ? `${konu.ad} · ` : ""}{k.kaynak_adi || "kaynak yok"}{k.sayfa_no ? ` · sf. ${k.sayfa_no}` : ""} · {k.eklenme_tarihi}
-          </p>
-        </div>
-        {!k.cozuldu && (
-          <button onClick={() => tekrarinaEkle(k)} className="btn" style={{ padding: "5px 10px", background: "var(--ink)", color: "var(--gold-glow)", fontSize: 12 }}>
-            Tekrarına ekle
-          </button>
-        )}
-        <button onClick={() => handleSil(k.id)} style={{ border: "none", background: "none", color: "var(--yanlis)", fontSize: 12 }}>Sil</button>
-      </div>
-    );
-  }
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   return (
-    <div style={{ maxWidth: 620, margin: "0 auto" }}>
-      <h1 className="display stagger-item" style={{ fontSize: 24, color: "var(--ink)", marginBottom: 20 }}>Yanlışlar</h1>
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+      <div>
+        <h1 className="page-title">Yanlışlar</h1>
+        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Yanlış soru arşivi ve tekrar planı</p>
+      </div>
 
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Yanlış Soru Ekle</h2>
-        <input className="input" style={{ width: "100%" }} value={aciklama} onChange={(e) => setAciklama(e.target.value)} placeholder="Kısa açıklama / soru hakkında not" onKeyDown={(e) => e.key === "Enter" && handleEkle()} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-          <select className="input" value={konuId} onChange={(e) => setKonuId(e.target.value)}>
-            <option value="">Konu (isteğe bağlı)</option>
-            {konular.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
-          </select>
-          <input className="input" value={kaynakAdi} onChange={(e) => setKaynakAdi(e.target.value)} placeholder="Kaynak" />
-          <div style={{ display: "flex", gap: 8 }}>
-            <input className="input" type="number" value={sayfaNo} onChange={(e) => setSayfaNo(e.target.value)} placeholder="sf." style={{ width: 70 }} />
-            <input className="input" type="number" value={soruNo} onChange={(e) => setSoruNo(e.target.value)} placeholder="soru no" style={{ flex: 1 }} />
-          </div>
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Yanlış Soru Ekle</h3>
+        <form onSubmit={handleEkle} style={{ display: "grid", gridTemplateColumns: "3fr 1fr 1fr 1fr 1fr auto", gap: 10, alignItems: "flex-end" }}>
+          <FormGroup>
+            <Label>Açıklama *</Label>
+            <Input placeholder="Fonksiyon tanımı ve özellikleri" value={aciklama} onChange={(e) => setAciklama(e.target.value)} required />
+          </FormGroup>
+          <FormGroup>
+            <Label>Konu</Label>
+            <Select value={konuId} onChange={(e) => setKonuId(e.target.value)}>
+              <option value="">Seç…</option>
+              {konular.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label>Kaynak</Label>
+            <Input placeholder="Palme TYT" value={kaynakAdi} onChange={(e) => setKaynakAdi(e.target.value)} />
+          </FormGroup>
+          <FormGroup>
+            <Label>Sayfa</Label>
+            <Input type="number" min={0} placeholder="142" value={sayfaNo} onChange={(e) => setSayfaNo(e.target.value)} />
+          </FormGroup>
+          <FormGroup>
+            <Label>Soru No</Label>
+            <Input type="number" min={0} placeholder="12" value={soruNo} onChange={(e) => setSoruNo(e.target.value)} />
+          </FormGroup>
+          <Btn variant="primary" type="submit" size="sm"><Icon name="plus" size={14} /> Ekle</Btn>
+        </form>
+      </Card>
+
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Çözülmeyenler</h3>
+          <Badge variant="brick">{cozulmeyenler.length} bekliyor</Badge>
         </div>
-        <button onClick={handleEkle} disabled={!aciklama.trim() && !kaynakAdi.trim()} className="btn btn-primary" style={{ marginTop: 12 }}>
-          Ekle
-        </button>
-      </div>
-
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-        <h2 className="card-title">Çözülmeyen ({cozulmeyenler.length})</h2>
-        {cozulmeyenler.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Çözülmemiş yanlış yok.</p>}
-        {cozulmeyenler.map((k, i) => <Satir key={k.id} k={k} i={i} />)}
-      </div>
+        {cozulmeyenler.length === 0 ? (
+          <EmptyState icon="✅" title="Tüm yanlışları çözdün!" desc="Harika iş! Yeni yanlışlar eklenince burada görünür." />
+        ) : (
+          <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
+            {cozulmeyenler.map((k) => {
+              const konu = k.konu_id ? konuHaritasi.get(k.konu_id) : null;
+              return (
+                <div key={k.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
+                  <Checkbox checked={false} onChange={() => toggleCozuldu(k)} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "#0F1B2D", marginBottom: 2 }}>{k.aciklama || "Açıklamasız yanlış"}</p>
+                    <p style={{ fontSize: 11, color: "rgba(15,27,45,0.45)" }}>
+                      {konu && <>{konu.ad} · </>}{k.kaynak_adi && <>{k.kaynak_adi}</>}{k.sayfa_no != null && <> · s.{k.sayfa_no}</>}{k.soru_no != null && <> · s.{k.soru_no}</>} · {k.eklenme_tarihi}
+                    </p>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => tekrarinaEkle(k)}>Tekrara Ekle</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => handleSil(k.id)}><Icon name="trash" size={13} /></button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
 
       {cozulenler.length > 0 && (
-        <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.15s" }}>
-          <h2 className="card-title">Çözülen ({cozulenler.length})</h2>
-          {cozulenler.map((k, i) => <Satir key={k.id} k={k} i={i} />)}
-        </div>
+        <Card>
+          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Çözülenler</h3>
+          <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
+            {cozulenler.map((k) => (
+              <div key={k.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", opacity: 0.6 }}>
+                <Checkbox checked onChange={() => toggleCozuldu(k)} />
+                <p style={{ flex: 1, fontSize: 13, textDecoration: "line-through", color: "rgba(15,27,45,0.5)" }}>{k.aciklama || "Açıklamasız yanlış"}</p>
+                <Badge variant="teal">Çözüldü ✓</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
     </div>
   );

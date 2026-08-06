@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { motorVerisiniGetir, bugunIso, gunEkle, type MotorVerisi } from "../../lib/oneriMotoru";
-import AnimatedNumber from "../../components/AnimatedNumber";
-import ProgressBar from "../../components/ProgressBar";
+import { Card, KPICard, Btn, AnimatedNumber, useToast } from "../../components/ui";
 import { pdfYazdir } from "../../lib/exportUtils";
 
 function gunEtiketi(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+  return new Date(iso + "T00:00:00").toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
 }
 
 export default function HaftalikRapor() {
+  const { toast, show } = useToast();
   const [veri, setVeri] = useState<MotorVerisi | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
-  const [kopyalandi, setKopyalandi] = useState(false);
 
   useEffect(() => {
     motorVerisiniGetir().then(setVeri).catch(() => setVeri(null)).finally(() => setYukleniyor(false));
@@ -45,7 +44,6 @@ export default function HaftalikRapor() {
       }
     }
     const odak = Array.from(konuOdak.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    const odakMax = odak.length > 0 ? odak[0][1] : 1;
 
     const haftalikGorevler = veri.gorevler.filter((g) => g.tarih >= ilk && g.tarih <= bugun);
     const tamamlanan = haftalikGorevler.filter((g) => g.tamamlandi).length;
@@ -62,7 +60,7 @@ export default function HaftalikRapor() {
     const haftalikDenemeler = Array.from(denemeMap.values()).filter((d) => d.tarih >= ilk && d.tarih <= bugun);
     const ortalamaNet =
       haftalikDenemeler.length > 0
-        ? haftalikDenemeler.reduce((a, d) => a + (d.dogru - d.yanlis / 4), 0) / haftalikDenemeler.length
+        ? Math.round((haftalikDenemeler.reduce((a, d) => a + (d.dogru - d.yanlis / 4), 0) / haftalikDenemeler.length) * 10) / 10
         : null;
 
     const kitaplarToplam = veri.kitaplar.reduce((a, k) => a + k.toplam, 0);
@@ -77,17 +75,18 @@ export default function HaftalikRapor() {
       (odak.length > 0 ? `En çok ${odak[0][0]} üzerine yoğunlaştın. ` : "Düzenli bir konu odağın henüz oluşmadı. ") +
       `Haftalık ${haftalikGorevler.length} görevden ${tamamlanan} tanesini tamamladın. ` +
       (ortalamaNet !== null
-        ? `Hafta içinde ${haftalikDenemeler.length} denemede ortalaman ${Math.round(ortalamaNet * 10) / 10} net. `
+        ? `Hafta içinde ${haftalikDenemeler.length} denemede ortalaman ${ortalamaNet} net. `
         : "Bu hafta deneme sonucun girilmedi. ") +
       `Kaynak ilerlemen toplam %${kaynakYuzde}.`;
 
     return {
+      ilk,
+      bugun,
       gunler,
       maxDk,
       haftalikCalismaDk,
       gunlukOrt,
       odak,
-      odakMax,
       haftalikGorevler,
       tamamlanan,
       haftalikDenemeler,
@@ -99,124 +98,115 @@ export default function HaftalikRapor() {
     };
   }, [veri]);
 
+  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+  if (!rapor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Rapor üretilemedi.</p>;
+  const r = rapor;
+
+  const totalH = Math.floor(r.haftalikCalismaDk / 60);
+  const gorevYuzde = r.haftalikGorevler.length === 0 ? 0 : Math.round((r.tamamlanan / r.haftalikGorevler.length) * 100);
+
   async function kopyala() {
-    if (!rapor) return;
-    const metin = `ÜNİVERSİTELY HAFTALIK RAPOR\n${new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}\n\n` + rapor.ozet;
+    const metin = `ÜNİVERSİTELY HAFTALIK RAPOR\n${new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}\n\n` + r.ozet;
     try {
       await navigator.clipboard.writeText(metin);
-      setKopyalandi(true);
-      setTimeout(() => setKopyalandi(false), 1800);
+      show("Rapor kopyalandı ✓");
     } catch {}
   }
 
   function pdfIndir() {
-    if (!rapor) return;
     const tarih = new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
     pdfYazdir("Haftalık Rapor", tarih, [
       ["Ölçüt", "Değer"],
-      ["Özet", rapor.ozet],
-      ["Toplam Çalışma", `${Math.round((rapor.haftalikCalismaDk / 60) * 10) / 10} saat (günde ort. ${rapor.gunlukOrt} dk)`],
-      ["Görev Tamamlama", `${rapor.tamamlanan}/${rapor.haftalikGorevler.length}`],
-      ["Deneme Ortalaması", `${rapor.ortalamaNet !== null ? rapor.ortalamaNet : "—"} net (${rapor.haftalikDenemeler.length} deneme)`],
-      ["Kaynak İlerlemesi", `%${rapor.kaynakYuzde}`],
-      ["En Çok Çalışılan", rapor.odak.length > 0 ? rapor.odak.map(([konu, dk]) => `${konu} (${dk}dk)`).join(" · ") : "—"],
+      ["Özet", r.ozet],
+      ["Toplam Çalışma", `${Math.round((r.haftalikCalismaDk / 60) * 10) / 10} saat (günde ort. ${r.gunlukOrt} dk)`],
+      ["Görev Tamamlama", `${r.tamamlanan}/${r.haftalikGorevler.length}`],
+      ["Deneme Ortalaması", `${r.ortalamaNet !== null ? r.ortalamaNet : "—"} net (${r.haftalikDenemeler.length} deneme)`],
+      ["Kaynak İlerlemesi", `%${r.kaynakYuzde}`],
+      ["En Çok Çalışılan", r.odak.length > 0 ? r.odak.map(([konu, dk]) => `${konu} (${dk}dk)`).join(" · ") : "—"],
     ]);
   }
 
-  if (yukleniyor) return <p className="mono" style={{ color: "var(--muted)" }}>Yükleniyor…</p>;
-  if (!rapor) return <p className="mono" style={{ color: "var(--muted)" }}>Rapor üretilemedi.</p>;
-
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
-      <div className="stagger-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 className="display" style={{ fontSize: 24, color: "var(--ink)" }}>Haftalık Rapor</h1>
-        <button onClick={kopyala} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)", marginRight: 8 }}>
-          {kopyalandi ? "Kopyalandı ✓" : "Raporu Kopyala"}
-        </button>
-        <button onClick={pdfIndir} className="btn" style={{ background: "var(--ink)", color: "var(--gold-glow)" }}>PDF</button>
-      </div>
-
-      <div className="card stagger-item" style={{ animationDelay: "0.05s" }}>
-        <h2 className="card-title">Özet</h2>
-        <p style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.6 }}>{rapor.ozet}</p>
-      </div>
-
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.1s" }}>
-        <h2 className="card-title">Günlük Çalışma Süresi (son 7 gün)</h2>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 130, marginTop: 10 }}>
-          {rapor.gunler.map((g) => {
-            const yuzde = Math.round((g.dk / rapor.maxDk) * 100);
-            return (
-              <div key={g.tarih} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{g.dk > 0 ? `${g.dk}dk` : ""}</span>
-                <div
-                  style={{
-                    width: "100%", maxWidth: 44, height: `${Math.max(yuzde, 2)}%`, minHeight: 3,
-                    background: g.dk > 0 ? "var(--gold-dim)" : "#ececec", borderRadius: 6,
-                    transition: "height 0.6s ease",
-                  }}
-                />
-                <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{gunEtiketi(g.tarih)}</span>
-              </div>
-            );
-          })}
+    <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h1 className="page-title">Haftalık Rapor</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>{gunEtiketi(rapor.ilk)} – {gunEtiketi(rapor.bugun)}</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Btn variant="ghost" size="sm" onClick={kopyala}>Kopyala</Btn>
+          <Btn variant="primary" size="sm" onClick={pdfIndir}>PDF</Btn>
         </div>
       </div>
 
-      <div className="stagger-item" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16, animationDelay: "0.15s" }}>
-        <div className="card" style={{ marginTop: 0 }}>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 6 }}>Toplam Çalışma</p>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            <AnimatedNumber value={Math.round((rapor.haftalikCalismaDk / 60) * 10) / 10} decimals={1} /> saat
-          </p>
-          <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>günde ort. {rapor.gunlukOrt} dk</p>
-        </div>
-        <div className="card" style={{ marginTop: 0 }}>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 6 }}>Görev Tamamlama</p>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            <AnimatedNumber value={rapor.tamamlanan} />/{rapor.haftalikGorevler.length}
-          </p>
-          <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>haftalık görev</p>
-        </div>
-        <div className="card" style={{ marginTop: 0 }}>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 6 }}>Deneme Ortalaması</p>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            {rapor.ortalamaNet !== null ? <AnimatedNumber value={Math.round(rapor.ortalamaNet * 10) / 10} decimals={1} /> : "—"} net
-          </p>
-          <p className="mono" style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{rapor.haftalikDenemeler.length} deneme</p>
-        </div>
-        <div className="card" style={{ marginTop: 0 }}>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 6 }}>Kaynak İlerlemesi</p>
-          <p style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            <AnimatedNumber value={rapor.kaynakYuzde} suffix="%" />
-          </p>
-          <ProgressBar oran={rapor.kaynakYuzde} color="var(--gold-dim)" delay={300} />
-        </div>
-      </div>
+      <Card className="tape-accent">
+        <h3 className="section-title" style={{ marginBottom: 12, fontSize: 16 }}>Özet</h3>
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(15,27,45,0.75)" }}>{rapor.ozet}</p>
+      </Card>
 
-      <div className="card stagger-item" style={{ marginTop: 16, animationDelay: "0.2s" }}>
-        <h2 className="card-title">En Çok Çalıştığın Konular</h2>
-        {rapor.odak.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Bu hafta konu bazlı çalışma kaydı yok.</p>}
-        {rapor.odak.map(([konu, dk], i) => (
-          <div key={konu} className="stagger-item" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f2f2f2", animationDelay: `${0.25 + i * 0.05}s` }}>
-            <span style={{ flex: 1, fontSize: 13.5, color: "var(--ink)" }}>{konu}</span>
-            <div className="progress-track" style={{ width: 140 }}>
-              <div className="progress-fill" style={{ width: `${Math.round((dk / rapor.odakMax) * 100)}%`, background: "var(--gold-dim)" }} />
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>Günlük Çalışma Süresi</h3>
+        <div style={{ display: "flex", gap: 8, height: 120, alignItems: "flex-end" }}>
+          {rapor.gunler.map((g) => (
+            <div key={g.tarih} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <span className="tabular" style={{ fontSize: 10, color: "rgba(15,27,45,0.45)", fontWeight: 600 }}>{g.dk > 0 ? g.dk : ""}</span>
+              <div style={{
+                width: "100%", borderRadius: "3px 3px 0 0",
+                background: g.dk > 0 ? "#E4BB60" : "rgba(15,27,45,0.07)",
+                height: rapor.maxDk ? `${(g.dk / rapor.maxDk) * 90}px` : 4,
+                minHeight: 4,
+                transition: "height 700ms ease",
+              }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(15,27,45,0.5)" }}>{gunEtiketi(g.tarih).split(" ")[0]}</span>
             </div>
-            <span className="mono" style={{ width: 48, textAlign: "right", fontSize: 12.5, color: "var(--muted)" }}>{dk}dk</span>
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid-4">
+        <KPICard label="Toplam Çalışma" value={totalH} sub={`${rapor.gunlukOrt} dk/gün ort.`} />
+        <KPICard label="Görev Tamamlama" value={gorevYuzde} sub="% bu hafta" color="#2A9D8F" />
+        {rapor.ortalamaNet !== null ? (
+          <KPICard label="Deneme Ortalaması" value={rapor.ortalamaNet} sub={`${rapor.haftalikDenemeler.length} deneme`} decimals={1} color="#E4BB60" />
+        ) : (
+          <div className="card tape-accent" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 4 }}>Deneme Ortalaması</p>
+            <p className="metric-value" style={{ fontSize: 36, fontWeight: 700, color: "#E4BB60", lineHeight: 1 }}>—</p>
+            <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)", marginTop: 4 }}>bu hafta deneme yok</p>
           </div>
-        ))}
+        )}
+        <KPICard label="Kaynak İlerlemesi" value={rapor.kaynakYuzde} sub="% genel" color="#0F1B2D" />
       </div>
 
-      <div className="stagger-item" style={{ display: "flex", gap: 12, marginTop: 16, animationDelay: "0.25s" }}>
-        <div className="card" style={{ marginTop: 0, flex: 1, textAlign: "center" }}>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "var(--dogru)" }}>{rapor.cozulenYanlis}</p>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>çözülen yanlış</p>
-        </div>
-        <div className="card" style={{ marginTop: 0, flex: 1, textAlign: "center" }}>
-          <p style={{ fontSize: 20, fontWeight: 700, color: "var(--gold-dim)" }}>{rapor.tamamlananTekrar}</p>
-          <p className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>yapılan tekrar</p>
-        </div>
+      <Card>
+        <h3 className="section-title" style={{ marginBottom: 16, fontSize: 16 }}>En Çok Çalıştığın Konular</h3>
+        {rapor.odak.length === 0 ? (
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)", fontStyle: "italic" }}>Bu hafta konu bazlı çalışma kaydı yok.</p>
+        ) : (
+          rapor.odak.map(([konu, dk], i) => (
+            <div key={konu} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < rapor.odak.length - 1 ? "1px solid rgba(15,27,45,0.06)" : "none" }}>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: "#E4BB60", minWidth: 28 }}>{i + 1}</span>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{konu}</span>
+              <span className="tabular" style={{ fontSize: 14, fontWeight: 700, color: "#0F1B2D" }}>{dk} dk</span>
+            </div>
+          ))
+        )}
+      </Card>
+
+      <div className="grid-2">
+        <Card style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 4 }}>Çözülen Yanlış</p>
+          <span className="metric-value" style={{ fontSize: 32, fontWeight: 700, color: "#2A9D8F" }}>
+            <AnimatedNumber value={rapor.cozulenYanlis} />
+          </span>
+        </Card>
+        <Card style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 4 }}>Yapılan Tekrar</p>
+          <span className="metric-value" style={{ fontSize: 32, fontWeight: 700, color: "#2A9D8F" }}>
+            <AnimatedNumber value={rapor.tamamlananTekrar} />
+          </span>
+        </Card>
       </div>
     </div>
   );
