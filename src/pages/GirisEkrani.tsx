@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { davetKodunuDogrula } from "../lib/ogrenciYonetimQueries";
-import UYArrow from "../components/UYArrow";
+import { Card, Btn, Input, Label, FormGroup, Tabs } from "../components/ui";
+import { Icon } from "../components/Icon";
 
-type Mod = "giris" | "ogrenci" | "veli";
+type Tab = "Giriş Yap" | "Öğrenci Kaydı" | "Veli Kaydı";
 
 export default function GirisEkrani() {
-  const [mod, setMod] = useState<Mod>("giris");
+  const [tab, setTab] = useState<Tab>("Giriş Yap");
   const [email, setEmail] = useState("");
   const [sifre, setSifre] = useState("");
   const [adSoyad, setAdSoyad] = useState("");
@@ -15,15 +16,16 @@ export default function GirisEkrani() {
   const [bilgi, setBilgi] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
 
-  async function handleGonder() {
+  async function handleGonder(e: React.FormEvent) {
+    e.preventDefault();
     setHata("");
     setBilgi("");
     setGonderiliyor(true);
     try {
-      if (mod === "giris") {
+      if (tab === "Giriş Yap") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: sifre });
         if (error) throw error;
-      } else if (mod === "ogrenci") {
+      } else if (tab === "Öğrenci Kaydı") {
         if (!adSoyad.trim()) {
           setHata("Ad soyad gerekli.");
           return;
@@ -44,7 +46,7 @@ export default function GirisEkrani() {
         });
         if (error) throw error;
         setBilgi("Kayıt oluşturuldu. Şimdi giriş yapabilirsin — koçuna otomatik bağlanacaksın.");
-        setMod("giris");
+        setTab("Giriş Yap");
       } else {
         if (!adSoyad.trim()) {
           setHata("Ad soyad gerekli.");
@@ -61,7 +63,7 @@ export default function GirisEkrani() {
         });
         if (error) throw error;
         setBilgi("Veli kaydı oluşturuldu. Şimdi giriş yapabilirsin — çocuğunun hesabına bağlanacaksın.");
-        setMod("giris");
+        setTab("Giriş Yap");
       }
     } catch (e: any) {
       setHata(e.message ?? "Bir hata oluştu.");
@@ -71,114 +73,67 @@ export default function GirisEkrani() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--ink)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "radial-gradient(circle at 50% 30%, rgba(228,187,96,0.14), transparent 60%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ width: "100%", maxWidth: 360, padding: 24, position: "relative" }}>
-        <div className="stagger-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28, animationDelay: "0s" }}>
-          <UYArrow size={44} animateDraw color="#E4BB60" />
-          <h1 className="display" style={{ color: "white", fontSize: 24, marginTop: 12 }}>
+    <div style={{ minHeight: "100vh", background: "#F4EFE4", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="rule-lines" style={{ position: "fixed", inset: 0, pointerEvents: "none" }} />
+
+      <div className="anim-slide" style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 1 }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ width: 48, height: 48, background: "#0F1B2D", borderRadius: 12, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="ai" size={24} color="#E4BB60" />
+          </div>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 700, color: "#0F1B2D", letterSpacing: "-0.03em", marginBottom: 6 }}>
             Universitely
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4 }}>Deneme Takip Sistemi</p>
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)" }}>TYT/AYT sınavına giden yolunuz</p>
         </div>
 
-        <div
-          className="stagger-item"
-          style={{
-            background: "var(--ink-surface)",
-            border: "1px solid var(--ink-border)",
-            borderRadius: "var(--radius)",
-            padding: 24,
-            animationDelay: "0.1s",
-          }}
-        >
-          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(0,0,0,0.2)", padding: 4, borderRadius: 10 }}>
-            {(
-              [
-                { id: "giris", etiket: "Giriş Yap" },
-                { id: "ogrenci", etiket: "Öğrenci Kaydı" },
-                { id: "veli", etiket: "Veli Kaydı" },
-              ] as { id: Mod; etiket: string }[]
-            ).map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setMod(s.id)}
-                style={{
-                  flex: 1, padding: "8px 0", borderRadius: 7, border: "none", fontSize: 12.5, fontWeight: 600,
-                  background: mod === s.id ? "var(--gold)" : "transparent",
-                  color: mod === s.id ? "var(--ink)" : "rgba(255,255,255,0.6)",
-                  transition: "all 0.2s var(--ease)",
-                }}
-              >
-                {s.etiket}
-              </button>
-            ))}
-          </div>
+        <Card style={{ borderRadius: 14 }}>
+          <Tabs
+            tabs={["Giriş Yap", "Öğrenci Kaydı", "Veli Kaydı"]}
+            active={tab}
+            onChange={(t) => {
+              setTab(t as Tab);
+              setHata("");
+              setBilgi("");
+            }}
+          />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {mod !== "giris" && (
-              <input
-                value={adSoyad}
-                onChange={(e) => setAdSoyad(e.target.value)}
-                placeholder="Ad Soyad"
-                className="input"
-                style={{ background: "rgba(255,255,255,0.06)", borderColor: "var(--ink-border)", color: "white" }}
-              />
+          <form onSubmit={handleGonder} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+            {(tab === "Öğrenci Kaydı" || tab === "Veli Kaydı") && (
+              <FormGroup>
+                <Label>Ad Soyad</Label>
+                <Input placeholder="Adınız Soyadınız" value={adSoyad} onChange={(e) => setAdSoyad(e.target.value)} required />
+              </FormGroup>
             )}
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="E-posta"
-              type="email"
-              className="input"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "var(--ink-border)", color: "white" }}
-            />
-            <input
-              value={sifre}
-              onChange={(e) => setSifre(e.target.value)}
-              placeholder="Şifre"
-              type="password"
-              className="input"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "var(--ink-border)", color: "white" }}
-            />
-            {mod !== "giris" && (
-              <input
-                value={kod}
-                onChange={(e) => setKod(e.target.value.toUpperCase())}
-                placeholder={mod === "ogrenci" ? "Davet kodu (koçundan al)" : "Bağlantı kodu (çocuğunun hesabından)"}
-                className="input"
-                style={{ background: "rgba(255,255,255,0.06)", borderColor: "var(--ink-border)", color: "white", textTransform: "uppercase" }}
-              />
+            <FormGroup>
+              <Label>E-posta</Label>
+              <Input type="email" placeholder="ornek@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </FormGroup>
+            <FormGroup>
+              <Label>Şifre</Label>
+              <Input type="password" placeholder="••••••••" value={sifre} onChange={(e) => setSifre(e.target.value)} required />
+            </FormGroup>
+            {tab === "Öğrenci Kaydı" && (
+              <FormGroup>
+                <Label>Davet Kodu</Label>
+                <Input placeholder="Koçunuzdan alınan kod" value={kod} onChange={(e) => setKod(e.target.value.toUpperCase())} required />
+              </FormGroup>
             )}
-            <button
-              onClick={handleGonder}
-              disabled={gonderiliyor || !email || !sifre}
-              className="btn btn-gold"
-              style={{ marginTop: 6 }}
-            >
-              {gonderiliyor ? "Gönderiliyor…" : mod === "giris" ? "Giriş Yap" : "Kayıt Ol"}
-            </button>
-            {hata && <p style={{ color: "#E88B76", fontSize: 12.5 }}>{hata}</p>}
-            {bilgi && <p style={{ color: "#7FD9BC", fontSize: 12.5 }}>{bilgi}</p>}
-          </div>
-        </div>
+            {tab === "Veli Kaydı" && (
+              <FormGroup>
+                <Label>Bağlantı Kodu</Label>
+                <Input placeholder="Koçtan veya çocuğunuzdan alınan kod" value={kod} onChange={(e) => setKod(e.target.value.toUpperCase())} required />
+              </FormGroup>
+            )}
+
+            {hata && <p style={{ fontSize: 13, color: "#C4503A", fontWeight: 500 }}>{hata}</p>}
+            {bilgi && <p style={{ fontSize: 13, color: "#2A9D8F", fontWeight: 500 }}>{bilgi}</p>}
+
+            <Btn variant="primary" type="submit" disabled={gonderiliyor || !email || !sifre} style={{ marginTop: 4, width: "100%" }}>
+              {gonderiliyor ? "Gönderiliyor…" : tab}
+            </Btn>
+          </form>
+        </Card>
       </div>
     </div>
   );
