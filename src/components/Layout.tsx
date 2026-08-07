@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
+import ProfilAvatarMenu from './ProfilAvatarMenu';
 
 // ── Sidebar nav config ──────────────────────────────────────────────────────
 export interface NavItem { path: string; label: string; icon: IconName }
@@ -9,7 +10,6 @@ export interface NavGroup { group: string; items: NavItem[] }
 export const studentNav: NavGroup[] = [
   { group: 'Genel', items: [
     { path: '/student/dashboard', label: 'Günlük', icon: 'home' },
-    { path: '/student/profile', label: 'Profil', icon: 'user' },
   ]},
   { group: 'Çalışma', items: [
     { path: '/student/study', label: 'Çalışma', icon: 'pen' },
@@ -130,31 +130,52 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
 }
 
 // ── Panel layouts (router-free: driven by activePath + onNavigate) ─────────
-export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, children }: {
-  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; children: ReactNode;
+export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, children }: {
+  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
 }) {
   return (
     <div className="panel-layout">
       <SidebarContent navConfig={navConfig} roleLabel={roleLabel} activePath={activePath} onNavigate={onNavigate} />
-      <main className="panel-main">{children}</main>
+      <main className="panel-main">
+        {onProfilAcil && (
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 30,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              margin: '-28px -32px 16px',
+              padding: '14px 24px',
+              background: 'rgba(244,239,228,0.88)',
+              backdropFilter: 'blur(8px)',
+              borderBottom: '1px solid rgba(15,27,45,0.06)',
+            }}
+          >
+            <ProfilAvatarMenu onProfilAcil={onProfilAcil} />
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   );
 }
 
-export function StudentLayout({ activePath, onNavigate, children }: {
-  activePath: string; onNavigate: (p: string) => void; children: ReactNode;
+export function StudentLayout({ activePath, onNavigate, onProfilAcil, children }: {
+  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
 }) {
-  return <PanelLayout navConfig={studentNav} roleLabel="Öğrenci Paneli" activePath={activePath} onNavigate={onNavigate}>{children}</PanelLayout>;
+  return <PanelLayout navConfig={studentNav} roleLabel="Öğrenci Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil}>{children}</PanelLayout>;
 }
 
-export function CoachLayout({ activePath, onNavigate, children }: {
-  activePath: string; onNavigate: (p: string) => void; children: ReactNode;
+export function CoachLayout({ activePath, onNavigate, onProfilAcil, children }: {
+  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
 }) {
-  return <PanelLayout navConfig={coachNav} roleLabel="Koç Paneli" activePath={activePath} onNavigate={onNavigate}>{children}</PanelLayout>;
+  return <PanelLayout navConfig={coachNav} roleLabel="Koç Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil}>{children}</PanelLayout>;
 }
 
-export function ParentLayout({ activePath, onNavigate, children }: {
-  activePath: string; onNavigate: (p: string) => void; children: ReactNode;
+export function ParentLayout({ activePath, onNavigate, onProfilAcil, children }: {
+  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
 }) {
-  return <PanelLayout navConfig={parentNav} roleLabel="Veli Paneli" activePath={activePath} onNavigate={onNavigate}>{children}</PanelLayout>;
+  return <PanelLayout navConfig={parentNav} roleLabel="Veli Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil}>{children}</PanelLayout>;
 }

@@ -500,3 +500,23 @@ select.input { cursor: pointer; }
   .section-title { font-size: 17px; }
   .panel-main { padding: 12px 10px; }
 }
+
+/* ── Dropdown menu item (profil menüsü) ──────────────────────────────────── */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0F1B2D;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+.menu-item:hover { background: rgba(15,27,45,0.05); }
+.menu-item:active { background: rgba(15,27,45,0.08); }

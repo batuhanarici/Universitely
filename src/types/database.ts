@@ -61,6 +61,9 @@ export interface OgrenciProfili {
   sinav_turu: SinavTuru;
   hedef_net: number | null;
   email_bildirim: boolean;
+  okul?: string | null;
+  sinif?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface CalismaKaydi {
