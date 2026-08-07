@@ -88,6 +88,7 @@ function OgretmenUygulamasi() {
       supabase.auth.signOut();
       return;
     }
+    if (ayarlarAcilik) setAyarlarAcilik(false);
     setSekme(path as Sekme);
   }
 

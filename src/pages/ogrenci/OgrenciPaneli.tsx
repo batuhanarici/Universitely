@@ -37,6 +37,7 @@ export default function OgrenciPaneli() {
       supabase.auth.signOut();
       return;
     }
+    if (ayarlarAcilik) setAyarlarAcilik(false);
     setSekme(path as Sekme);
   };
 

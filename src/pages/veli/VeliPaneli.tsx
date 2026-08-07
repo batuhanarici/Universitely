@@ -47,6 +47,7 @@ export default function VeliPaneli() {
       supabase.auth.signOut();
       return;
     }
+    if (ayarlarAcilik) setAyarlarAcilik(false);
     setSekme(path as Sekme);
   };
 
