@@ -136,23 +136,9 @@ export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onPr
   return (
     <div className="panel-layout">
       <SidebarContent navConfig={navConfig} roleLabel={roleLabel} activePath={activePath} onNavigate={onNavigate} />
-      <main className="panel-main">
+      <main className={`panel-main${onProfilAcil ? " panel-main-with-profile" : ""}`}>
         {onProfilAcil && (
-          <div
-            style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 30,
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              margin: '-28px -32px 16px',
-              padding: '14px 24px',
-              background: 'rgba(244,239,228,0.88)',
-              backdropFilter: 'blur(8px)',
-              borderBottom: '1px solid rgba(15,27,45,0.06)',
-            }}
-          >
+          <div className="panel-profile-bar">
             <ProfilAvatarMenu onProfilAcil={onProfilAcil} />
           </div>
         )}
