@@ -118,13 +118,6 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
           </div>
         ))}
       </nav>
-
-      <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(244,239,228,0.08)' }}>
-        <a className="sidebar-item" onClick={(e) => { e.preventDefault(); onNavigate('/'); }} href="/">
-          <Icon name="logout" size={16} />
-          <span>Çıkış Yap</span>
-        </a>
-      </div>
     </div>
   );
 }
