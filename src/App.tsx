@@ -4,6 +4,7 @@ import { supabase, supabaseConfigurada } from "./lib/supabase";
 import GirisEkrani from "./pages/GirisEkrani";
 import SifreSifirlama from "./pages/SifreSifirlama";
 import KurulumEkrani from "./pages/KurulumEkrani";
+import LandingPage from "./pages/landing/LandingPage";
 import OgrenciPaneli from "./pages/ogrenci/OgrenciPaneli";
 import DersKonuYonetimi from "./pages/ogretmen/DersKonuYonetimi";
 import SablonOlustur from "./pages/ogretmen/SablonOlustur";
@@ -119,6 +120,19 @@ function OgretmenUygulamasi() {
 
 function App() {
   const { session, yukleniyor, ogrenciMi, veliMi, sifreSifirlama } = useAuth();
+  // "Ücretsiz Dene" ile landing page'den giriş ekranına geçildiğinde true olur.
+  const [girisIstendi, setGirisIstendi] = useState(false);
+
+  // Landing page sadece kök path'te ("/"), oturum yokken ve henüz
+  // "Ücretsiz Dene"ye tıklanmamışken gösterilir. Doğrudan /giris gibi
+  // başka bir path'e gelindiyse veya giriş istendiyse atlanır.
+  const anaSayfaGosterilsin =
+    supabaseConfigurada &&
+    !yukleniyor &&
+    !sifreSifirlama &&
+    !session &&
+    !girisIstendi &&
+    window.location.pathname === "/";
 
   let icerik: ReactNode;
   if (!supabaseConfigurada) {
@@ -127,6 +141,15 @@ function App() {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (sifreSifirlama) {
     icerik = <SifreSifirlama />;
+  } else if (anaSayfaGosterilsin) {
+    icerik = (
+      <LandingPage
+        onGetStarted={() => {
+          setGirisIstendi(true);
+          window.history.pushState({}, "", "/giris");
+        }}
+      />
+    );
   } else if (!session) {
     icerik = <GirisEkrani />;
   } else if (veliMi) {
