@@ -138,6 +138,25 @@ export interface Mesaj {
   icerik: string;
   tarih: string;
   okundu: boolean;
+  tur: string;
+}
+
+export type BildirimTuru = "mesaj" | "hatirlatma" | "uyari" | "toplu";
+
+export interface Bildirim {
+  id: string;
+  alici_id: string;
+  tur: BildirimTuru;
+  baslik: string;
+  detay: string | null;
+  gonderici_id: string | null;
+  gonderici_adi: string | null;
+  ilgili_id: string | null;
+  hedef: string | null;
+  okundu: boolean;
+  arsivlendi: boolean;
+  kaynak: string | null;
+  created_at: string;
 }
 
 export interface KocNot {

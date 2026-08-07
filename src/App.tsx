@@ -29,12 +29,13 @@ import KaynakAta from "./pages/ogretmen/KaynakAta";
 import KonuAta from "./pages/ogretmen/KonuAta";
 import VeliPaneli from "./pages/veli/VeliPaneli";
 import KocProfil from "./pages/ogretmen/Profil";
+import BildirimMerkezi from "./pages/BildirimMerkezi";
 import { PanelLayout } from "./components/Layout";
 import ProfilOverlay from "./components/ProfilOverlay";
 import type { NavGroup } from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe";
+type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe" | "bildirimler";
 
 const KOC_NAV: NavGroup[] = [
   { group: "Genel", items: [
@@ -62,6 +63,7 @@ const KOC_NAV: NavGroup[] = [
   ]},
   { group: "İletişim", items: [
     { path: "mesajlar", label: "Mesajlar", icon: "message" },
+    { path: "bildirimler", label: "Bildirimler", icon: "bell" },
     { path: "koc-notlar", label: "Koç Notları", icon: "note" },
     { path: "gorusme-yonetim", label: "Görüşme & Ödeme", icon: "meeting" },
     { path: "toplu-bildirim", label: "Toplu Bildirim", icon: "send" },
@@ -112,6 +114,7 @@ function OgretmenUygulamasi() {
           {sekme === "kaynak-ata" && <KaynakAta />}
           {sekme === "konu-ata" && <KonuAta />}
           {sekme === "mesajlar" && <OgretmenMesajlar />}
+          {sekme === "bildirimler" && <BildirimMerkezi onNavigate={git} />}
           {sekme === "koc-notlar" && <KocNotlar />}
           {sekme === "gorusme-yonetim" && <GorusmeYonetimi />}
           {sekme === "toplu-bildirim" && <TopluBildirim />}
@@ -137,11 +140,13 @@ function OgretmenUygulamasi() {
 function App() {
   const { session, yukleniyor, ogrenciMi, veliMi, sifreSifirlama } = useAuth();
   // "Ücretsiz Dene" ile landing page'den giriş ekranına geçildiğinde true olur.
-  const [girisIstendi, setGirisIstendi] = useState(false);
+  const [girisIstendi, setGirisIstendi] = useState(
+    () => sessionStorage.getItem("girisIstendi") === "1"
+  );
 
   // Landing page sadece kök path'te ("/"), oturum yokken ve henüz
-  // "Ücretsiz Dene"ye tıklanmamışken gösterilir. Doğrudan /giris gibi
-  // başka bir path'e gelindiyse veya giriş istendiyse atlanır.
+  // "Ücretsiz Dene"ye tıklanmamışken gösterilir. Tercih sessionStorage'da
+  // tutulur; URL değiştirilmez, böylece yenilemede host 404 vermez.
   const anaSayfaGosterilsin =
     supabaseConfigurada &&
     !yukleniyor &&
@@ -162,7 +167,7 @@ function App() {
       <LandingPage
         onGetStarted={() => {
           setGirisIstendi(true);
-          window.history.pushState({}, "", "/giris");
+          sessionStorage.setItem("girisIstendi", "1");
         }}
       />
     );

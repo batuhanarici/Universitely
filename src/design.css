@@ -438,6 +438,7 @@ select.input { cursor: pointer; }
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 10px;
   margin: 0;
   padding: 14px 32px;
   background: rgba(244,239,228,0.88);
@@ -545,3 +546,14 @@ select.input { cursor: pointer; }
 }
 .menu-item:hover { background: rgba(15,27,45,0.05); }
 .menu-item:active { background: rgba(15,27,45,0.08); }
+
+/* ── Bildirim merkezi ───────────────────────────────────────────────────── */
+.bildirim-satiri { transition: background 0.15s ease; }
+.bildirim-satiri:hover { background: rgba(244,239,228,0.7); }
+.bildirim-aksiyonlar { opacity: 0; transition: opacity 150ms ease; }
+.bildirim-satiri:hover .bildirim-aksiyonlar,
+.bildirim-satiri:focus-within .bildirim-aksiyonlar { opacity: 1; }
+@media (hover: none) {
+  .bildirim-aksiyonlar { opacity: 1; }
+}
+.bildirim-aksiyon:hover { background: rgba(15,27,45,0.06); }

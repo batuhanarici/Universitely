@@ -14,11 +14,11 @@ import Yanlislar from "./Yanlislar";
 import Tekrar from "./Tekrar";
 import Takvim from "./Takvim";
 import Mesaj from "./Mesaj";
-import Bildirimler from "./Bildirimler";
 import Oneriler from "./Oneriler";
 import HaftalikRapor from "./HaftalikRapor";
 import Karsilastirma from "./Karsilastirma";
 import Motivasyon from "./Motivasyon";
+import BildirimMerkezi from "../BildirimMerkezi";
 
 type Sekme =
   | "/student/dashboard" | "/student/study" | "/student/subjects" | "/student/tasks"
@@ -52,7 +52,7 @@ export default function OgrenciPaneli() {
           {sekme === "/student/repetition" && <Tekrar />}
           {sekme === "/student/calendar" && <Takvim />}
           {sekme === "/student/messages" && <Mesaj />}
-          {sekme === "/student/notifications" && <Bildirimler />}
+          {sekme === "/student/notifications" && <BildirimMerkezi onNavigate={git} />}
           {sekme === "/student/ai-coach" && <Oneriler />}
           {sekme === "/student/weekly-report" && <HaftalikRapor />}
           {sekme === "/student/compare" && <Karsilastirma />}

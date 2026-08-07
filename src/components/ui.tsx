@@ -118,13 +118,21 @@ export function FormGroup({ children, style }: { children: ReactNode; style?: CS
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
 export function Tabs({ tabs, active, onChange }: {
-  tabs: string[]; active: string; onChange: (t: string) => void;
+  tabs: (string | { label: string; value: string })[];
+  active: string;
+  onChange: (t: string) => void;
 }) {
   return (
     <div className="tabs">
-      {tabs.map(t => (
-        <button key={t} className={`tab-btn ${active === t ? 'active' : ''}`} onClick={() => onChange(t)}>{t}</button>
-      ))}
+      {tabs.map((t) => {
+        const label = typeof t === "string" ? t : t.label;
+        const value = typeof t === "string" ? t : t.value;
+        return (
+          <button key={value} className={`tab-btn ${active === value ? "active" : ""}`} onClick={() => onChange(value)}>
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

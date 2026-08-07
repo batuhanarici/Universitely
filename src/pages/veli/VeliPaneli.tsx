@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { ParentLayout } from "../../components/Layout";
 import ProfilOverlay from "../../components/ProfilOverlay";
 import { VeliVeriProvider } from "./VeliVeri";
+import { useVeliDerived } from "./veliDerived";
+import { sistemHatirlatmalariniSenkronla, type SistemHatirlatmasi } from "../../lib/bildirimQueries";
 import GenelDurum from "./GenelDurum";
 import Grafikler from "./Grafikler";
 import Takvim from "./Takvim";
@@ -15,6 +17,24 @@ import Profil from "./Profil";
 type Sekme =
   | "/parent/overview" | "/parent/charts" | "/parent/calendar" | "/parent/notifications"
   | "/parent/report" | "/parent/ai-summary" | "/parent/message";
+
+// Veli paneli yüklenince hatırlatmalar bildirim tablosuna eklenir (çan için).
+function VeliBildirimEkim() {
+  const d = useVeliDerived();
+  const hatirlatmalar = d.hatirlatmalar as unknown as { baslik: string; detay: string; oncelik: "yuksek" | "normal" }[];
+
+  useEffect(() => {
+    const liste: SistemHatirlatmasi[] = hatirlatmalar.map((h) => ({
+      baslik: h.baslik,
+      detay: h.detay,
+      oncelik: h.oncelik,
+      hedef: "/parent/overview",
+    }));
+    if (liste.length > 0) sistemHatirlatmalariniSenkronla(liste).catch(() => {});
+  }, [hatirlatmalar]);
+
+  return null;
+}
 
 export default function VeliPaneli() {
   const [sekme, setSekme] = useState<Sekme>("/parent/overview");
@@ -30,12 +50,13 @@ export default function VeliPaneli() {
 
   return (
     <VeliVeriProvider>
+      <VeliBildirimEkim />
       <ParentLayout activePath={sekme} onNavigate={git} onProfilAcil={() => setProfilAcilik(true)}>
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {sekme === "/parent/overview" && <GenelDurum />}
           {sekme === "/parent/charts" && <Grafikler />}
           {sekme === "/parent/calendar" && <Takvim />}
-          {sekme === "/parent/notifications" && <Bildirimler />}
+          {sekme === "/parent/notifications" && <Bildirimler onNavigate={git} />}
           {sekme === "/parent/report" && <Rapor />}
           {sekme === "/parent/ai-summary" && <AIOzet />}
           {sekme === "/parent/message" && <Mesaj />}

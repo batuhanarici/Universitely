@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import ProfilAvatarMenu from './ProfilAvatarMenu';
+import BildirimCani from './BildirimCani';
 
 // ── Sidebar nav config ──────────────────────────────────────────────────────
 export interface NavItem { path: string; label: string; icon: IconName }
@@ -132,6 +133,7 @@ export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onPr
       <main className={`panel-main${onProfilAcil ? " panel-main-with-profile" : ""}`}>
         {onProfilAcil && (
           <div className="panel-profile-bar">
+            <BildirimCani onNavigate={onNavigate} />
             <ProfilAvatarMenu onProfilAcil={onProfilAcil} />
           </div>
         )}

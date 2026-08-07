@@ -74,7 +74,7 @@ export default function TopluBildirim() {
       let basarili = 0;
       for (const aliciId of alicilar) {
         try {
-          await mesajGonder(aliciId, metin);
+          await mesajGonder(aliciId, metin, "toplu");
           basarili++;
         } catch {}
       }

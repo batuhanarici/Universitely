@@ -5,6 +5,7 @@ import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
 import type { Mesaj, Ogrenci, VeliAlici } from "../../types/database";
 import { Card, Select, Input, Btn, Label, FormGroup } from "../../components/ui";
+import { TUR_ETIKET, TUR_RENK } from "../../lib/bildirimUi";
 
 interface Alici {
   id: string;
@@ -21,6 +22,7 @@ export default function OgretmenMesajlar() {
   const [aliciTipi, setAliciTipi] = useState<AliciTipi>("ogrenci");
   const [aliciId, setAliciId] = useState("");
   const [girdi, setGirdi] = useState("");
+  const [tur, setTur] = useState("normal");
   const [yukleniyor, setYukleniyor] = useState(true);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const altRef = useRef<HTMLDivElement>(null);
@@ -71,7 +73,7 @@ export default function OgretmenMesajlar() {
     if (!aliciId || !girdi.trim()) return;
     setGonderiliyor(true);
     try {
-      const yeni = await mesajGonder(aliciId, girdi.trim());
+      const yeni = await mesajGonder(aliciId, girdi.trim(), tur);
       setMesajlar((m) => [...m, yeni]);
       setGirdi("");
     } finally {
@@ -131,9 +133,15 @@ export default function OgretmenMesajlar() {
           {konusma.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Henüz mesaj yok.</p>}
           {konusma.map((m) => {
             const benimki = m.gonderici_id === ben;
+            const etiketli = m.tur !== "normal";
             return (
               <div key={m.id} style={{ display: "flex", flexDirection: benimki ? "row-reverse" : "row", alignItems: "flex-end", gap: 8 }}>
                 <div>
+                  {etiketli && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: TUR_RENK[m.tur as keyof typeof TUR_RENK] ?? "#0F1B2D", display: "block", marginBottom: 2, textAlign: benimki ? "right" : "left" }}>
+                      {TUR_ETIKET[m.tur as keyof typeof TUR_ETIKET] ?? m.tur}
+                    </span>
+                  )}
                   <div className={benimki ? "bubble-self" : "bubble-other"}>{m.icerik}</div>
                   <p style={{ fontSize: 10, color: "rgba(15,27,45,0.35)", marginTop: 2, textAlign: benimki ? "right" : "left" }}>
                     {new Date(m.tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -145,6 +153,12 @@ export default function OgretmenMesajlar() {
         </div>
 
         <form onSubmit={handleGonder} style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(15,27,45,0.08)" }}>
+          <Select value={tur} onChange={(e) => setTur(e.target.value)} style={{ maxWidth: 130, flexShrink: 0 }} title="Mesaj türü">
+            <option value="normal">Normal</option>
+            <option value="hatirlatma">Hatırlatma</option>
+            <option value="uyari">Uyarı</option>
+            <option value="toplu">Toplu</option>
+          </Select>
           <Input
             placeholder="Mesaj yaz…"
             value={girdi}

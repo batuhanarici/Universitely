@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/AuthContext";
 import { benimOgretmenId, mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
-import { Card, Input, Btn } from "../../components/ui";
+import { Card, Input, Btn, Select } from "../../components/ui";
 import type { Mesaj } from "../../types/database";
+import { TUR_ETIKET, TUR_RENK } from "../../lib/bildirimUi";
 
 function zamanla(tarih: string): string {
   return new Date(tarih).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -12,6 +13,7 @@ export default function Mesaj() {
   const { session } = useAuth();
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [girdi, setGirdi] = useState("");
+  const [tur, setTur] = useState("normal");
   const [yukleniyor, setYukleniyor] = useState(true);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const altRef = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ export default function Mesaj() {
     try {
       const aliciId = await benimOgretmenId();
       if (!aliciId) return;
-      const yeni = await mesajGonder(aliciId, girdi.trim());
+      const yeni = await mesajGonder(aliciId, girdi.trim(), tur);
       setMesajlar((m) => [...m, yeni]);
       setGirdi("");
     } finally {
@@ -71,12 +73,18 @@ export default function Mesaj() {
           )}
           {mesajlar.map((m) => {
             const benimki = m.gonderici_id === ben;
+            const etiketli = m.tur !== "normal";
             return (
               <div key={m.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: benimki ? "flex-end" : "flex-start" }}>
                 {!benimki && (
                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#0F1B2D", color: "#E4BB60", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0, marginTop: 8 }}>K</div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: benimki ? "flex-end" : "flex-start", maxWidth: "70%" }}>
+                  {etiketli && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: TUR_RENK[m.tur as keyof typeof TUR_RENK] ?? "#0F1B2D", marginBottom: 3 }}>
+                      {TUR_ETIKET[m.tur as keyof typeof TUR_ETIKET] ?? m.tur}
+                    </span>
+                  )}
                   <div className={benimki ? "bubble-self" : "bubble-other"}>{m.icerik}</div>
                   <span style={{ fontSize: 10, color: "rgba(15,27,45,0.4)", marginTop: 4 }}>{zamanla(m.tarih)}</span>
                 </div>
@@ -86,6 +94,11 @@ export default function Mesaj() {
         </div>
 
         <div style={{ display: "flex", gap: 8, padding: "14px 20px", borderTop: "1px solid rgba(15,27,45,0.08)" }}>
+          <Select value={tur} onChange={(e) => setTur(e.target.value)} style={{ maxWidth: 130, flexShrink: 0 }} title="Mesaj türü">
+            <option value="normal">Normal</option>
+            <option value="hatirlatma">Hatırlatma</option>
+            <option value="uyari">Uyarı</option>
+          </Select>
           <Input
             value={girdi}
             onChange={(e) => setGirdi(e.target.value)}

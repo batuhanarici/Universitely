@@ -22,10 +22,10 @@ export async function mesajlariGetir(): Promise<Mesaj[]> {
   return data ?? [];
 }
 
-export async function mesajGonder(aliciId: string, icerik: string): Promise<Mesaj> {
+export async function mesajGonder(aliciId: string, icerik: string, tur: string = "normal"): Promise<Mesaj> {
   const { data, error } = await supabase
     .from("mesajlar")
-    .insert({ alici_id: aliciId, icerik })
+    .insert({ alici_id: aliciId, icerik, tur })
     .select()
     .single();
   if (error) throw error;
@@ -35,4 +35,9 @@ export async function mesajGonder(aliciId: string, icerik: string): Promise<Mesa
 export async function mesajOkunduIsaretle(id: string) {
   const { error } = await supabase.from("mesajlar").update({ okundu: true }).eq("id", id);
   if (error) throw error;
+  await supabase
+    .from("bildirimler")
+    .update({ okundu: true })
+    .eq("ilgili_id", id)
+    .eq("tur", "mesaj");
 }
