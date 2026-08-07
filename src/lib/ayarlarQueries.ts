@@ -136,7 +136,7 @@ export async function hesapSil(girdi: {
   talep_id?: string;
   onay_email: string;
 }): Promise<void> {
-  const sonuc = await supabase.functions.invoke("hesap-sil", { body: girdi });
+  const sonuc = await supabase.functions.invoke("hesap-silme", { body: girdi });
   if (sonuc.error) {
     const detay = sonuc.error as { context?: Response };
     let mesaj = "Silme işlemi başarısız oldu.";

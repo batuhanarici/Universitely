@@ -115,12 +115,15 @@ Deno.serve(async (req) => {
       if (!talep) return json({ hata: "Talep onaylı durumda değil." }, 400);
       hedef = hedefId;
     } else if (tur === "veli") {
-      const { data: v } = await supabase
-        .from("veliler")
-        .select("id")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (!v) return json({ hata: "Veli hesabı bulunamadı." }, 403);
+      const meta = user.user_metadata?.rol as string | undefined;
+      if (meta !== "veli") {
+        const { data: v } = await supabase
+          .from("veliler")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!v) return json({ hata: "Veli hesabı bulunamadı." }, 403);
+      }
     } else if (tur === "ogretmen") {
       const { data: o } = await supabase
         .from("ogretmen_profilleri")
