@@ -107,12 +107,19 @@ Deno.serve(async (req) => {
       if (!ogr) return json({ hata: "Bu öğrencinin koçu değilsiniz." }, 403);
       const { data: talep } = await supabase
         .from("hesap_silme_talepleri")
-        .select("id")
+        .select("id, durum")
         .eq("id", talepId)
         .eq("kullanici_id", hedefId)
-        .eq("durum", "onaylandi")
+        .in("durum", ["bekliyor", "onaylandi"])
         .maybeSingle();
-      if (!talep) return json({ hata: "Talep onaylı durumda değil." }, 400);
+      if (!talep) return json({ hata: "Onay bekleyen talep bulunamadı." }, 400);
+      if (talep.durum === "bekliyor") {
+        const { error: guncelleHata } = await supabase
+          .from("hesap_silme_talepleri")
+          .update({ durum: "onaylandi", onaylayan_id: user.id, updated_at: new Date().toISOString() })
+          .eq("id", talepId);
+        if (guncelleHata) throw guncelleHata;
+      }
       hedef = hedefId;
     } else if (tur === "veli") {
       const meta = user.user_metadata?.rol as string | undefined;

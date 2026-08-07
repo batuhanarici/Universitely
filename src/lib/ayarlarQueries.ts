@@ -138,11 +138,20 @@ export async function hesapSil(girdi: {
 }): Promise<void> {
   const sonuc = await supabase.functions.invoke("hesap-silme", { body: girdi });
   if (sonuc.error) {
-    const detay = sonuc.error as { context?: Response };
+    const detay = sonuc.error as { context?: Response; message?: string };
     let mesaj = "Silme işlemi başarısız oldu.";
     try {
-      const json = await (detay.context as Response).json();
-      if (json?.hata) mesaj = json.hata;
+      const res = detay.context;
+      if (res && typeof (res as Response).json === "function") {
+        const json = (await (res as Response).json()) as Record<string, unknown>;
+        mesaj =
+          (json?.hata as string) ??
+          (json?.message as string) ??
+          (json?.msg as string) ??
+          `Silme işlemi başarısız oldu. (${(res as Response).status})`;
+      } else if (detay.message) {
+        mesaj = detay.message;
+      }
     } catch {
       // mesaj varsayılan kalır
     }

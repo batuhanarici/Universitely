@@ -40,7 +40,6 @@ export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string;
     setIslemYapiliyor(true);
     setHata("");
     try {
-      await talepKarar(talep.id, true);
       await hesapSil({ tur: "ogrenci", hedef_id: ogrenciId, talep_id: talep.id, onay_email: onayEmail });
       show("Öğrencinin hesabı silindi ✓");
       setTimeout(onGeri, 800);
