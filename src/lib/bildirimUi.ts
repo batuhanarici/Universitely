@@ -5,6 +5,7 @@ export const TUR_ETIKET: Record<BildirimTuru, string> = {
   hatirlatma: "Hatırlatma",
   uyari: "Uyarı",
   toplu: "Toplu",
+  talep: "Onay",
 };
 
 export const TUR_RENK: Record<BildirimTuru, string> = {
@@ -12,6 +13,7 @@ export const TUR_RENK: Record<BildirimTuru, string> = {
   hatirlatma: "#A07C20",
   uyari: "#C4503A",
   toplu: "#0F1B2D",
+  talep: "#C4503A",
 };
 
 export function bildirimZamani(tarih: string): string {

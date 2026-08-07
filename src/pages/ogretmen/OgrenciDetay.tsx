@@ -1,17 +1,69 @@
 import { useEffect, useState } from "react";
 import { ogrenciDetayiGetir, type OgrenciDetay } from "../../lib/ogrenciYonetimQueries";
-import { Card, KPICard, ProgressBar, Checkbox, Btn, Badge } from "../../components/ui";
+import { ogrenciTalepGetir, talepKarar, hesapSil } from "../../lib/ayarlarQueries";
+import type { HesapSilmeTalebi } from "../../types/database";
+import { useAuth } from "../../lib/AuthContext";
+import { Card, KPICard, ProgressBar, Checkbox, Btn, Badge, Input, Label, FormGroup, useToast } from "../../components/ui";
 
 export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string; onGeri: () => void }) {
+  const { toast, show } = useToast();
+  const { session } = useAuth();
   const [detay, setDetay] = useState<OgrenciDetay | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [talep, setTalep] = useState<HesapSilmeTalebi | null>(null);
+  const [onayModu, setOnayModu] = useState(false);
+  const [onayEmail, setOnayEmail] = useState("");
+  const [islemYapiliyor, setIslemYapiliyor] = useState(false);
+  const [hata, setHata] = useState("");
 
   useEffect(() => {
     ogrenciDetayiGetir(ogrenciId)
       .then(setDetay)
       .catch(() => setDetay(null))
       .finally(() => setYukleniyor(false));
+    ogrenciTalepGetir(ogrenciId)
+      .then((t) => {
+        setTalep(t);
+        setOnayModu(false);
+        setOnayEmail("");
+        setHata("");
+      })
+      .catch(() => {});
   }, [ogrenciId]);
+
+  async function onayla() {
+    if (!talep) return;
+    if (onayEmail.trim().toLowerCase() !== (session?.user.email ?? "").toLowerCase()) {
+      setHata("Yazdığın e-posta kendi e-postanla eşleşmiyor.");
+      return;
+    }
+    setIslemYapiliyor(true);
+    setHata("");
+    try {
+      await talepKarar(talep.id, true);
+      await hesapSil({ tur: "ogrenci", hedef_id: ogrenciId, talep_id: talep.id, onay_email: onayEmail });
+      show("Öğrencinin hesabı silindi ✓");
+      setTimeout(onGeri, 800);
+    } catch (err: any) {
+      setHata(err.message ?? "Silme işlemi başarısız oldu.");
+      setIslemYapiliyor(false);
+    }
+  }
+
+  async function reddet() {
+    if (!talep) return;
+    setIslemYapiliyor(true);
+    setHata("");
+    try {
+      await talepKarar(talep.id, false);
+      show("Talep reddedildi ✓");
+      setTalep(null);
+    } catch (err: any) {
+      setHata(err.message ?? "İşlem başarısız oldu.");
+    } finally {
+      setIslemYapiliyor(false);
+    }
+  }
 
   if (yukleniyor) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
   if (!detay) return <p className="mono" style={{ color: "rgba(15,27,45,0.5)" }}>Öğrenci bulunamadı.</p>;
@@ -27,6 +79,57 @@ export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string;
         <h1 className="page-title" style={{ marginBottom: 0 }}>{detay.ad_soyad}</h1>
         <Btn variant="ghost" size="sm" onClick={onGeri}>← Geri</Btn>
       </div>
+
+      {talep && (
+        <Card style={{ borderLeft: "4px solid #C4503A" }}>
+          <p style={{ fontSize: 13, color: "#C4503A", fontWeight: 700, margin: "0 0 4px" }}>
+            Hesap silme talebi bekliyor
+          </p>
+          <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.6)", lineHeight: 1.6, margin: "0 0 12px" }}>
+            Öğrencin bu hesabın kalıcı olarak silinmesini istiyor. Onayladığında öğrencinin tüm verileri
+            silinir ve hesabı kapatılır.
+          </p>
+          {!onayModu ? (
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <Btn variant="ghost" size="sm" onClick={reddet} disabled={islemYapiliyor}>
+                {islemYapiliyor ? "İşleniyor…" : "Reddet"}
+              </Btn>
+              <Btn variant="danger" size="sm" onClick={() => setOnayModu(true)} disabled={islemYapiliyor}>
+                Onayla ve Sil
+              </Btn>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <FormGroup>
+                <Label>Onaylamak için kendi e-postanı yaz</Label>
+                <Input
+                  type="email"
+                  placeholder={session?.user.email ?? ""}
+                  value={onayEmail}
+                  onChange={(e) => {
+                    setOnayEmail(e.target.value);
+                    setHata("");
+                  }}
+                />
+              </FormGroup>
+              {hata && <p style={{ fontSize: 13, color: "#C4503A", fontWeight: 500, margin: 0 }}>{hata}</p>}
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <Btn variant="ghost" size="sm" onClick={() => setOnayModu(false)} disabled={islemYapiliyor}>
+                  Vazgeç
+                </Btn>
+                <Btn
+                  variant="danger"
+                  size="sm"
+                  onClick={onayla}
+                  disabled={islemYapiliyor || onayEmail.trim().toLowerCase() !== (session?.user.email ?? "").toLowerCase()}
+                >
+                  {islemYapiliyor ? "Siliniyor…" : "Onayla ve Sil"}
+                </Btn>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         <KPICard label="Son net" value={sonNet ?? 0} decimals={1} />
@@ -122,6 +225,8 @@ export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string;
           {detay.profil.hedef_net != null && <Badge variant="gold" >Hedef {detay.profil.hedef_net} net</Badge>}
         </Card>
       )}
+
+      {toast}
     </div>
   );
 }

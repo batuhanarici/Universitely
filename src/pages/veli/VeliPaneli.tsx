@@ -13,6 +13,7 @@ import Rapor from "./Rapor";
 import AIOzet from "./AIOzet";
 import Mesaj from "./Mesaj";
 import Profil from "./Profil";
+import AyarlarSayfasi from "../ayarlar/AyarlarSayfasi";
 
 type Sekme =
   | "/parent/overview" | "/parent/charts" | "/parent/calendar" | "/parent/notifications"
@@ -39,6 +40,7 @@ function VeliBildirimEkim() {
 export default function VeliPaneli() {
   const [sekme, setSekme] = useState<Sekme>("/parent/overview");
   const [profilAcilik, setProfilAcilik] = useState(false);
+  const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
 
   const git = (path: string) => {
     if (path === "/") {
@@ -51,7 +53,15 @@ export default function VeliPaneli() {
   return (
     <VeliVeriProvider>
       <VeliBildirimEkim />
-      <ParentLayout activePath={sekme} onNavigate={git} onProfilAcil={() => setProfilAcilik(true)}>
+      <ParentLayout
+        activePath={sekme}
+        onNavigate={git}
+        onProfilAcil={() => setProfilAcilik(true)}
+        onAyarlarAcil={() => setAyarlarAcilik(true)}
+      >
+        {ayarlarAcilik ? (
+          <AyarlarSayfasi />
+        ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {sekme === "/parent/overview" && <GenelDurum />}
           {sekme === "/parent/charts" && <Grafikler />}
@@ -61,6 +71,7 @@ export default function VeliPaneli() {
           {sekme === "/parent/ai-summary" && <AIOzet />}
           {sekme === "/parent/message" && <Mesaj />}
         </div>
+        )}
       </ParentLayout>
 
       {profilAcilik && (

@@ -141,7 +141,7 @@ export interface Mesaj {
   tur: string;
 }
 
-export type BildirimTuru = "mesaj" | "hatirlatma" | "uyari" | "toplu";
+export type BildirimTuru = "mesaj" | "hatirlatma" | "uyari" | "toplu" | "talep";
 
 export interface Bildirim {
   id: string;
@@ -157,6 +157,15 @@ export interface Bildirim {
   arsivlendi: boolean;
   kaynak: string | null;
   created_at: string;
+}
+
+export interface HesapSilmeTalebi {
+  id: string;
+  kullanici_id: string;
+  durum: "bekliyor" | "onaylandi" | "reddedildi";
+  onaylayan_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface KocNot {

@@ -124,8 +124,8 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
 }
 
 // ── Panel layouts (router-free: driven by activePath + onNavigate) ─────────
-export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, children }: {
-  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
+export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, onAyarlarAcil, children }: {
+  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; children: ReactNode;
 }) {
   return (
     <div className="panel-layout">
@@ -134,7 +134,7 @@ export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onPr
         {onProfilAcil && (
           <div className="panel-profile-bar">
             <BildirimCani onNavigate={onNavigate} />
-            <ProfilAvatarMenu onProfilAcil={onProfilAcil} />
+            <ProfilAvatarMenu onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil} />
           </div>
         )}
         {children}
@@ -143,20 +143,20 @@ export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onPr
   );
 }
 
-export function StudentLayout({ activePath, onNavigate, onProfilAcil, children }: {
-  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
+export function StudentLayout({ activePath, onNavigate, onProfilAcil, onAyarlarAcil, children }: {
+  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; children: ReactNode;
 }) {
-  return <PanelLayout navConfig={studentNav} roleLabel="Öğrenci Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil}>{children}</PanelLayout>;
+  return <PanelLayout navConfig={studentNav} roleLabel="Öğrenci Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil}>{children}</PanelLayout>;
 }
 
-export function CoachLayout({ activePath, onNavigate, onProfilAcil, children }: {
-  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
+export function CoachLayout({ activePath, onNavigate, onProfilAcil, onAyarlarAcil, children }: {
+  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; children: ReactNode;
 }) {
-  return <PanelLayout navConfig={coachNav} roleLabel="Koç Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil}>{children}</PanelLayout>;
+  return <PanelLayout navConfig={coachNav} roleLabel="Koç Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil}>{children}</PanelLayout>;
 }
 
-export function ParentLayout({ activePath, onNavigate, onProfilAcil, children }: {
-  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; children: ReactNode;
+export function ParentLayout({ activePath, onNavigate, onProfilAcil, onAyarlarAcil, children }: {
+  activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; children: ReactNode;
 }) {
-  return <PanelLayout navConfig={parentNav} roleLabel="Veli Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil}>{children}</PanelLayout>;
+  return <PanelLayout navConfig={parentNav} roleLabel="Veli Paneli" activePath={activePath} onNavigate={onNavigate} onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil}>{children}</PanelLayout>;
 }

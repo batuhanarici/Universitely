@@ -19,6 +19,7 @@ import HaftalikRapor from "./HaftalikRapor";
 import Karsilastirma from "./Karsilastirma";
 import Motivasyon from "./Motivasyon";
 import BildirimMerkezi from "../BildirimMerkezi";
+import AyarlarSayfasi from "../ayarlar/AyarlarSayfasi";
 
 type Sekme =
   | "/student/dashboard" | "/student/study" | "/student/subjects" | "/student/tasks"
@@ -29,6 +30,7 @@ type Sekme =
 export default function OgrenciPaneli() {
   const [sekme, setSekme] = useState<Sekme>("/student/dashboard");
   const [profilAcilik, setProfilAcilik] = useState(false);
+  const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
 
   const git = (path: string) => {
     if (path === "/") {
@@ -40,7 +42,15 @@ export default function OgrenciPaneli() {
 
   return (
     <>
-      <StudentLayout activePath={sekme} onNavigate={git} onProfilAcil={() => setProfilAcilik(true)}>
+      <StudentLayout
+        activePath={sekme}
+        onNavigate={git}
+        onProfilAcil={() => setProfilAcilik(true)}
+        onAyarlarAcil={() => setAyarlarAcilik(true)}
+      >
+        {ayarlarAcilik ? (
+          <AyarlarSayfasi />
+        ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {sekme === "/student/dashboard" && <Dashboard />}
           {sekme === "/student/study" && <Calisma />}
@@ -59,6 +69,7 @@ export default function OgrenciPaneli() {
           {sekme === "/student/motivation" && <Motivasyon />}
           {sekme === "/student/tasks" && <Gorevler />}
         </div>
+        )}
       </StudentLayout>
 
       {profilAcilik && (

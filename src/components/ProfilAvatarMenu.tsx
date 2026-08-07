@@ -4,7 +4,10 @@ import { supabase } from "../lib/supabase";
 import ProfilAvatar from "./ProfilAvatar";
 import { Icon } from "./Icon";
 
-export default function ProfilAvatarMenu({ onProfilAcil }: { onProfilAcil: () => void }) {
+export default function ProfilAvatarMenu({ onProfilAcil, onAyarlarAcil }: {
+  onProfilAcil: () => void;
+  onAyarlarAcil?: () => void;
+}) {
   const { session, veliMi, ogrenciMi } = useAuth();
   const [acik, setAcik] = useState(false);
   const [avatarYol, setAvatarYol] = useState<string | null>(null);
@@ -111,6 +114,18 @@ export default function ProfilAvatarMenu({ onProfilAcil }: { onProfilAcil: () =>
               <Icon name="user" size={16} />
               <span>Profilim</span>
             </button>
+            {onAyarlarAcil && (
+              <button
+                className="menu-item"
+                onClick={() => {
+                  setAcik(false);
+                  onAyarlarAcil();
+                }}
+              >
+                <Icon name="settings" size={16} />
+                <span>Ayarlar</span>
+              </button>
+            )}
             <button className="menu-item" onClick={() => supabase.auth.signOut()}>
               <Icon name="logout" size={16} />
               <span>Çıkış Yap</span>

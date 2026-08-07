@@ -9,6 +9,7 @@ const TUR_IKON: Record<string, IconName> = {
   hatirlatma: "bell",
   uyari: "alert",
   toplu: "send",
+  talep: "alert",
 };
 
 export default function BildirimSatiri({ bildirim, onAc, onOkundu, onArsivle, onSil }: {

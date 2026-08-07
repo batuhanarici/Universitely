@@ -29,6 +29,7 @@ import KaynakAta from "./pages/ogretmen/KaynakAta";
 import KonuAta from "./pages/ogretmen/KonuAta";
 import VeliPaneli from "./pages/veli/VeliPaneli";
 import KocProfil from "./pages/ogretmen/Profil";
+import AyarlarSayfasi from "./pages/ayarlar/AyarlarSayfasi";
 import BildirimMerkezi from "./pages/BildirimMerkezi";
 import { PanelLayout } from "./components/Layout";
 import ProfilOverlay from "./components/ProfilOverlay";
@@ -75,6 +76,7 @@ function OgretmenUygulamasi() {
   const [sekme, setSekme] = useState<Sekme>("koc-dashboard");
   const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
   const [profilAcilik, setProfilAcilik] = useState(false);
+  const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
 
   function ogrenciDetayinaGit(id: string) {
     setSeciliOgrenci(id);
@@ -97,7 +99,11 @@ function OgretmenUygulamasi() {
         activePath={sekme === "ogrenci-detay" ? "ogrenciler" : sekme}
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
+        onAyarlarAcil={() => setAyarlarAcilik(true)}
       >
+        {ayarlarAcilik ? (
+          <AyarlarSayfasi />
+        ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
           {sekme === "sinif" && <SinifGenel />}
@@ -122,6 +128,7 @@ function OgretmenUygulamasi() {
           {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
           {sekme === "muhasebe" && <Muhasebe />}
         </div>
+        )}
       </PanelLayout>
 
       {profilAcilik && (
