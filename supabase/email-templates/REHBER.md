@@ -46,7 +46,19 @@
    - **Confirm signup** → `confirm-signup.html`
    - **Reset password** → `reset-password.html`
    - **Change email address** → `change-email.html`
-3. **Subject** alanlarını da güncelle (örn. "Üniversitely · E-postanı doğrula").
+3. **Subject** alanlarını da güncelle:
+   - Confirm signup: `Üniversitely · E-postanı doğrula`
+   - Reset password: `Üniversitely · Şifreni sıfırla`
+   - Change email: `Üniversitely · E-posta adresini değiştir`
+
+## Adım 6 — Güvenlik bildirim şablonları (yalnızca 2 aktif)
+Aynı **Email Templates** sayfasındaki **Security** bölümünde yalnızca şu ikisini doldur
+ve yanlarındaki **Notify** anahtarını aç; diğerlerini kapalı bırak:
+
+| Şablon | Dosya | Subject |
+| --- | --- | --- |
+| Password changed | `password-changed.html` | Üniversitely · Şifren değiştirildi |
+| Email address changed | `email-changed.html` | Üniversitely · E-posta adresin değiştirildi |
 
 ## Test etme
 1. `npm run dev` ile uygulamayı başlat.
