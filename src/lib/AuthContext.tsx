@@ -9,14 +9,24 @@ interface AuthCtx {
   yukleniyor: boolean;
   ogrenciMi: boolean | null; // null = henüz kontrol edilmedi
   veliMi: boolean;
+  sifreSifirlama: boolean; // şifre sıfırlama linkiyle geldiyse true
+  setSifreSifirlama: (v: boolean) => void;
 }
 
-const Ctx = createContext<AuthCtx>({ session: null, yukleniyor: true, ogrenciMi: null, veliMi: false });
+const Ctx = createContext<AuthCtx>({
+  session: null,
+  yukleniyor: true,
+  ogrenciMi: null,
+  veliMi: false,
+  sifreSifirlama: false,
+  setSifreSifirlama: () => {},
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [ogrenciMi, setOgrenciMi] = useState<boolean | null>(null);
+  const [sifreSifirlama, setSifreSifirlama] = useState(false);
 
   useEffect(() => {
     if (!supabaseConfigurada) {
@@ -32,7 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setYukleniyor(false);
     });
 
-    const { data: dinleyici } = supabase.auth.onAuthStateChange((_event, yeniSession) => {
+    const { data: dinleyici } = supabase.auth.onAuthStateChange((event, yeniSession) => {
+      if (event === "PASSWORD_RECOVERY") setSifreSifirlama(true);
       setSession(yeniSession);
     });
 
@@ -76,7 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user.id]);
 
   return (
-    <Ctx.Provider value={{ session, yukleniyor, ogrenciMi, veliMi: session?.user.user_metadata?.rol === "veli" }}>
+    <Ctx.Provider
+      value={{
+        session,
+        yukleniyor,
+        ogrenciMi,
+        veliMi: session?.user.user_metadata?.rol === "veli",
+        sifreSifirlama,
+        setSifreSifirlama,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );

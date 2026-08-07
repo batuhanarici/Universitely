@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { supabase, supabaseConfigurada } from "./lib/supabase";
 import GirisEkrani from "./pages/GirisEkrani";
+import SifreSifirlama from "./pages/SifreSifirlama";
 import KurulumEkrani from "./pages/KurulumEkrani";
 import OgrenciPaneli from "./pages/ogrenci/OgrenciPaneli";
 import DersKonuYonetimi from "./pages/ogretmen/DersKonuYonetimi";
@@ -117,13 +118,15 @@ function OgretmenUygulamasi() {
 }
 
 function App() {
-  const { session, yukleniyor, ogrenciMi, veliMi } = useAuth();
+  const { session, yukleniyor, ogrenciMi, veliMi, sifreSifirlama } = useAuth();
 
   let icerik: ReactNode;
   if (!supabaseConfigurada) {
     icerik = <KurulumEkrani />;
   } else if (yukleniyor) {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
+  } else if (sifreSifirlama) {
+    icerik = <SifreSifirlama />;
   } else if (!session) {
     icerik = <GirisEkrani />;
   } else if (veliMi) {
