@@ -29,7 +29,7 @@ export default function AyarlarSayfasi() {
   return (
     <div className="anim-fade" style={{ maxWidth: 760, margin: "0 auto", padding: "24px 16px 64px" }}>
       <h1 className="page-title">Ayarlar</h1>
-      <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", margin: "-6px 0 20px" }}>
+      <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", margin: "2px 0 20px" }}>
         Hesap, bildirim ve gizlilik tercihlerini buradan yönetebilirsin.
       </p>
 
