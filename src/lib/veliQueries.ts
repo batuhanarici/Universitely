@@ -31,6 +31,42 @@ export interface VeliSonucSatiri {
   ders_adi: string;
 }
 
+export interface VeliProfili {
+  id: string;
+  ad_soyad: string | null;
+  telefon: string | null;
+  yakinlik: string | null;
+  avatar_url: string | null;
+  email_bildirim: boolean;
+}
+
+export interface VeliProfilGirdisi {
+  ad_soyad?: string;
+  telefon?: string;
+  yakinlik?: string;
+  avatar_url?: string | null;
+  email_bildirim?: boolean;
+}
+
+export async function veliProfilGetir(): Promise<VeliProfili | null> {
+  const { data, error } = await supabase.from("veliler").select("*").maybeSingle();
+  if (error) throw error;
+  return data as VeliProfili | null;
+}
+
+export async function veliProfilKaydet(girdi: VeliProfilGirdisi): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase.from("veliler").update(girdi).eq("id", user.id);
+  if (error) throw error;
+}
+
+export async function veliAdSoyadKaydet(yeni: string): Promise<void> {
+  await veliProfilKaydet({ ad_soyad: yeni });
+  const { error } = await supabase.auth.updateUser({ data: { ad_soyad: yeni } });
+  if (error) throw error;
+}
+
 export async function veliBagla(kod: string, adSoyad: string): Promise<boolean> {
   const { data, error } = await supabase.rpc("veli_bagla", { kod, ad_soyad: adSoyad });
   if (error) throw error;

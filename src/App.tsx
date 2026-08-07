@@ -28,7 +28,9 @@ import GorevYonetimi from "./pages/ogretmen/GorevYonetimi";
 import KaynakAta from "./pages/ogretmen/KaynakAta";
 import KonuAta from "./pages/ogretmen/KonuAta";
 import VeliPaneli from "./pages/veli/VeliPaneli";
+import KocProfil from "./pages/ogretmen/Profil";
 import { PanelLayout } from "./components/Layout";
+import ProfilOverlay from "./components/ProfilOverlay";
 import type { NavGroup } from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -70,6 +72,7 @@ const KOC_NAV: NavGroup[] = [
 function OgretmenUygulamasi() {
   const [sekme, setSekme] = useState<Sekme>("koc-dashboard");
   const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
+  const [profilAcilik, setProfilAcilik] = useState(false);
 
   function ogrenciDetayinaGit(id: string) {
     setSeciliOgrenci(id);
@@ -85,36 +88,49 @@ function OgretmenUygulamasi() {
   }
 
   return (
-    <PanelLayout
-      navConfig={KOC_NAV}
-      roleLabel="Koç Paneli"
-      activePath={sekme === "ogrenci-detay" ? "ogrenciler" : sekme}
-      onNavigate={git}
-    >
-      <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
-        {sekme === "sinif" && <SinifGenel />}
-        {sekme === "sinif-analiz" && <SinifAnaliz />}
-        {sekme === "ogrenciler" && <OgrenciYonetimi onOgrenciSec={ogrenciDetayinaGit} />}
-        {sekme === "ogrenci-detay" && <OgrenciDetay ogrenciId={seciliOgrenci ?? ""} onGeri={() => setSekme("ogrenciler")} />}
-        {sekme === "ders-konu" && <DersKonuYonetimi />}
-        {sekme === "sablon" && <SablonOlustur />}
-        {sekme === "deneme" && <DenemeOlustur />}
-        {sekme === "sonuc" && <SonucGir />}
-        {sekme === "toplu-sonuc" && <TopluSonucGir />}
-        {sekme === "program" && <ProgramYonetimi />}
-        {sekme === "gorev-yonetim" && <GorevYonetimi />}
-        {sekme === "kaynak-ata" && <KaynakAta />}
-        {sekme === "konu-ata" && <KonuAta />}
-        {sekme === "mesajlar" && <OgretmenMesajlar />}
-        {sekme === "koc-notlar" && <KocNotlar />}
-        {sekme === "gorusme-yonetim" && <GorusmeYonetimi />}
-        {sekme === "toplu-bildirim" && <TopluBildirim />}
-        {sekme === "ogretmen-rapor" && <OgretmenRapor />}
-        {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
-        {sekme === "muhasebe" && <Muhasebe />}
-      </div>
-    </PanelLayout>
+    <>
+      <PanelLayout
+        navConfig={KOC_NAV}
+        roleLabel="Koç Paneli"
+        activePath={sekme === "ogrenci-detay" ? "ogrenciler" : sekme}
+        onNavigate={git}
+        onProfilAcil={() => setProfilAcilik(true)}
+      >
+        <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "sinif" && <SinifGenel />}
+          {sekme === "sinif-analiz" && <SinifAnaliz />}
+          {sekme === "ogrenciler" && <OgrenciYonetimi onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "ogrenci-detay" && <OgrenciDetay ogrenciId={seciliOgrenci ?? ""} onGeri={() => setSekme("ogrenciler")} />}
+          {sekme === "ders-konu" && <DersKonuYonetimi />}
+          {sekme === "sablon" && <SablonOlustur />}
+          {sekme === "deneme" && <DenemeOlustur />}
+          {sekme === "sonuc" && <SonucGir />}
+          {sekme === "toplu-sonuc" && <TopluSonucGir />}
+          {sekme === "program" && <ProgramYonetimi />}
+          {sekme === "gorev-yonetim" && <GorevYonetimi />}
+          {sekme === "kaynak-ata" && <KaynakAta />}
+          {sekme === "konu-ata" && <KonuAta />}
+          {sekme === "mesajlar" && <OgretmenMesajlar />}
+          {sekme === "koc-notlar" && <KocNotlar />}
+          {sekme === "gorusme-yonetim" && <GorusmeYonetimi />}
+          {sekme === "toplu-bildirim" && <TopluBildirim />}
+          {sekme === "ogretmen-rapor" && <OgretmenRapor />}
+          {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "muhasebe" && <Muhasebe />}
+        </div>
+      </PanelLayout>
+
+      {profilAcilik && (
+        <ProfilOverlay
+          baslik="Profil"
+          altBaslik="Hesap bilgilerini ve kurum bilgilerini yönet"
+          onKapat={() => setProfilAcilik(false)}
+        >
+          <KocProfil />
+        </ProfilOverlay>
+      )}
+    </>
   );
 }
 

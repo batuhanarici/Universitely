@@ -31,9 +31,10 @@ create policy "koc kendi profilini yonetir" on public.ogretmen_profilleri
 
 -- ============ 3) veliler: telefon + yakinlik + avatar ============
 alter table public.veliler
-  add column if not exists telefon    text,
-  add column if not exists yakinlik   text,
-  add column if not exists avatar_url text;
+  add column if not exists telefon         text,
+  add column if not exists yakinlik        text,
+  add column if not exists avatar_url      text,
+  add column if not exists email_bildirim  boolean not null default true;
 
 -- Veli kendi kaydını güncelleyebilsin (ad_soyad, telefon, yakinlik, avatar_url)
 drop policy if exists "veli kendi kaydini gunceller" on public.veliler;
@@ -79,8 +80,8 @@ notify pgrst, 'reload schema';
 -- ============ Dogrulama ============
 select to_regclass('public.ogretmen_profilleri') as tablo_ogretmen,
        count(*) filter (where column_name in ('okul','sinif','avatar_url')) as ogrenci_yeni_kolon,
-       count(*) filter (where column_name in ('telefon','yakinlik','avatar_url')) as veli_yeni_kolon
+       count(*) filter (where column_name in ('telefon','yakinlik','avatar_url','email_bildirim')) as veli_yeni_kolon
   from information_schema.columns
  where table_schema = 'public'
    and ((table_name = 'ogrenci_profilleri' and column_name in ('okul','sinif','avatar_url'))
-     or (table_name = 'veliler' and column_name in ('telefon','yakinlik','avatar_url')));
+     or (table_name = 'veliler' and column_name in ('telefon','yakinlik','avatar_url','email_bildirim')));
