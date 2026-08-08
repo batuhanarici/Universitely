@@ -17,10 +17,19 @@
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Manrope', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Tabular figures for numbers */
 .tabular { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+
+/* Monospace numeric data (rakam-ağırlıklı veriler için — netler, tarihler vb.) */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+* { box-sizing: border-box; }
 
 html, body, #root {
   height: 100%;
@@ -35,6 +44,23 @@ body {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+::selection { background: var(--color-gold-light); color: var(--color-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Scrollbar */
@@ -83,6 +109,21 @@ body {
   0%, 100% { box-shadow: 0 0 0 0 rgba(228,187,96,0.4); }
   50%       { box-shadow: 0 0 0 8px rgba(228,187,96,0); }
 }
+@keyframes draw-arrow {
+  from { stroke-dashoffset: var(--arrow-len, 120); }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes float-arrow {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+.arrow-draw path {
+  stroke-dasharray: var(--arrow-len, 120);
+  stroke-dashoffset: var(--arrow-len, 120);
+  animation: draw-arrow 1s var(--ease) 0.15s forwards;
+}
+.arrow-float { animation: float-arrow 2.6s ease-in-out infinite; }
 
 .anim-stagger > * {
   animation: stagger-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
