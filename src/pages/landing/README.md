@@ -5,55 +5,37 @@ bileşenidir. Kolay değiştirilebilmesi için her bölüm ayrı bir dosyada:
 
 - `LandingPage.tsx` — tüm bölümleri birleştiren ana bileşen
 - `LandingPage.css` — tüm stiller (tüm class isimleri `lp-` öneki taşır,
-  mevcut `theme.css` ile çakışmaz)
-- `Nav.tsx` — sticky üst nav + scroll progress çubuğu
-- `Hero.tsx` — başlık + 3D perspektifli dashboard mockup'ı
-- `FeatureGallery.tsx` — yatay kayan (sticky) özellik kartları
-- `RolesSection.tsx` — Öğrenci / Veli / Koç sekmeli önizleme
-- `CompareSection.tsx` — "Kağıt-kalem vs Universitely" karşılaştırması
-- `StatsSection.tsx` — sayaç animasyonlu istatistikler
-- `Testimonials.tsx` — kayan yorum şeridi (şu an placeholder içerik)
+  mevcut `theme.css` / `design.css` ile çakışmaz)
+- `Nav.tsx` — sticky üst nav + scroll progress çubuğu + bölüm bağlantıları
+- `Hero.tsx` — optik cevap kağıdı mockup'ı; scroll ile boş yuvarlaklar dolar
+- `StepsSection.tsx` — "Gir → Gör → Bitir" 3 adım, pinned (scroll bağlı)
+- `RolesSection.tsx` — Öğrenci / Veli / Koç, pinned scroll-through
+- `CompareSection.tsx` — "Eskisi" üstü çizilir, Universitely karşılığı belirir
+- `StatsSection.tsx` — sayaç + çizilen altın alt çizgi (placeholder rakamlar)
+- `Testimonials.tsx` — kayan yorum şeridi (placeholder içerik)
 - `Closing.tsx` — kapanış CTA
+- `Footer.tsx` — minimal alt bilgi
 - `MagneticButton.tsx` — fareye doğru hafifçe kayan buton (paylaşılan bileşen)
 - `useCursorTrail.ts` — imleç takip eden altın çizgi efekti (hook)
+- `useScrollStages.ts` — pinned bölümlerde scroll ilerlemesi → sahne indeksi
+- `useMediaQuery.ts` — responsive bileşen seçimi için matchMedia hook'u
 - `useReveal.ts` — scroll'da fade/slide-up gösterimi (hook)
 
-Bir bölümü değiştirmek istediğinde sadece o dosyaya dokunman yeterli —
-diğer bölümler etkilenmez.
+## Scroll anlatımı nasıl çalışıyor?
+
+Pinned bölümler (`StepsSection`, `RolesSection`, `CompareSection`) masaüstünde
+`300vh`'lik bir dış kapsayıcı + `100vh`'lik `position: sticky` iç alan
+kullanır. `useScrollStages` dış kapsayıcının ekranı aşma oranını 0→1'e
+çevirir; `active` sahne indeksi yalnızca sahne değişince re-render tetikler.
+Dokunmatik cihazlarda ve `820px` altında bu bölümler doğal, kaydırılabilir
+kart/istiflemeli düzene düşer (`useMediaQuery("(min-width: 821px) and
+(pointer: fine)")` ile seçilir).
 
 ## Entegrasyon (App.tsx)
 
-1. Bu klasörü olduğu gibi `src/pages/landing/` altına kopyala (zaten bu yoldaysa ekstra iş yok).
-2. `index.html`'deki Google Fonts linkine `Manrope` fontu ve `Fraunces` italic
-   ağırlığı eklendi — bu değişiklik zip içinde `index.html` olarak da var,
-   diff'ini kontrol edip kendi `index.html`'ine uygula.
-3. `App.tsx`'e şunu ekle:
-
-```tsx
-import LandingPage from "./pages/landing/LandingPage";
-
-// ... mevcut component içinde, auth kontrolünden önce:
-const [showLanding, setShowLanding] = useState(
-  !user && window.location.pathname === "/"
-);
-
-if (showLanding) {
-  return (
-    <LandingPage
-      onGetStarted={() => {
-        setShowLanding(false);
-        window.history.pushState({}, "", "/giris");
-        // burada mevcut giriş ekranına geçişini tetikleyen state'i güncelle
-      }}
-    />
-  );
-}
-```
-
-Tam olarak nereye ekleneceği, senin `App.tsx`'indeki mevcut auth/state
-yapısına göre değişir — mevcut `useAuth` / `supabaseConfigurada` kontrolünün
-hemen üstüne, giriş yapılmamış kullanıcı için bir dal olarak eklemen en
-temiz çözüm olur.
+`LandingPage` yalnızca `onGetStarted` prop'unu alır; tıklanınca
+giriş/kayıt ekranına geçmek için bu callback çağrılır. Routing'den
+bağımsızdır — App.tsx'teki mevcut kullanımı değişmedi.
 
 ## Notlar
 
@@ -62,5 +44,5 @@ temiz çözüm olur.
   dosyayı güncellemek yeterli.
 - İmleç izi efekti sadece `pointer: fine` olan cihazlarda (mouse) çalışır,
   dokunmatik cihazlarda otomatik devre dışı.
-- Tüm CSS class'ları `lp-` önekiyle izole edildi, mevcut `theme.css`
-  class'larıyla (`.card`, `.btn` vb.) çakışma riski yok.
+- `prefers-reduced-motion` kullanıcılarında tema CSS'i animasyonları
+  otomatik kısıtlar.

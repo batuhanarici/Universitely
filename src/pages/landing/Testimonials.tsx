@@ -1,4 +1,8 @@
-const QUOTES = [
+import { useReveal } from "./useReveal";
+
+type Yorum = { text: string; name: string; role: string; initials: string; bg: string; color: string };
+
+const YORUMLAR: Yorum[] = [
   {
     text: "Artık hangi konuda geride olduğumu tahmin etmiyorum, direkt görüyorum.",
     name: "Elif K.",
@@ -25,29 +29,44 @@ const QUOTES = [
   },
 ];
 
+function Kart({ y, i }: { y: Yorum; i: number }) {
+  return (
+    <div className="lp-quote-card" style={{ transform: `rotate(${i % 2 ? 1.2 : -1.2}deg)` }}>
+      <span className="lp-quote-mark" aria-hidden="true">
+        &ldquo;
+      </span>
+      <p>{y.text}</p>
+      <div className="lp-quote-who">
+        <div className="lp-quote-avatar" style={{ background: y.bg, color: y.color }}>
+          {y.initials}
+        </div>
+        <div>
+          <div className="lp-quote-name">{y.name}</div>
+          <div className="lp-quote-role">{y.role}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Testimonials() {
-  // Kesintisiz kaymak için liste iki kez tekrarlanıyor
-  const items = [...QUOTES, ...QUOTES];
+  const ref = useReveal<HTMLElement>();
+  // Kesintisiz kaymak için liste iki kez tekrarlanıyor; ikinci sıra ters akar.
+  const items = [...YORUMLAR, ...YORUMLAR];
 
   return (
-    <section className="lp-section lp-reveal">
-      <div className="lp-eyebrow">Onlar ne diyor</div>
-      <h2>Placeholder yorumlar — onay sonrası gerçekleriyle değişecek.</h2>
-      <div className="lp-marquee-wrap">
+    <section className="lp-section" ref={ref}>
+      <div className="lp-eyebrow lp-reveal">Onlar ne diyor</div>
+      <h2 className="lp-reveal">Placeholder yorumlar — onay sonrası gerçekleriyle değişecek.</h2>
+      <div className="lp-marquee-wrap lp-reveal">
         <div className="lp-marquee-track">
-          {items.map((q, i) => (
-            <div className="lp-quote-card" key={`${q.name}-${i}`}>
-              <p>&ldquo;{q.text}&rdquo;</p>
-              <div className="lp-quote-who">
-                <div className="lp-quote-avatar" style={{ background: q.bg, color: q.color }}>
-                  {q.initials}
-                </div>
-                <div>
-                  <div className="lp-quote-name">{q.name}</div>
-                  <div className="lp-quote-role">{q.role}</div>
-                </div>
-              </div>
-            </div>
+          {items.map((y, i) => (
+            <Kart key={`a-${y.name}-${i}`} y={y} i={i} />
+          ))}
+        </div>
+        <div className="lp-marquee-track lp-marquee-b">
+          {items.map((y, i) => (
+            <Kart key={`b-${y.name}-${i}`} y={y} i={i + 1} />
           ))}
         </div>
       </div>

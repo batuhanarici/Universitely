@@ -2,12 +2,14 @@ import "./LandingPage.css";
 import { useCursorTrail } from "./useCursorTrail";
 import Nav from "./Nav";
 import Hero from "./Hero";
-import FeatureGallery from "./FeatureGallery";
+import StepsSection from "./StepsSection";
 import RolesSection from "./RolesSection";
 import CompareSection from "./CompareSection";
 import StatsSection from "./StatsSection";
 import Testimonials from "./Testimonials";
+import KeywordStrip from "./KeywordStrip";
 import Closing from "./Closing";
+import Footer from "./Footer";
 
 /**
  * Universitely landing sayfası.
@@ -20,16 +22,21 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
   const trailCanvasRef = useCursorTrail();
 
   return (
-    <div className="lp-root">
+    <div className="lp-root" id="top">
       <canvas className="lp-trail-canvas" ref={trailCanvasRef} />
       <Nav onGetStarted={onGetStarted} />
-      <Hero onGetStarted={onGetStarted} />
-      <FeatureGallery />
-      <RolesSection />
-      <CompareSection />
-      <StatsSection />
-      <Testimonials />
-      <Closing onGetStarted={onGetStarted} />
+      <main>
+        <Hero onGetStarted={onGetStarted} />
+        <StepsSection />
+        <RolesSection />
+        <CompareSection />
+        <KeywordStrip />
+        <StatsSection />
+        <Testimonials />
+        <KeywordStrip />
+        <Closing onGetStarted={onGetStarted} />
+      </main>
+      <Footer />
     </div>
   );
 }

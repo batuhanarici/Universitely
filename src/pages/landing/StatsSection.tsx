@@ -18,6 +18,48 @@ function useCountUp(target: number, active: boolean, duration = 1200) {
   return value;
 }
 
+function Underline() {
+  return (
+    <svg className="lp-stat-underline" viewBox="0 0 130 12" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        d="M3 8 C 30 3, 70 11, 127 6"
+        pathLength={100}
+        stroke="var(--lp-gold)"
+        strokeWidth={3}
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+function Stat({
+  hedef,
+  on,
+  etiket,
+  active,
+}: {
+  hedef: number;
+  on: string;
+  etiket: string;
+  active: boolean;
+}) {
+  const sayi = useCountUp(hedef, active);
+  return (
+    <div className="lp-stat">
+      <div className="lp-stat-num">{on === "%" ? `%${sayi}` : `${sayi}+`}</div>
+      <Underline />
+      <div className="lp-stat-label">{etiket}</div>
+    </div>
+  );
+}
+
+const ISTATISKLER: { hedef: number; on: string; etiket: string }[] = [
+  { hedef: 500, on: "+", etiket: "aktif öğrenci" },
+  { hedef: 23, on: "%", etiket: "ortalama net artışı" },
+  { hedef: 89, on: "%", etiket: "memnuniyet oranı" },
+];
+
 export default function StatsSection() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(false);
@@ -37,26 +79,20 @@ export default function StatsSection() {
     return () => io.disconnect();
   }, []);
 
-  const students = useCountUp(500, active);
-  const netIncrease = useCountUp(23, active);
-  const satisfaction = useCountUp(89, active);
-
   return (
-    <section className="lp-section" ref={sectionRef}>
-      <div className="lp-eyebrow">Sonuçlar</div>
-      <h2>Rakamlar konuşuyor.</h2>
-      <div className="lp-stat-row">
-        <div>
-          <div className="lp-stat-num">{students}+</div>
-          <div className="lp-stat-label">aktif öğrenci</div>
+    <section className={`lp-section${active ? " lp-stat-on" : ""}`} ref={sectionRef}>
+      <div className="lp-stats-grid">
+        <div className="lp-stats-intro">
+          <div className="lp-eyebrow">Sonuçlar</div>
+          <h2>Rakamlar konuşuyor.</h2>
+          <p className="lp-lede">
+            Pilot dönemdeki öğrencilerden derlenen rakamlar; yayına geçince gerçek verilerle değişecek.
+          </p>
         </div>
-        <div>
-          <div className="lp-stat-num">%{netIncrease}</div>
-          <div className="lp-stat-label">ortalama net artışı</div>
-        </div>
-        <div>
-          <div className="lp-stat-num">%{satisfaction}</div>
-          <div className="lp-stat-label">memnuniyet oranı</div>
+        <div className="lp-stat-row">
+          {ISTATISKLER.map((s) => (
+            <Stat key={s.etiket} hedef={s.hedef} on={s.on} etiket={s.etiket} active={active} />
+          ))}
         </div>
       </div>
     </section>
