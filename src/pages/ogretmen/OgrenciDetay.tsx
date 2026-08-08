@@ -82,11 +82,12 @@ export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string;
       {talep && (
         <Card style={{ borderLeft: "4px solid #C4503A" }}>
           <p style={{ fontSize: 13, color: "#C4503A", fontWeight: 700, margin: "0 0 4px" }}>
-            Hesap silme talebi bekliyor
+            {talep.durum === "onaylandi" ? "Silme tamamlanamadı" : "Hesap silme talebi bekliyor"}
           </p>
           <p style={{ fontSize: 12.5, color: "rgba(15,27,45,0.6)", lineHeight: 1.6, margin: "0 0 12px" }}>
-            Öğrencin bu hesabın kalıcı olarak silinmesini istiyor. Onayladığında öğrencinin tüm verileri
-            silinir ve hesabı kapatılır.
+            {talep.durum === "onaylandi"
+              ? "Öğrencinin hesabı daha önce onaylandı ancak silme işlemi tamamlanamadı. İstersen işlemi yeniden başlatabilirsin."
+              : "Öğrencin bu hesabın kalıcı olarak silinmesini istiyor. Onayladığında öğrencinin tüm verileri silinir ve hesabı kapatılır."}
           </p>
           {!onayModu ? (
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>

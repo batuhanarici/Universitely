@@ -5,10 +5,16 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -79,6 +85,9 @@ async function temizle(hedefId: string) {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
   try {
     const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "");
     const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
@@ -151,11 +160,15 @@ Deno.serve(async (req) => {
     }
 
     const { error } = await supabase.auth.admin.deleteUser(hedef);
-    if (error) throw error;
+    if (error) {
+      console.error("hesap-silme deleteUser hatasi:", JSON.stringify(error));
+      throw error;
+    }
 
     return json({ basarili: true });
   } catch (e) {
     const mesaj = e instanceof Error ? e.message : "Bilinmeyen hata";
+    console.error("hesap-silme hata:", mesaj);
     return json({ hata: mesaj }, 500);
   }
 });

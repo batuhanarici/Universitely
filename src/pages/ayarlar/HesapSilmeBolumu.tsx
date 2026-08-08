@@ -128,12 +128,12 @@ export default function HesapSilmeBolumu() {
       )}
 
       {ogrenci && talep?.durum === "onaylandi" && (
-        <p style={{ fontSize: 13, color: "#2A9D8F", fontWeight: 600, margin: 0 }}>
-          Hesabın siliniyor…
+        <p style={{ fontSize: 13, color: "#C4503A", lineHeight: 1.6, margin: "0 0 12px" }}>
+          Hesabın silinmesi onaylandı ancak işlem tamamlanamadı. Lütfen aşağıdan yeni bir talep oluştur.
         </p>
       )}
 
-      {ogrenci && (!talep || talep.durum === "reddedildi") && (
+      {ogrenci && (!talep || talep.durum !== "bekliyor") && (
         <>
           {talep?.durum === "reddedildi" && (
             <p style={{ fontSize: 13, color: "#C4503A", lineHeight: 1.6, margin: "0 0 12px" }}>

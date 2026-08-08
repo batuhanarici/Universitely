@@ -112,13 +112,13 @@ export async function talepOlustur(): Promise<string | null> {
   return data;
 }
 
-// Koç: öğrencinin bekleyen talebi
+// Koç: öğrencinin bekleyen veya silme işlemi tamamlanmamış (onaylanmış) talebi
 export async function ogrenciTalepGetir(ogrenciId: string): Promise<HesapSilmeTalebi | null> {
   const { data } = await supabase
     .from("hesap_silme_talepleri")
     .select("*")
     .eq("kullanici_id", ogrenciId)
-    .eq("durum", "bekliyor")
+    .in("durum", ["bekliyor", "onaylandi"])
     .order("created_at", { ascending: false })
     .limit(1);
   return (data?.[0] as HesapSilmeTalebi | undefined) ?? null;
