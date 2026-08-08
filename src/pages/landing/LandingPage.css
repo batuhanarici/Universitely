@@ -18,7 +18,9 @@
   background: var(--lp-cream);
   color: var(--lp-ink);
   font-family: "Manrope", system-ui, sans-serif;
-  overflow-x: hidden;
+  /* clip: hidden'dan farklı olarak scroll container OLUŞTURMAZ,
+     böylece içerideki position: sticky pinned bölümler bozulmaz. */
+  overflow-x: clip;
   position: relative;
   scroll-behavior: smooth;
 }
@@ -181,7 +183,7 @@
 .lp-reveal.lp-in { opacity: 1; transform: translateY(0); }
 
 /* ---------- Pinned bölümler (scroll bağlı) ---------- */
-.lp-scroll-outer { position: relative; height: 280vh; }
+.lp-scroll-outer { position: relative; height: 260vh; }
 .lp-scroll-sticky { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 8vw; overflow: hidden; }
 
 .lp-h-progress { height: 2px; background: rgba(22, 40, 63, 0.1); position: relative; }
@@ -351,11 +353,14 @@
 
 /* ---------- Yorumlar ---------- */
 .lp-marquee-wrap { overflow: hidden; margin-top: 20px; display: flex; flex-direction: column; gap: 20px; }
-.lp-marquee-track { display: flex; gap: 22px; width: max-content; animation: lpMarquee 34s linear infinite; }
+/* Döngü noktasında atlama olmaması için flex gap yerine kartın sağına margin:
+   -50% kaydırma, iki eş kopya arasında tam hizalanır. */
+.lp-marquee-track { display: flex; width: max-content; animation: lpMarquee 38s linear infinite; }
 .lp-marquee-b { animation-direction: reverse; opacity: 0.8; }
 @keyframes lpMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .lp-quote-card {
   flex: 0 0 300px; background: var(--lp-paper); border-radius: 14px; padding: 22px;
+  margin-right: 22px;
   box-shadow: 0 16px 34px rgba(22, 40, 63, 0.1); position: relative;
 }
 .lp-quote-card::before {
