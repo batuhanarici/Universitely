@@ -66,7 +66,7 @@ const KOC_NAV: NavGroup[] = [
     { path: "mesajlar", label: "Mesajlar", icon: "message" },
     { path: "bildirimler", label: "Bildirimler", icon: "bell" },
     { path: "koc-notlar", label: "Koç Notları", icon: "note" },
-    { path: "gorusme-yonetim", label: "Görüşme & Ödeme", icon: "meeting" },
+    { path: "gorusme-yonetim", label: "Görüşmeler", icon: "meeting" },
     { path: "toplu-bildirim", label: "Toplu Bildirim", icon: "send" },
     { path: "ogretmen-rapor", label: "Sınıf Raporu", icon: "report" },
   ]},
