@@ -57,7 +57,7 @@ export default function Testimonials() {
   return (
     <section className="lp-section" ref={ref}>
       <div className="lp-eyebrow lp-reveal">Onlar ne diyor</div>
-      <h2 className="lp-reveal">Placeholder yorumlar — onay sonrası gerçekleriyle değişecek.</h2>
+      <h2 className="lp-reveal">Deneyenler ne diyor.</h2>
       <div className="lp-marquee-wrap lp-reveal">
         <div className="lp-marquee-track">
           {items.map((y, i) => (
