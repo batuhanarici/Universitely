@@ -277,7 +277,7 @@
 .lp-pool-dot.lp-done { background: var(--lp-teal); border-color: var(--lp-teal); }
 
 /* ---------- Roller ---------- */
-.lp-role-head { margin-bottom: 28px; }
+.lp-roles-copy h2 { margin-bottom: 30px; }
 .lp-roles-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; flex: 1; }
 .lp-role-no { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--lp-gold-dim); margin-bottom: 14px; }
 .lp-role-title { font-size: clamp(26px, 3vw, 36px); line-height: 1.12; animation: lpHeroIn 0.45s var(--lp-ease); }

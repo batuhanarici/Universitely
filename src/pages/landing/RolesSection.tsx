@@ -100,13 +100,10 @@ function RolesDesktop() {
   return (
     <div className="lp-scroll-outer" ref={ref} id="roller">
       <div className="lp-scroll-sticky">
-        <div className="lp-role-head">
-          <div className="lp-eyebrow">Kimin için</div>
-          <h2>Herkes kendi ekranını görür.</h2>
-        </div>
-
         <div className="lp-roles-grid">
           <div className="lp-roles-copy">
+            <div className="lp-eyebrow">Kimin için</div>
+            <h2>Herkes kendi ekranını görür.</h2>
             <div className="lp-role-no">
               {String(active + 1).padStart(2, "0")} / {String(ROLLER.length).padStart(2, "0")}
             </div>
