@@ -75,7 +75,7 @@
 }
 .lp-nav.lp-show { transform: translateY(0); }
 .lp-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-.lp-nav-logo-img { height: 26px; width: auto; display: block; }
+.lp-nav-logo-img { height: 38px; width: auto; display: block; }
 .lp-nav-logo { font-family: "Fraunces", serif; font-weight: 600; font-size: 16px; letter-spacing: 0.01em; }
 .lp-nav-logo em { font-style: italic; color: var(--lp-brick); }
 .lp-nav-tag {
