@@ -36,9 +36,7 @@ export default function Nav({ onGetStarted }: { onGetStarted: () => void }) {
       <div className="lp-top-progress" ref={progressRef} />
       <div className="lp-nav" ref={navRef}>
         <a className="lp-nav-brand" href="#top" onClick={(e) => atla(e, "#top")}>
-          <span className="lp-nav-logo">
-            Universitel<em>y</em>
-          </span>
+          <img className="lp-nav-logo-img" src="/landing-logo.svg" alt="Universitely" />
           <span className="lp-nav-tag">TYT/AYT takip</span>
         </a>
         <nav className="lp-nav-links" aria-label="Bölümler">
