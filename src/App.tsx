@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { supabase, supabaseConfigurada } from "./lib/supabase";
+import { turGosterilmeliMi, turGorulduIsaretle } from "./lib/ogretmenProfilQueries";
 import KurulumEkrani from "./pages/KurulumEkrani";
 import { PanelLayout } from "./components/Layout";
 import ProfilOverlay from "./components/ProfilOverlay";
@@ -37,6 +38,8 @@ const KonuAta = lazy(() => import("./pages/ogretmen/KonuAta"));
 const KocProfil = lazy(() => import("./pages/ogretmen/Profil"));
 const AyarlarSayfasi = lazy(() => import("./pages/ayarlar/AyarlarSayfasi"));
 const BildirimMerkezi = lazy(() => import("./pages/BildirimMerkezi"));
+const YardimSayfasi = lazy(() => import("./pages/ogretmen/YardimSayfasi"));
+const OnboardingTuru = lazy(() => import("./components/OnboardingTuru"));
 
 type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe" | "bildirimler";
 
@@ -79,6 +82,23 @@ function OgretmenUygulamasi() {
   const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
+  const [yardimAcilik, setYardimAcilik] = useState(false);
+  const [turAcik, setTurAcik] = useState(false);
+
+  useEffect(() => {
+    turGosterilmeliMi()
+      .then((goster) => setTurAcik(goster))
+      .catch(() => {});
+  }, []);
+
+  async function turuKapat() {
+    setTurAcik(false);
+    try {
+      await turGorulduIsaretle();
+    } catch {
+      // sessizce geç — tur bir sonraki girişte tekrar denenir
+    }
+  }
 
   function ogrenciDetayinaGit(id: string) {
     setSeciliOgrenci(id);
@@ -91,11 +111,17 @@ function OgretmenUygulamasi() {
       return;
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
+    if (yardimAcilik) setYardimAcilik(false);
     setSekme(path as Sekme);
   }
 
   return (
     <>
+      {turAcik && (
+        <Suspense fallback={null}>
+          <OnboardingTuru onTamamla={turuKapat} />
+        </Suspense>
+      )}
       <PanelLayout
         navConfig={KOC_NAV}
         roleLabel="Koç Paneli"
@@ -103,8 +129,11 @@ function OgretmenUygulamasi() {
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
         onAyarlarAcil={() => setAyarlarAcilik(true)}
+        onYardimAcil={() => setYardimAcilik(true)}
       >
-        {ayarlarAcilik ? (
+        {yardimAcilik ? (
+          <Suspense fallback={<PageLoading />}><YardimSayfasi /></Suspense>
+        ) : ayarlarAcilik ? (
           <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>

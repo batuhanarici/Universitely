@@ -9,6 +9,7 @@ export interface OgretmenProfili {
   biyografi: string | null;
   avatar_url: string | null;
   email_bildirim: boolean;
+  tur_gorundu: boolean;
 }
 
 export interface OgretmenProfilGirdisi {
@@ -44,4 +45,22 @@ export async function ogretmenAdSoyadKaydet(yeni: string): Promise<void> {
   if (tabloHata) throw tabloHata;
   const { error: metaHata } = await supabase.auth.updateUser({ data: { ad_soyad: yeni } });
   if (metaHata) throw metaHata;
+}
+
+/** Koçun tanıtım turunu daha önce görüp görmediğini döner (görmediyse true). */
+export async function turGosterilmeliMi(): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("ogretmen_profilleri")
+    .select("tur_gorundu")
+    .maybeSingle();
+  if (error) throw error;
+  return data ? data.tur_gorundu !== true : true;
+}
+
+/** Turu görüldü olarak işaretler (bitirdiğinde ya da atladığında çağrılır). */
+export async function turGorulduIsaretle(): Promise<void> {
+  const { error } = await supabase
+    .from("ogretmen_profilleri")
+    .upsert({ tur_gorundu: true }, { onConflict: "ogretmen_id" });
+  if (error) throw error;
 }

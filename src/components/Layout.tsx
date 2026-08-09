@@ -125,8 +125,8 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
 }
 
 // ── Panel layouts (router-free: driven by activePath + onNavigate) ─────────
-export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, onAyarlarAcil, children }: {
-  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; children: ReactNode;
+export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, onAyarlarAcil, onYardimAcil, children }: {
+  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; onYardimAcil?: () => void; children: ReactNode;
 }) {
   return (
     <div className="panel-layout">
@@ -135,7 +135,7 @@ export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onPr
         {onProfilAcil && (
           <div className="panel-profile-bar">
             <BildirimCani onNavigate={onNavigate} />
-            <ProfilAvatarMenu onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil} />
+            <ProfilAvatarMenu onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil} onYardimAcil={onYardimAcil} />
           </div>
         )}
         {children}
