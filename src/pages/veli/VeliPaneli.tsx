@@ -1,19 +1,21 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { ParentLayout } from "../../components/Layout";
 import ProfilOverlay from "../../components/ProfilOverlay";
+import PageLoading from "../../components/PageLoading";
 import { VeliVeriProvider } from "./VeliVeri";
 import { useVeliDerived } from "./veliDerived";
 import { sistemHatirlatmalariniSenkronla, type SistemHatirlatmasi } from "../../lib/bildirimQueries";
-import GenelDurum from "./GenelDurum";
-import Grafikler from "./Grafikler";
-import Takvim from "./Takvim";
-import Bildirimler from "./Bildirimler";
-import Rapor from "./Rapor";
-import AIOzet from "./AIOzet";
-import Mesaj from "./Mesaj";
-import Profil from "./Profil";
-import AyarlarSayfasi from "../ayarlar/AyarlarSayfasi";
+
+const GenelDurum = lazy(() => import("./GenelDurum"));
+const Grafikler = lazy(() => import("./Grafikler"));
+const Takvim = lazy(() => import("./Takvim"));
+const Bildirimler = lazy(() => import("./Bildirimler"));
+const Rapor = lazy(() => import("./Rapor"));
+const AIOzet = lazy(() => import("./AIOzet"));
+const Mesaj = lazy(() => import("./Mesaj"));
+const Profil = lazy(() => import("./Profil"));
+const AyarlarSayfasi = lazy(() => import("../ayarlar/AyarlarSayfasi"));
 
 type Sekme =
   | "/parent/overview" | "/parent/charts" | "/parent/calendar" | "/parent/notifications"
@@ -61,9 +63,10 @@ export default function VeliPaneli() {
         onAyarlarAcil={() => setAyarlarAcilik(true)}
       >
         {ayarlarAcilik ? (
-          <AyarlarSayfasi />
+          <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <Suspense fallback={<PageLoading />}>
           {sekme === "/parent/overview" && <GenelDurum />}
           {sekme === "/parent/charts" && <Grafikler />}
           {sekme === "/parent/calendar" && <Takvim />}
@@ -71,6 +74,7 @@ export default function VeliPaneli() {
           {sekme === "/parent/report" && <Rapor />}
           {sekme === "/parent/ai-summary" && <AIOzet />}
           {sekme === "/parent/message" && <Mesaj />}
+          </Suspense>
         </div>
         )}
       </ParentLayout>
@@ -81,7 +85,7 @@ export default function VeliPaneli() {
           altBaslik="Hesap bilgilerini yönet"
           onKapat={() => setProfilAcilik(false)}
         >
-          <Profil />
+          <Suspense fallback={<PageLoading />}><Profil /></Suspense>
         </ProfilOverlay>
       )}
     </VeliVeriProvider>
