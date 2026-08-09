@@ -70,7 +70,7 @@ export default function KocAI({ onOgrenciSec }: { onOgrenciSec: (id: string) => 
                         <span className="tabular" style={{ width: 40, textAlign: "right", fontSize: 13, fontWeight: 700 }}>{r.riskSkoru}</span>
                       </div>
                     </div>
-                    <button className="btn btn-ghost btn-sm" onClick={() => onOgrenciSec(r.ogrenci_id)}><Icon name="user" size={12} /></button>
+                    <button className="btn btn-ghost btn-sm btn-icon" onClick={() => onOgrenciSec(r.ogrenci_id)}><Icon name="user" size={12} /></button>
                     <button className="btn btn-ghost btn-sm" onClick={() => setAcik(acikMi ? null : r.ogrenci_id)}>
                       {acikMi ? "Kapat" : "Analiz"}
                     </button>

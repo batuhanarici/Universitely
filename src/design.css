@@ -327,6 +327,18 @@ h1, h2, h3, .display {
 .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* İkon-only butonlar (yalnızca <Icon> içeren, metinsiz butonlar).
+   Masaüstünde kompakt kalır; dokunmatik cihazlarda WCAG'in önerdiği
+   44x44px dokunma hedefini sağlar. */
+.btn-icon { padding: 5px; }
+@media (hover: none) {
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+}
+
 /* Input */
 .input {
   width: 100%;

@@ -132,7 +132,7 @@ export default function KocNotlar() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
                   <Badge variant={ONEM_VAZIAN[n.onem] ?? "gray"}>{ONEMLER.find((o) => o.deger === n.onem)?.etiket ?? n.onem}</Badge>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleSil(n.id)} title="Notu sil"><Icon name="trash" size={13} /></button>
+                  <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(n.id)} title="Notu sil"><Icon name="trash" size={13} /></button>
                 </div>
               </div>
             ))}

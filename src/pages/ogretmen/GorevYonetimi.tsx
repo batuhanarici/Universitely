@@ -150,7 +150,7 @@ export default function GorevYonetimi() {
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <Badge variant={d.variant}>{d.metin}</Badge>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleSil(g.id)} title="Görevi sil"><Icon name="trash" size={13} /></button>
+                    <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(g.id)} title="Görevi sil"><Icon name="trash" size={13} /></button>
                   </div>
                 </div>
                 {g.tamamlandi && !g.kontrol_edildi && (

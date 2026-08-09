@@ -166,7 +166,7 @@ export default function Muhasebe() {
                   </p>
                 </div>
                 <Badge variant={d.badge}>{d.metin}</Badge>
-                <button className="btn btn-ghost btn-sm" onClick={() => odemeSil(od.id)}><Icon name="trash" size={12} /></button>
+                <button className="btn btn-ghost btn-sm btn-icon" onClick={() => odemeSil(od.id)}><Icon name="trash" size={12} /></button>
               </div>
             );
           })}

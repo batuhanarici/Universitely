@@ -151,7 +151,7 @@ export default function KonuAta() {
                   </span>
                   <Badge variant="gray">{konu?.ders_adi ?? "—"}</Badge>
                   <Badge variant={il.tamamlandi ? "teal" : "gray"}>{il.tamamlandi ? "✓ Tamamlandı" : "Çalışılıyor"}</Badge>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleKaldir(il.konu_id)} title="Atamayı kaldır"><Icon name="trash" size={13} /></button>
+                  <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleKaldir(il.konu_id)} title="Atamayı kaldır"><Icon name="trash" size={13} /></button>
                 </div>
               );
             })}

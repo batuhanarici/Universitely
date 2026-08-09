@@ -125,7 +125,7 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.ad_soyad}</span>
                 <div style={{ width: 90 }}><ProgressBar pct={r.riskSkoru} color={RISK_RENK[r.seviye]} /></div>
                 <Badge variant={RISK_BADGE[r.seviye]}>{RISK_METIN[r.seviye]}</Badge>
-                <button className="btn btn-ghost btn-sm" onClick={() => onOgrenciSec(r.ogrenci_id)}><Icon name="user" size={12} /></button>
+                <button className="btn btn-ghost btn-sm btn-icon" onClick={() => onOgrenciSec(r.ogrenci_id)}><Icon name="user" size={12} /></button>
               </div>
             ))}
           </div>
@@ -151,7 +151,7 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
                     </p>
                   </div>
                   {o.aktif ? null : <Badge variant="gray">Pasif</Badge>}
-                  <button className="btn btn-ghost btn-sm" onClick={() => onOgrenciSec(o.id)}><Icon name="user" size={12} /></button>
+                  <button className="btn btn-ghost btn-sm btn-icon" onClick={() => onOgrenciSec(o.id)}><Icon name="user" size={12} /></button>
                 </div>
               );
             })}

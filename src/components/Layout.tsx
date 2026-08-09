@@ -111,6 +111,7 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
                 className={`sidebar-item ${activePath === item.path ? 'active' : ''}`}
                 onClick={(e) => { e.preventDefault(); onNavigate(item.path); }}
                 href={item.path}
+                title={item.label}
               >
                 <Icon name={item.icon} size={16} />
                 <span>{item.label}</span>
