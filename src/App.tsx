@@ -129,11 +129,10 @@ function OgretmenUygulamasi() {
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
         onAyarlarAcil={() => setAyarlarAcilik(true)}
-        onYardimAcil={() => setYardimAcilik(true)}
+        yardimAcik={yardimAcilik}
+        onYardimToggle={() => setYardimAcilik((a) => !a)}
       >
-        {yardimAcilik ? (
-          <Suspense fallback={<PageLoading />}><YardimSayfasi /></Suspense>
-        ) : ayarlarAcilik ? (
+        {ayarlarAcilik ? (
           <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -172,6 +171,16 @@ function OgretmenUygulamasi() {
           onKapat={() => setProfilAcilik(false)}
         >
           <Suspense fallback={<PageLoading />}><KocProfil /></Suspense>
+        </ProfilOverlay>
+      )}
+
+      {yardimAcilik && (
+        <ProfilOverlay
+          baslik="Yardım"
+          altBaslik="Koç panelindeki bölümlerin ne işe yaradığına dair kısa bir rehber"
+          onKapat={() => setYardimAcilik(false)}
+        >
+          <Suspense fallback={<PageLoading />}><YardimSayfasi /></Suspense>
         </ProfilOverlay>
       )}
     </>

@@ -125,8 +125,8 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
 }
 
 // ── Panel layouts (router-free: driven by activePath + onNavigate) ─────────
-export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, onAyarlarAcil, onYardimAcil, children }: {
-  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; onYardimAcil?: () => void; children: ReactNode;
+export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onProfilAcil, onAyarlarAcil, yardimAcik, onYardimToggle, children }: {
+  navConfig: NavGroup[]; roleLabel: string; activePath: string; onNavigate: (p: string) => void; onProfilAcil?: () => void; onAyarlarAcil?: () => void; yardimAcik?: boolean; onYardimToggle?: () => void; children: ReactNode;
 }) {
   return (
     <div className="panel-layout">
@@ -134,8 +134,28 @@ export function PanelLayout({ navConfig, roleLabel, activePath, onNavigate, onPr
       <main className={`panel-main${onProfilAcil ? " panel-main-with-profile" : ""}`}>
         {onProfilAcil && (
           <div className="panel-profile-bar">
+            {onYardimToggle && (
+              <button
+                onClick={onYardimToggle}
+                aria-label="Yardım"
+                title="Yardım"
+                style={{
+                  border: "none",
+                  background: yardimAcik ? "rgba(228,187,96,0.15)" : "none",
+                  padding: 6,
+                  cursor: "pointer",
+                  borderRadius: 10,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#0F1B2D",
+                }}
+              >
+                <Icon name="help" size={19} />
+              </button>
+            )}
             <BildirimCani onNavigate={onNavigate} />
-            <ProfilAvatarMenu onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil} onYardimAcil={onYardimAcil} />
+            <ProfilAvatarMenu onProfilAcil={onProfilAcil} onAyarlarAcil={onAyarlarAcil} />
           </div>
         )}
         {children}

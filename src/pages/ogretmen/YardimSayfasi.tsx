@@ -3,14 +3,7 @@ import { kocRehberGruplari } from "../../lib/kocRehberIcerik";
 
 export default function YardimSayfasi() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div>
-        <h1 className="page-title">Yardım</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>
-          Koç panelindeki bölümlerin ne işe yaradığına dair kısa bir rehber
-        </p>
-      </div>
-
+    <>
       {kocRehberGruplari.map((grup) => (
         <Card key={grup.baslik}>
           <h3 className="section-title" style={{ marginBottom: 4, fontSize: 16 }}>{grup.baslik}</h3>
@@ -28,6 +21,6 @@ export default function YardimSayfasi() {
           </div>
         </Card>
       ))}
-    </div>
+    </>
   );
 }
