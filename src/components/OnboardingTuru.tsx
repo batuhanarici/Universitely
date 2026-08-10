@@ -70,7 +70,7 @@ export default function OnboardingTuru({ onTamamla }: { onTamamla: () => void })
       />
       {spotlightAktif && (
         <div
-          className="anim-fade tur-spotlight"
+          className="tur-spotlight"
           style={{
             position: "fixed",
             top: rect!.top, left: rect!.left, width: rect!.width, height: rect!.height,
