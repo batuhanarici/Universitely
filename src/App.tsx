@@ -180,7 +180,9 @@ function OgretmenUygulamasi() {
           altBaslik="Koç panelindeki bölümlerin ne işe yaradığına dair kısa bir rehber"
           onKapat={() => setYardimAcilik(false)}
         >
-          <Suspense fallback={<PageLoading />}><YardimSayfasi /></Suspense>
+          <Suspense fallback={<PageLoading />}>
+            <YardimSayfasi onTuruBaslat={() => { setYardimAcilik(false); setTurAcik(true); }} />
+          </Suspense>
         </ProfilOverlay>
       )}
     </>
