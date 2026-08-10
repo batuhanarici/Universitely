@@ -103,7 +103,7 @@ function SidebarContent({ navConfig, roleLabel, activePath, onNavigate }: {
 
       <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
         {navConfig.map(group => (
-          <div key={group.group}>
+          <div key={group.group} data-tur-grup={group.group}>
             <div className="sidebar-label">{group.group}</div>
             {group.items.map(item => (
               <a
