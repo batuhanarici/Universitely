@@ -125,6 +125,14 @@ h1, h2, h3, .display {
 }
 .arrow-float { animation: float-arrow 2.6s ease-in-out infinite; }
 
+/* Onboarding turu — hedeflenen sidebar grubunun etrafındaki vurgu kutusu.
+   9999px'lik box-shadow tekniğiyle hem "diğer her yeri karart" hem
+   "hedefi net bir çerçeveyle kutula" efekti tek elemanda veriliyor.
+   Nabız/glow yerine sabit, keskin bir kutu tercih edildi. */
+.tur-spotlight {
+  box-shadow: 0 0 0 9999px rgba(15,27,45,0.72), 0 0 0 2px var(--color-gold), inset 0 0 0 1px rgba(228,187,96,0.4);
+}
+
 .anim-stagger > * {
   animation: stagger-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -326,6 +334,18 @@ h1, h2, h3, .display {
 .btn-danger:hover { background: rgba(196,80,58,0.06); }
 .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* İkon-only butonlar (yalnızca <Icon> içeren, metinsiz butonlar).
+   Masaüstünde kompakt kalır; dokunmatik cihazlarda WCAG'in önerdiği
+   44x44px dokunma hedefini sağlar. */
+.btn-icon { padding: 5px; }
+@media (hover: none) {
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+}
 
 /* Input */
 .input {

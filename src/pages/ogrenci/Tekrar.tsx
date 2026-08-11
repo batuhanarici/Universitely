@@ -64,7 +64,7 @@ export default function Tekrar() {
         <Checkbox checked={p.yapildi} onChange={() => toggleYapildi(p)} />
         <span style={{ flex: 1, fontSize: 13, textDecoration: p.yapildi ? "line-through" : "none", color: p.yapildi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>{p.aciklama}</span>
         <span style={{ fontSize: 11, color: "rgba(15,27,45,0.4)" }}>{relativeDate(p.plan_tarihi)}</span>
-        <button className="btn btn-danger btn-sm" onClick={() => handleSil(p.id)}><Icon name="trash" size={13} /></button>
+        <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(p.id)}><Icon name="trash" size={13} /></button>
       </div>
     );
   }

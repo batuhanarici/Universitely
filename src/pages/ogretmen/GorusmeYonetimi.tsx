@@ -156,7 +156,7 @@ export default function GorusmeYonetimi() {
                       <Btn variant="danger" size="sm" onClick={() => gorusmeDurumunaGec(m, "iptal")}>İptal</Btn>
                     </>
                   )}
-                  <button className="btn btn-danger btn-sm" onClick={() => gorusmeSil(m.id)} title="Görüşmeyi sil"><Icon name="trash" size={13} /></button>
+                  <button className="btn btn-danger btn-sm btn-icon" onClick={() => gorusmeSil(m.id)} title="Görüşmeyi sil"><Icon name="trash" size={13} /></button>
                 </div>
               </div>
             ))}

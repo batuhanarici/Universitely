@@ -141,7 +141,7 @@ export default function KaynakAta() {
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <span className="tabular" style={{ fontSize: 13 }}>{k.ilerleme}/{k.toplam} ({p}%)</span>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleSil(k.id)} title="Kaynağı kaldır"><Icon name="trash" size={13} /></button>
+                      <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(k.id)} title="Kaynağı kaldır"><Icon name="trash" size={13} /></button>
                     </div>
                   </div>
                   <ProgressBar pct={p} color="#E4BB60" />

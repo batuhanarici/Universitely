@@ -147,7 +147,7 @@ export default function Kaynaklar() {
                         {k.ilerleme} / {k.toplam}
                       </span>
                       <button className="btn btn-ghost btn-sm" onClick={() => ilerlemeyiGuncelle(k, 1)}>+</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleSil(k.id)}><Icon name="trash" size={14} /></button>
+                      <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(k.id)}><Icon name="trash" size={14} /></button>
                     </div>
                   </div>
                   <ProgressBar pct={p} color={over ? "#C4503A" : done ? "#2A9D8F" : "#E4BB60"} />

@@ -1,40 +1,45 @@
-import { useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { supabase, supabaseConfigurada } from "./lib/supabase";
-import GirisEkrani from "./pages/GirisEkrani";
-import SifreSifirlama from "./pages/SifreSifirlama";
+import { turGosterilmeliMi, turGorulduIsaretle } from "./lib/ogretmenProfilQueries";
 import KurulumEkrani from "./pages/KurulumEkrani";
-import LandingPage from "./pages/landing/LandingPage";
-import OgrenciPaneli from "./pages/ogrenci/OgrenciPaneli";
-import DersKonuYonetimi from "./pages/ogretmen/DersKonuYonetimi";
-import SablonOlustur from "./pages/ogretmen/SablonOlustur";
-import DenemeOlustur from "./pages/ogretmen/DenemeOlustur";
-import SonucGir from "./pages/ogretmen/SonucGir";
-import SinifGenel from "./pages/ogretmen/SinifGenel";
-import SinifAnaliz from "./pages/ogretmen/SinifAnaliz";
-import TopluSonucGir from "./pages/ogretmen/TopluSonucGir";
-import OgretmenMesajlar from "./pages/ogretmen/OgretmenMesajlar";
-import KocDashboard from "./pages/ogretmen/KocDashboard";
-import OgrenciYonetimi from "./pages/ogretmen/OgrenciYonetimi";
-import OgrenciDetay from "./pages/ogretmen/OgrenciDetay";
-import KocNotlar from "./pages/ogretmen/KocNotlar";
-import GorusmeYonetimi from "./pages/ogretmen/GorusmeYonetimi";
-import TopluBildirim from "./pages/ogretmen/TopluBildirim";
-import OgretmenRapor from "./pages/ogretmen/OgretmenRapor";
-import KocAI from "./pages/ogretmen/KocAI";
-import Muhasebe from "./pages/ogretmen/Muhasebe";
-import ProgramYonetimi from "./pages/ogretmen/ProgramYonetimi";
-import GorevYonetimi from "./pages/ogretmen/GorevYonetimi";
-import KaynakAta from "./pages/ogretmen/KaynakAta";
-import KonuAta from "./pages/ogretmen/KonuAta";
-import VeliPaneli from "./pages/veli/VeliPaneli";
-import KocProfil from "./pages/ogretmen/Profil";
-import AyarlarSayfasi from "./pages/ayarlar/AyarlarSayfasi";
-import BildirimMerkezi from "./pages/BildirimMerkezi";
 import { PanelLayout } from "./components/Layout";
 import ProfilOverlay from "./components/ProfilOverlay";
 import type { NavGroup } from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PageLoading from "./components/PageLoading";
+
+const GirisEkrani = lazy(() => import("./pages/GirisEkrani"));
+const SifreSifirlama = lazy(() => import("./pages/SifreSifirlama"));
+const LandingPage = lazy(() => import("./pages/landing/LandingPage"));
+const OgrenciPaneli = lazy(() => import("./pages/ogrenci/OgrenciPaneli"));
+const VeliPaneli = lazy(() => import("./pages/veli/VeliPaneli"));
+const DersKonuYonetimi = lazy(() => import("./pages/ogretmen/DersKonuYonetimi"));
+const SablonOlustur = lazy(() => import("./pages/ogretmen/SablonOlustur"));
+const DenemeOlustur = lazy(() => import("./pages/ogretmen/DenemeOlustur"));
+const SonucGir = lazy(() => import("./pages/ogretmen/SonucGir"));
+const SinifGenel = lazy(() => import("./pages/ogretmen/SinifGenel"));
+const SinifAnaliz = lazy(() => import("./pages/ogretmen/SinifAnaliz"));
+const TopluSonucGir = lazy(() => import("./pages/ogretmen/TopluSonucGir"));
+const OgretmenMesajlar = lazy(() => import("./pages/ogretmen/OgretmenMesajlar"));
+const KocDashboard = lazy(() => import("./pages/ogretmen/KocDashboard"));
+const OgrenciYonetimi = lazy(() => import("./pages/ogretmen/OgrenciYonetimi"));
+const OgrenciDetay = lazy(() => import("./pages/ogretmen/OgrenciDetay"));
+const KocNotlar = lazy(() => import("./pages/ogretmen/KocNotlar"));
+const GorusmeYonetimi = lazy(() => import("./pages/ogretmen/GorusmeYonetimi"));
+const TopluBildirim = lazy(() => import("./pages/ogretmen/TopluBildirim"));
+const OgretmenRapor = lazy(() => import("./pages/ogretmen/OgretmenRapor"));
+const KocAI = lazy(() => import("./pages/ogretmen/KocAI"));
+const Muhasebe = lazy(() => import("./pages/ogretmen/Muhasebe"));
+const ProgramYonetimi = lazy(() => import("./pages/ogretmen/ProgramYonetimi"));
+const GorevYonetimi = lazy(() => import("./pages/ogretmen/GorevYonetimi"));
+const KaynakAta = lazy(() => import("./pages/ogretmen/KaynakAta"));
+const KonuAta = lazy(() => import("./pages/ogretmen/KonuAta"));
+const KocProfil = lazy(() => import("./pages/ogretmen/Profil"));
+const AyarlarSayfasi = lazy(() => import("./pages/ayarlar/AyarlarSayfasi"));
+const BildirimMerkezi = lazy(() => import("./pages/BildirimMerkezi"));
+const YardimSayfasi = lazy(() => import("./pages/ogretmen/YardimSayfasi"));
+const OnboardingTuru = lazy(() => import("./components/OnboardingTuru"));
 
 type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe" | "bildirimler";
 
@@ -77,6 +82,23 @@ function OgretmenUygulamasi() {
   const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
+  const [yardimAcilik, setYardimAcilik] = useState(false);
+  const [turAcik, setTurAcik] = useState(false);
+
+  useEffect(() => {
+    turGosterilmeliMi()
+      .then((goster) => setTurAcik(goster))
+      .catch(() => {});
+  }, []);
+
+  async function turuKapat() {
+    setTurAcik(false);
+    try {
+      await turGorulduIsaretle();
+    } catch {
+      // sessizce geç — tur bir sonraki girişte tekrar denenir
+    }
+  }
 
   function ogrenciDetayinaGit(id: string) {
     setSeciliOgrenci(id);
@@ -89,11 +111,17 @@ function OgretmenUygulamasi() {
       return;
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
+    if (yardimAcilik) setYardimAcilik(false);
     setSekme(path as Sekme);
   }
 
   return (
     <>
+      {turAcik && (
+        <Suspense fallback={null}>
+          <OnboardingTuru onTamamla={turuKapat} />
+        </Suspense>
+      )}
       <PanelLayout
         navConfig={KOC_NAV}
         roleLabel="Koç Paneli"
@@ -101,11 +129,14 @@ function OgretmenUygulamasi() {
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
         onAyarlarAcil={() => setAyarlarAcilik(true)}
+        yardimAcik={yardimAcilik}
+        onYardimToggle={() => setYardimAcilik((a) => !a)}
       >
         {ayarlarAcilik ? (
-          <AyarlarSayfasi />
+          <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <Suspense fallback={<PageLoading />}>
           {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
           {sekme === "sinif" && <SinifGenel />}
           {sekme === "sinif-analiz" && <SinifAnaliz />}
@@ -128,6 +159,7 @@ function OgretmenUygulamasi() {
           {sekme === "ogretmen-rapor" && <OgretmenRapor />}
           {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
           {sekme === "muhasebe" && <Muhasebe />}
+          </Suspense>
         </div>
         )}
       </PanelLayout>
@@ -138,7 +170,19 @@ function OgretmenUygulamasi() {
           altBaslik="Hesap bilgilerini ve kurum bilgilerini yönet"
           onKapat={() => setProfilAcilik(false)}
         >
-          <KocProfil />
+          <Suspense fallback={<PageLoading />}><KocProfil /></Suspense>
+        </ProfilOverlay>
+      )}
+
+      {yardimAcilik && (
+        <ProfilOverlay
+          baslik="Yardım"
+          altBaslik="Koç panelindeki bölümlerin ne işe yaradığına dair kısa bir rehber"
+          onKapat={() => setYardimAcilik(false)}
+        >
+          <Suspense fallback={<PageLoading />}>
+            <YardimSayfasi onTuruBaslat={() => { setYardimAcilik(false); setTurAcik(true); }} />
+          </Suspense>
         </ProfilOverlay>
       )}
     </>
@@ -169,24 +213,26 @@ function App() {
   } else if (yukleniyor) {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (sifreSifirlama) {
-    icerik = <SifreSifirlama />;
+    icerik = <Suspense fallback={<PageLoading />}><SifreSifirlama /></Suspense>;
   } else if (anaSayfaGosterilsin) {
     icerik = (
-      <LandingPage
-        onGetStarted={() => {
-          setGirisIstendi(true);
-          sessionStorage.setItem("girisIstendi", "1");
-        }}
-      />
+      <Suspense fallback={<PageLoading />}>
+        <LandingPage
+          onGetStarted={() => {
+            setGirisIstendi(true);
+            sessionStorage.setItem("girisIstendi", "1");
+          }}
+        />
+      </Suspense>
     );
   } else if (!session) {
-    icerik = <GirisEkrani />;
+    icerik = <Suspense fallback={<PageLoading />}><GirisEkrani /></Suspense>;
   } else if (veliMi) {
-    icerik = <VeliPaneli />;
+    icerik = <Suspense fallback={<PageLoading />}><VeliPaneli /></Suspense>;
   } else if (ogrenciMi === null) {
     icerik = <p style={{ textAlign: "center", marginTop: 100 }}>Yükleniyor…</p>;
   } else if (ogrenciMi) {
-    icerik = <OgrenciPaneli />;
+    icerik = <Suspense fallback={<PageLoading />}><OgrenciPaneli /></Suspense>;
   } else {
     icerik = <OgretmenUygulamasi />;
   }

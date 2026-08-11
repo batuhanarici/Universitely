@@ -137,7 +137,7 @@ export default function Yanlislar() {
                     </p>
                   </div>
                   <button className="btn btn-ghost btn-sm" onClick={() => tekrarinaEkle(k)}>Tekrara Ekle</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleSil(k.id)}><Icon name="trash" size={13} /></button>
+                  <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(k.id)}><Icon name="trash" size={13} /></button>
                 </div>
               );
             })}

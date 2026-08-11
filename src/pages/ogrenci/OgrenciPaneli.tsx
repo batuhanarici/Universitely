@@ -1,25 +1,27 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { StudentLayout } from "../../components/Layout";
 import ProfilOverlay from "../../components/ProfilOverlay";
-import Dashboard from "./Dashboard";
-import Profil from "./Profil";
-import Calisma from "./Calisma";
-import Konular from "./Konular";
-import Gorevler from "./Gorevler";
-import Kaynaklar from "./Kaynaklar";
-import Denemeler from "./Denemeler";
-import Analiz from "./Analiz";
-import Yanlislar from "./Yanlislar";
-import Tekrar from "./Tekrar";
-import Takvim from "./Takvim";
-import Mesaj from "./Mesaj";
-import Oneriler from "./Oneriler";
-import HaftalikRapor from "./HaftalikRapor";
-import Karsilastirma from "./Karsilastirma";
-import Motivasyon from "./Motivasyon";
-import BildirimMerkezi from "../BildirimMerkezi";
-import AyarlarSayfasi from "../ayarlar/AyarlarSayfasi";
+import PageLoading from "../../components/PageLoading";
+
+const Dashboard = lazy(() => import("./Dashboard"));
+const Profil = lazy(() => import("./Profil"));
+const Calisma = lazy(() => import("./Calisma"));
+const Konular = lazy(() => import("./Konular"));
+const Gorevler = lazy(() => import("./Gorevler"));
+const Kaynaklar = lazy(() => import("./Kaynaklar"));
+const Denemeler = lazy(() => import("./Denemeler"));
+const Analiz = lazy(() => import("./Analiz"));
+const Yanlislar = lazy(() => import("./Yanlislar"));
+const Tekrar = lazy(() => import("./Tekrar"));
+const Takvim = lazy(() => import("./Takvim"));
+const Mesaj = lazy(() => import("./Mesaj"));
+const Oneriler = lazy(() => import("./Oneriler"));
+const HaftalikRapor = lazy(() => import("./HaftalikRapor"));
+const Karsilastirma = lazy(() => import("./Karsilastirma"));
+const Motivasyon = lazy(() => import("./Motivasyon"));
+const BildirimMerkezi = lazy(() => import("../BildirimMerkezi"));
+const AyarlarSayfasi = lazy(() => import("../ayarlar/AyarlarSayfasi"));
 
 type Sekme =
   | "/student/dashboard" | "/student/study" | "/student/subjects" | "/student/tasks"
@@ -50,9 +52,10 @@ export default function OgrenciPaneli() {
         onAyarlarAcil={() => setAyarlarAcilik(true)}
       >
         {ayarlarAcilik ? (
-          <AyarlarSayfasi />
+          <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <Suspense fallback={<PageLoading />}>
           {sekme === "/student/dashboard" && <Dashboard />}
           {sekme === "/student/study" && <Calisma />}
           {sekme === "/student/subjects" && <Konular />}
@@ -69,6 +72,7 @@ export default function OgrenciPaneli() {
           {sekme === "/student/compare" && <Karsilastirma />}
           {sekme === "/student/motivation" && <Motivasyon />}
           {sekme === "/student/tasks" && <Gorevler />}
+          </Suspense>
         </div>
         )}
       </StudentLayout>
@@ -79,7 +83,7 @@ export default function OgrenciPaneli() {
           altBaslik="Hesap bilgilerini ve hedeflerini yönet"
           onKapat={() => setProfilAcilik(false)}
         >
-          <Profil />
+          <Suspense fallback={<PageLoading />}><Profil /></Suspense>
         </ProfilOverlay>
       )}
     </>
