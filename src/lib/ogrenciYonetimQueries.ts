@@ -6,6 +6,8 @@ export interface KocOgrencisi {
   ad_soyad: string;
   aktif: boolean;
   davet_kodu: string | null;
+  sube_id: string | null;
+  sube_adi: string | null;
 }
 
 export interface OgrenciDetay {

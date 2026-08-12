@@ -87,6 +87,7 @@ export interface Gorev {
   tamamlandi: boolean;
   kontrol_edildi: boolean;
   geri_bildirim: string | null;
+  sube_id?: string | null;
 }
 
 export interface KonuIlerleme {

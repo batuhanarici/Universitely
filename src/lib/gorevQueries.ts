@@ -60,10 +60,10 @@ export async function gorevSil(id: string) {
   if (error) throw error;
 }
 
-export async function gorevAta(ogrenciId: string, baslik: string, tarih: string) {
+export async function gorevAta(ogrenciId: string, baslik: string, tarih: string, subeId?: string | null) {
   const { data, error } = await supabase
     .from("gorevler")
-    .insert({ ogrenci_id: ogrenciId, baslik, tarih, tip: "koc" })
+    .insert({ ogrenci_id: ogrenciId, baslik, tarih, tip: "koc", sube_id: subeId ?? null })
     .select()
     .single();
   if (error) throw error;
