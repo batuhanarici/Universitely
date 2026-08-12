@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
 import { kocOgrencileri } from "../../lib/ogrenciYonetimQueries";
-import { Card, StatusDot } from "../../components/ui";
+import { subeleriGetir, type Sube } from "../../lib/subeQueries";
+import { Card, StatusDot, Select } from "../../components/ui";
 
 interface OgrenciOzet {
   ogrenci_id: string;
@@ -79,21 +80,35 @@ function ozetleriHesapla(satirlar: SinifSonucSatiri[], aktifHaritasi: Map<string
 export default function SinifGenel() {
   const [satirlar, setSatirlar] = useState<SinifSonucSatiri[]>([]);
   const [aktifHaritasi, setAktifHaritasi] = useState<Map<string, boolean>>(new Map());
+  const [subeHaritasi, setSubeHaritasi] = useState<Map<string, string | null>>(new Map());
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [seciliSubeId, setSeciliSubeId] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
-    Promise.all([sinifSonuclariniGetir(), kocOgrencileri()])
-      .then(([s, o]) => {
+    Promise.all([sinifSonuclariniGetir(), kocOgrencileri(), subeleriGetir()])
+      .then(([s, o, sb]) => {
         setSatirlar(s);
-        const map = new Map<string, boolean>();
-        for (const ogr of o) map.set(ogr.id, ogr.aktif);
-        setAktifHaritasi(map);
+        const aktifMap = new Map<string, boolean>();
+        const subeMap = new Map<string, string | null>();
+        for (const ogr of o) {
+          aktifMap.set(ogr.id, ogr.aktif);
+          subeMap.set(ogr.id, ogr.sube_id);
+        }
+        setAktifHaritasi(aktifMap);
+        setSubeHaritasi(subeMap);
+        setSubeler(sb);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
 
-  const { ogrenciler, konular } = useMemo(() => ozetleriHesapla(satirlar, aktifHaritasi), [satirlar, aktifHaritasi]);
+  const filtreliSatirlar = useMemo(() => {
+    if (!seciliSubeId) return satirlar;
+    return satirlar.filter((s) => subeHaritasi.get(s.ogrenci_id) === seciliSubeId);
+  }, [satirlar, subeHaritasi, seciliSubeId]);
+
+  const { ogrenciler, konular } = useMemo(() => ozetleriHesapla(filtreliSatirlar, aktifHaritasi), [filtreliSatirlar, aktifHaritasi]);
 
   if (yukleniyor) return <p style={{ textAlign: "center", marginTop: 60 }}>Yükleniyor…</p>;
 
@@ -108,11 +123,27 @@ export default function SinifGenel() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div>
-        <h1 className="page-title">Sınıf Genel Durumu</h1>
-        <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Nete göre sıralı öğrenci listesi</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 className="page-title">Sınıf Genel Durumu</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Nete göre sıralı öğrenci listesi</p>
+        </div>
+        {subeler.length > 0 && (
+          <Select value={seciliSubeId} onChange={(e) => setSeciliSubeId(e.target.value)} style={{ maxWidth: 180 }}>
+            <option value="">Tüm Şubeler</option>
+            {subeler.map((s) => (
+              <option key={s.id} value={s.id}>{s.ad}</option>
+            ))}
+          </Select>
+        )}
       </div>
 
+      {filtreliSatirlar.length === 0 ? (
+        <Card>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Bu şubede henüz sonuç girilmiş öğrenci yok.</p>
+        </Card>
+      ) : (
+      <>
       <Card>
         <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Öğrenciler — Nete Göre</h3>
         <table className="data-table">
@@ -162,6 +193,8 @@ export default function SinifGenel() {
           ))}
         </div>
       </Card>
+      </>
+      )}
     </div>
   );
 }

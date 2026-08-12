@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ogrencileriGetir } from "../../lib/sonucQueries";
+import { kocOgrencileri } from "../../lib/ogrenciYonetimQueries";
 import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
+import { subeleriGetir, type Sube } from "../../lib/subeQueries";
 import { mesajGonder } from "../../lib/mesajQueries";
 import type { Ogrenci, VeliAlici } from "../../types/database";
 import { Card, Textarea, Btn, Checkbox, useToast } from "../../components/ui";
@@ -14,16 +16,20 @@ export default function TopluBildirim() {
   const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<Ogrenci[]>([]);
   const [veliler, setVeliler] = useState<VeliAlici[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [subeUyeleri, setSubeUyeleri] = useState<Map<string, string | null>>(new Map());
   const [secim, setSecim] = useState<Secim>({ ogrenciler: new Set(), veliler: new Set() });
   const [mesaj, setMesaj] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
-    Promise.all([ogrencileriGetir(), kocVelileriniGetir()])
-      .then(([o, v]) => {
+    Promise.all([ogrencileriGetir(), kocVelileriniGetir(), subeleriGetir(), kocOgrencileri()])
+      .then(([o, v, sb, ko]) => {
         setOgrenciler(o);
         setVeliler(v);
+        setSubeler(sb);
+        setSubeUyeleri(new Map(ko.map((k) => [k.id, k.sube_id])));
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
@@ -46,6 +52,16 @@ export default function TopluBildirim() {
       if (yeni.has(id)) yeni.delete(id);
       else yeni.add(id);
       return { ...s, veliler: yeni };
+    });
+  }
+
+  function subedenSec(subeId: string) {
+    setSecim((s) => {
+      const yeni = new Set(s.ogrenciler);
+      for (const o of ogrenciler) {
+        if (subeUyeleri.get(o.id) === subeId) yeni.add(o.id);
+      }
+      return { ...s, ogrenciler: yeni };
     });
   }
 
@@ -95,6 +111,17 @@ export default function TopluBildirim() {
         <h1 className="page-title">Toplu Bildirim</h1>
         <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Öğrencilere ve velilere toplu mesaj gönderin</p>
       </div>
+
+      {subeler.length > 0 && (
+        <Card style={{ padding: "14px 20px" }}>
+          <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)", marginBottom: 8 }}>Şubeden hızlı seç</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {subeler.map((s) => (
+              <Btn key={s.id} variant="ghost" size="sm" onClick={() => subedenSec(s.id)}>{s.ad}</Btn>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {ogrenciler.length === 0 && veliler.length === 0 ? (
         <Card>
