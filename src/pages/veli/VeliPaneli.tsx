@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { turGosterilmeliMi, turGorulduIsaretle } from "../../lib/veliQueries";
+import { veliRehberGiris, veliRehberGruplari, veliRehberKapanis } from "../../lib/veliRehberIcerik";
 import { ParentLayout } from "../../components/Layout";
 import ProfilOverlay from "../../components/ProfilOverlay";
 import PageLoading from "../../components/PageLoading";
@@ -16,6 +18,8 @@ const AIOzet = lazy(() => import("./AIOzet"));
 const Mesaj = lazy(() => import("./Mesaj"));
 const Profil = lazy(() => import("./Profil"));
 const AyarlarSayfasi = lazy(() => import("../ayarlar/AyarlarSayfasi"));
+const YardimSayfasi = lazy(() => import("./YardimSayfasi"));
+const OnboardingTuru = lazy(() => import("../../components/OnboardingTuru"));
 
 type Sekme =
   | "/parent/overview" | "/parent/charts" | "/parent/calendar" | "/parent/notifications"
@@ -43,6 +47,23 @@ export default function VeliPaneli() {
   const [sekme, setSekme] = useState<Sekme>("/parent/overview");
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
+  const [yardimAcilik, setYardimAcilik] = useState(false);
+  const [turAcik, setTurAcik] = useState(false);
+
+  useEffect(() => {
+    turGosterilmeliMi()
+      .then((goster) => setTurAcik(goster))
+      .catch(() => {});
+  }, []);
+
+  async function turuKapat() {
+    setTurAcik(false);
+    try {
+      await turGorulduIsaretle();
+    } catch {
+      // sessizce geç — tur bir sonraki girişte tekrar denenir
+    }
+  }
 
   const git = (path: string) => {
     if (path === "/") {
@@ -50,17 +71,25 @@ export default function VeliPaneli() {
       return;
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
+    if (yardimAcilik) setYardimAcilik(false);
     setSekme(path as Sekme);
   };
 
   return (
     <VeliVeriProvider>
       <VeliBildirimEkim />
+      {turAcik && (
+        <Suspense fallback={null}>
+          <OnboardingTuru giris={veliRehberGiris} gruplar={veliRehberGruplari} kapanis={veliRehberKapanis} onTamamla={turuKapat} />
+        </Suspense>
+      )}
       <ParentLayout
         activePath={sekme}
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
         onAyarlarAcil={() => setAyarlarAcilik(true)}
+        yardimAcik={yardimAcilik}
+        onYardimToggle={() => setYardimAcilik((a) => !a)}
       >
         {ayarlarAcilik ? (
           <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
@@ -86,6 +115,18 @@ export default function VeliPaneli() {
           onKapat={() => setProfilAcilik(false)}
         >
           <Suspense fallback={<PageLoading />}><Profil /></Suspense>
+        </ProfilOverlay>
+      )}
+
+      {yardimAcilik && (
+        <ProfilOverlay
+          baslik="Yardım"
+          altBaslik="Veli panelindeki bölümlerin ne işe yaradığına dair kısa bir rehber"
+          onKapat={() => setYardimAcilik(false)}
+        >
+          <Suspense fallback={<PageLoading />}>
+            <YardimSayfasi onTuruBaslat={() => { setYardimAcilik(false); setTurAcik(true); }} />
+          </Suspense>
         </ProfilOverlay>
       )}
     </VeliVeriProvider>

@@ -1,5 +1,7 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { turGosterilmeliMi, turGorulduIsaretle } from "../../lib/profilQueries";
+import { ogrenciRehberGiris, ogrenciRehberGruplari, ogrenciRehberKapanis } from "../../lib/ogrenciRehberIcerik";
 import { StudentLayout } from "../../components/Layout";
 import ProfilOverlay from "../../components/ProfilOverlay";
 import PageLoading from "../../components/PageLoading";
@@ -22,6 +24,8 @@ const Karsilastirma = lazy(() => import("./Karsilastirma"));
 const Motivasyon = lazy(() => import("./Motivasyon"));
 const BildirimMerkezi = lazy(() => import("../BildirimMerkezi"));
 const AyarlarSayfasi = lazy(() => import("../ayarlar/AyarlarSayfasi"));
+const YardimSayfasi = lazy(() => import("./YardimSayfasi"));
+const OnboardingTuru = lazy(() => import("../../components/OnboardingTuru"));
 
 type Sekme =
   | "/student/dashboard" | "/student/study" | "/student/subjects" | "/student/tasks"
@@ -33,6 +37,23 @@ export default function OgrenciPaneli() {
   const [sekme, setSekme] = useState<Sekme>("/student/dashboard");
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
+  const [yardimAcilik, setYardimAcilik] = useState(false);
+  const [turAcik, setTurAcik] = useState(false);
+
+  useEffect(() => {
+    turGosterilmeliMi()
+      .then((goster) => setTurAcik(goster))
+      .catch(() => {});
+  }, []);
+
+  async function turuKapat() {
+    setTurAcik(false);
+    try {
+      await turGorulduIsaretle();
+    } catch {
+      // sessizce geç — tur bir sonraki girişte tekrar denenir
+    }
+  }
 
   const git = (path: string) => {
     if (path === "/") {
@@ -40,16 +61,24 @@ export default function OgrenciPaneli() {
       return;
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
+    if (yardimAcilik) setYardimAcilik(false);
     setSekme(path as Sekme);
   };
 
   return (
     <>
+      {turAcik && (
+        <Suspense fallback={null}>
+          <OnboardingTuru giris={ogrenciRehberGiris} gruplar={ogrenciRehberGruplari} kapanis={ogrenciRehberKapanis} onTamamla={turuKapat} />
+        </Suspense>
+      )}
       <StudentLayout
         activePath={sekme}
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
         onAyarlarAcil={() => setAyarlarAcilik(true)}
+        yardimAcik={yardimAcilik}
+        onYardimToggle={() => setYardimAcilik((a) => !a)}
       >
         {ayarlarAcilik ? (
           <Suspense fallback={<PageLoading />}><AyarlarSayfasi /></Suspense>
@@ -84,6 +113,18 @@ export default function OgrenciPaneli() {
           onKapat={() => setProfilAcilik(false)}
         >
           <Suspense fallback={<PageLoading />}><Profil /></Suspense>
+        </ProfilOverlay>
+      )}
+
+      {yardimAcilik && (
+        <ProfilOverlay
+          baslik="Yardım"
+          altBaslik="Öğrenci panelindeki bölümlerin ne işe yaradığına dair kısa bir rehber"
+          onKapat={() => setYardimAcilik(false)}
+        >
+          <Suspense fallback={<PageLoading />}>
+            <YardimSayfasi onTuruBaslat={() => { setYardimAcilik(false); setTurAcik(true); }} />
+          </Suspense>
         </ProfilOverlay>
       )}
     </>

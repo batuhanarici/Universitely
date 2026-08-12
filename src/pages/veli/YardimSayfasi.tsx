@@ -1,6 +1,6 @@
 import YardimIcerigi from "../../components/YardimIcerigi";
-import { kocRehberGruplari } from "../../lib/kocRehberIcerik";
+import { veliRehberGruplari } from "../../lib/veliRehberIcerik";
 
 export default function YardimSayfasi({ onTuruBaslat }: { onTuruBaslat?: () => void }) {
-  return <YardimIcerigi gruplar={kocRehberGruplari} onTuruBaslat={onTuruBaslat} />;
+  return <YardimIcerigi gruplar={veliRehberGruplari} onTuruBaslat={onTuruBaslat} />;
 }

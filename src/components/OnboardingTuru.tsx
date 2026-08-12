@@ -2,37 +2,60 @@ import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
 import UYArrow from "./UYArrow";
 import { Btn } from "./ui";
-import { kocRehberGiris, kocRehberGruplari, kocRehberKapanis } from "../lib/kocRehberIcerik";
+import type { RehberGrup, RehberGiris } from "../lib/rehberTipleri";
 
-const TOPLAM_ADIM = kocRehberGruplari.length + 2;
 // Spotlight, sidebar dar/gizli olduğunda (mobil) anlamsızlaşır — bu genişliğin
 // altında sade, ortalanmış kart gösterilir.
 const SPOTLIGHT_MIN_GENISLIK = 780;
 
 interface Rect { top: number; left: number; width: number; height: number; }
 
-function hedefRectAl(baslik: string): Rect | null {
-  const el = document.querySelector(`[data-tur-grup="${baslik}"]`);
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
+function hedefRectAl(grup: RehberGrup): Rect | null {
   const pad = 6;
-  return { top: r.top - pad, left: r.left - pad, width: r.width + pad * 2, height: r.height + pad * 2 };
+  if (grup.hedefOgeler && grup.hedefOgeler.length > 0) {
+    // Birden fazla ardışık sidebar öğesini tek kutuda birleştir
+    const rects = grup.hedefOgeler
+      .map((etiket) => document.querySelector(`[data-tur-oge="${etiket}"]`))
+      .filter((el): el is Element => !!el)
+      .map((el) => el.getBoundingClientRect());
+    if (rects.length === 0) return null;
+    const top = Math.min(...rects.map((r) => r.top));
+    const left = Math.min(...rects.map((r) => r.left));
+    const bottom = Math.max(...rects.map((r) => r.bottom));
+    const right = Math.max(...rects.map((r) => r.right));
+    return { top: top - pad, left: left - pad, width: right - left + pad * 2, height: bottom - top + pad * 2 };
+  }
+  if (grup.hedefGrup) {
+    const el = document.querySelector(`[data-tur-grup="${grup.hedefGrup}"]`);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top - pad, left: r.left - pad, width: r.width + pad * 2, height: r.height + pad * 2 };
+  }
+  return null;
 }
 
-export default function OnboardingTuru({ onTamamla }: { onTamamla: () => void }) {
+interface Props {
+  giris: RehberGiris;
+  gruplar: RehberGrup[];
+  kapanis: RehberGiris;
+  onTamamla: () => void;
+}
+
+export default function OnboardingTuru({ giris, gruplar, kapanis, onTamamla }: Props) {
   const [adim, setAdim] = useState(0);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
   const [genisEkran, setGenisEkran] = useState(() => window.innerWidth >= SPOTLIGHT_MIN_GENISLIK);
 
+  const TOPLAM_ADIM = gruplar.length + 2;
   const sonAdim = adim === TOPLAM_ADIM - 1;
   const ilkAdim = adim === 0;
-  const grup = adim >= 1 && adim <= kocRehberGruplari.length ? kocRehberGruplari[adim - 1] : null;
+  const grup = adim >= 1 && adim <= gruplar.length ? gruplar[adim - 1] : null;
 
   useEffect(() => {
     function guncelle() {
       setGenisEkran(window.innerWidth >= SPOTLIGHT_MIN_GENISLIK);
-      setRect(grup ? hedefRectAl(grup.baslik) : null);
+      setRect(grup ? hedefRectAl(grup) : null);
     }
     guncelle();
     window.addEventListener("resize", guncelle);
@@ -100,15 +123,15 @@ export default function OnboardingTuru({ onTamamla }: { onTamamla: () => void })
 
         {ilkAdim && (
           <div>
-            <h1 className="display" style={{ fontSize: 20, marginBottom: 10 }}>{kocRehberGiris.baslik}</h1>
-            <p style={{ fontSize: 13.5, color: "rgba(15,27,45,0.6)", lineHeight: 1.6 }}>{kocRehberGiris.aciklama}</p>
+            <h1 className="display" style={{ fontSize: 20, marginBottom: 10 }}>{giris.baslik}</h1>
+            <p style={{ fontSize: 13.5, color: "rgba(15,27,45,0.6)", lineHeight: 1.6 }}>{giris.aciklama}</p>
           </div>
         )}
 
         {grup && (
           <div>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-gold)", marginBottom: 6 }}>
-              {adim} / {kocRehberGruplari.length}
+              {adim} / {gruplar.length}
             </p>
             <h1 className="display" style={{ fontSize: 18, marginBottom: 6 }}>{grup.baslik}</h1>
             <p style={{ fontSize: 13, color: "rgba(15,27,45,0.65)", lineHeight: 1.5 }}>{grup.ozet}</p>
@@ -117,8 +140,8 @@ export default function OnboardingTuru({ onTamamla }: { onTamamla: () => void })
 
         {sonAdim && (
           <div>
-            <h1 className="display" style={{ fontSize: 20, marginBottom: 10 }}>{kocRehberKapanis.baslik}</h1>
-            <p style={{ fontSize: 13.5, color: "rgba(15,27,45,0.6)", lineHeight: 1.6 }}>{kocRehberKapanis.aciklama}</p>
+            <h1 className="display" style={{ fontSize: 20, marginBottom: 10 }}>{kapanis.baslik}</h1>
+            <p style={{ fontSize: 13.5, color: "rgba(15,27,45,0.6)", lineHeight: 1.6 }}>{kapanis.aciklama}</p>
           </div>
         )}
 

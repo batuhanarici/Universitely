@@ -44,3 +44,21 @@ export async function ogrenciAdSoyadKaydet(yeni: string): Promise<void> {
   const { error: metaHata } = await supabase.auth.updateUser({ data: { ad_soyad: yeni } });
   if (metaHata) throw metaHata;
 }
+
+/** Öğrencinin tanıtım turunu daha önce görüp görmediğini döner (görmediyse true). */
+export async function turGosterilmeliMi(): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("ogrenci_profilleri")
+    .select("tur_gorundu")
+    .maybeSingle();
+  if (error) throw error;
+  return data ? (data as { tur_gorundu: boolean }).tur_gorundu !== true : true;
+}
+
+/** Turu görüldü olarak işaretler (bitirdiğinde ya da atladığında çağrılır). */
+export async function turGorulduIsaretle(): Promise<void> {
+  const { error } = await supabase
+    .from("ogrenci_profilleri")
+    .upsert({ tur_gorundu: true }, { onConflict: "ogrenci_id" });
+  if (error) throw error;
+}

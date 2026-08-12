@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { supabase, supabaseConfigurada } from "./lib/supabase";
 import { turGosterilmeliMi, turGorulduIsaretle } from "./lib/ogretmenProfilQueries";
+import { kocRehberGiris, kocRehberGruplari, kocRehberKapanis } from "./lib/kocRehberIcerik";
 import KurulumEkrani from "./pages/KurulumEkrani";
 import { PanelLayout } from "./components/Layout";
 import ProfilOverlay from "./components/ProfilOverlay";
@@ -119,7 +120,7 @@ function OgretmenUygulamasi() {
     <>
       {turAcik && (
         <Suspense fallback={null}>
-          <OnboardingTuru onTamamla={turuKapat} />
+          <OnboardingTuru giris={kocRehberGiris} gruplar={kocRehberGruplari} kapanis={kocRehberKapanis} onTamamla={turuKapat} />
         </Suspense>
       )}
       <PanelLayout

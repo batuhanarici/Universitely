@@ -38,6 +38,7 @@ export interface VeliProfili {
   yakinlik: string | null;
   avatar_url: string | null;
   email_bildirim: boolean;
+  tur_gorundu: boolean;
 }
 
 export interface VeliProfilGirdisi {
@@ -64,6 +65,21 @@ export async function veliProfilKaydet(girdi: VeliProfilGirdisi): Promise<void> 
 export async function veliAdSoyadKaydet(yeni: string): Promise<void> {
   await veliProfilKaydet({ ad_soyad: yeni });
   const { error } = await supabase.auth.updateUser({ data: { ad_soyad: yeni } });
+  if (error) throw error;
+}
+
+/** Velinin tanıtım turunu daha önce görüp görmediğini döner (görmediyse true). */
+export async function turGosterilmeliMi(): Promise<boolean> {
+  const { data, error } = await supabase.from("veliler").select("tur_gorundu").maybeSingle();
+  if (error) throw error;
+  return data ? (data as { tur_gorundu: boolean }).tur_gorundu !== true : true;
+}
+
+/** Turu görüldü olarak işaretler (bitirdiğinde ya da atladığında çağrılır). */
+export async function turGorulduIsaretle(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase.from("veliler").update({ tur_gorundu: true }).eq("id", user.id);
   if (error) throw error;
 }
 
