@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
+import { subeleriGetir, type Sube } from "../../lib/subeQueries";
 import { ogrenciGorevleriGetir, gorevAta, gorevSil, gorevKontrolEt, gorevGeriBildirimYaz } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
-import { Card, Select, Input, Label, FormGroup, Btn, Badge, Checkbox, useToast } from "../../components/ui";
+import { Card, Select, Input, Label, FormGroup, Btn, Badge, Checkbox, Tabs, useToast } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 function bugunIso(): string {
@@ -14,6 +15,7 @@ const TIP_ETIKET: Record<string, string> = { gunluk: "günlük", haftalik: "haft
 export default function GorevYonetimi() {
   const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
   const [ogrenciId, setOgrenciId] = useState("");
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
   const [baslik, setBaslik] = useState("");
@@ -22,11 +24,17 @@ export default function GorevYonetimi() {
   const [kaydediliyor, setKaydediliyor] = useState<Record<string, boolean>>({});
   const [yukleniyor, setYukleniyor] = useState(true);
 
+  const [atamaModu, setAtamaModu] = useState<"tekil" | "sube">("tekil");
+  const [hedefSubeId, setHedefSubeId] = useState("");
+  const [topluAtiliyor, setTopluAtiliyor] = useState(false);
+
   useEffect(() => {
-    kocOgrencileri()
-      .then((o) => {
+    Promise.all([kocOgrencileri(), subeleriGetir()])
+      .then(([o, s]) => {
         setOgrenciler(o);
+        setSubeler(s);
         if (o.length > 0) setOgrenciId(o[0].id);
+        if (s.length > 0) setHedefSubeId(s[0].id);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
@@ -51,11 +59,35 @@ export default function GorevYonetimi() {
   }, [ogrenciId]);
 
   async function handleAta() {
-    if (!ogrenciId || !baslik.trim()) return;
-    await gorevAta(ogrenciId, baslik.trim(), tarih);
-    setBaslik("");
-    await gorevleriTazele();
-    show("Görev atandı ✓");
+    if (!baslik.trim()) return;
+
+    if (atamaModu === "tekil") {
+      if (!ogrenciId) return;
+      await gorevAta(ogrenciId, baslik.trim(), tarih);
+      setBaslik("");
+      await gorevleriTazele();
+      show("Görev atandı ✓");
+      return;
+    }
+
+    // Şube modu: şubedeki tüm öğrencilere ayrı ayrı ata
+    const uyeler = ogrenciler.filter((o) => o.sube_id === hedefSubeId);
+    if (uyeler.length === 0) return;
+    setTopluAtiliyor(true);
+    try {
+      let basarili = 0;
+      for (const uye of uyeler) {
+        try {
+          await gorevAta(uye.id, baslik.trim(), tarih, hedefSubeId);
+          basarili++;
+        } catch {}
+      }
+      setBaslik("");
+      if (uyeler.some((u) => u.id === ogrenciId)) await gorevleriTazele();
+      show(`${basarili}/${uyeler.length} öğrenciye atandı ✓`);
+    } finally {
+      setTopluAtiliyor(false);
+    }
   }
 
   async function toggleKontrol(g: Gorev) {
@@ -122,7 +154,29 @@ export default function GorevYonetimi() {
 
       <Card>
         <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Görev Ata</h3>
+        {subeler.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <Tabs
+              tabs={[{ label: "Tekil Öğrenci", value: "tekil" }, { label: "Şube (Toplu)", value: "sube" }]}
+              active={atamaModu}
+              onChange={(v) => setAtamaModu(v as "tekil" | "sube")}
+            />
+          </div>
+        )}
         <form onSubmit={(e) => { e.preventDefault(); handleAta(); }} style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+          {atamaModu === "sube" && (
+            <FormGroup>
+              <Label>Şube</Label>
+              <Select value={hedefSubeId} onChange={(e) => setHedefSubeId(e.target.value)} style={{ maxWidth: 180 }}>
+                {subeler.map((s) => (
+                  <option key={s.id} value={s.id}>{s.ad}</option>
+                ))}
+              </Select>
+              <p style={{ fontSize: 11, color: "rgba(15,27,45,0.45)", marginTop: 4 }}>
+                {ogrenciler.filter((o) => o.sube_id === hedefSubeId).length} öğrenciye atanacak
+              </p>
+            </FormGroup>
+          )}
           <FormGroup style={{ flex: 1, minWidth: 200 }}>
             <Label>Açıklama *</Label>
             <Input placeholder="Görev açıklaması" value={baslik} onChange={(e) => setBaslik(e.target.value)} required />
@@ -131,7 +185,14 @@ export default function GorevYonetimi() {
             <Label>Tarih</Label>
             <Input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} />
           </FormGroup>
-          <Btn variant="primary" type="submit" size="sm">Ata</Btn>
+          <Btn
+            variant="primary"
+            type="submit"
+            size="sm"
+            disabled={topluAtiliyor || (atamaModu === "sube" && ogrenciler.filter((o) => o.sube_id === hedefSubeId).length === 0)}
+          >
+            {topluAtiliyor ? "Atanıyor…" : "Ata"}
+          </Btn>
         </form>
       </Card>
 
@@ -146,7 +207,10 @@ export default function GorevYonetimi() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 2, textDecoration: g.tamamlandi ? "line-through" : "none", opacity: g.tamamlandi ? 0.6 : 1 }}>{g.baslik}</p>
-                    <p style={{ fontSize: 11, color: "rgba(15,27,45,0.45)" }}>{g.tarih} · {TIP_ETIKET[g.tip] ?? g.tip}</p>
+                    <p style={{ fontSize: 11, color: "rgba(15,27,45,0.45)" }}>
+                      {g.tarih} · {TIP_ETIKET[g.tip] ?? g.tip}
+                      {g.sube_id && <> · <Icon name="grid" size={10} /> {subeler.find((s) => s.id === g.sube_id)?.ad ?? "toplu"}</>}
+                    </p>
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <Badge variant={d.variant}>{d.metin}</Badge>
