@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries";
+import { yanlisKonuDagiliminiHesapla } from "../../lib/analizHesaplari";
 import { Card } from "../../components/ui";
 
 const TEAL = "#2A9D8F";
@@ -12,19 +13,26 @@ const GOLD = "#E4BB60";
 
 const tt = { contentStyle: { background: "#0F1B2D", border: "none", borderRadius: 8, color: "#F4EFE4", fontSize: 12 } };
 
-interface KonuYanlis {
-  konu_adi: string;
-  yanlis: number;
-  bos: number;
-}
-
 export default function Analiz() {
   const [sonuclar, setSonuclar] = useState<SonucDetay[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [hata, setHata] = useState(false);
+
+  const verileriYukle = useCallback(async () => {
+    setYukleniyor(true);
+    setHata(false);
+    try {
+      setSonuclar(await kendiSonuclariniGetir());
+    } catch {
+      setHata(true);
+    } finally {
+      setYukleniyor(false);
+    }
+  }, []);
 
   useEffect(() => {
-    kendiSonuclariniGetir().then(setSonuclar).catch(() => {}).finally(() => setYukleniyor(false));
-  }, []);
+    void verileriYukle();
+  }, [verileriYukle]);
 
   const netTrend = useMemo(() => {
     const map = new Map<string, { deneme_adi: string; tarih: string; dogru: number; yanlis: number }>();
@@ -53,20 +61,10 @@ export default function Analiz() {
     return Array.from(map.values());
   }, [sonuclar]);
 
-  const yanlisKonuDagilimi = useMemo(() => {
-    const map = new Map<string, KonuYanlis>();
-    for (const s of sonuclar) {
-      if (s.durum === "dogru") continue;
-      if (!map.has(s.konu_adi)) map.set(s.konu_adi, { konu_adi: s.konu_adi, yanlis: 0, bos: 0 });
-      const o = map.get(s.konu_adi)!;
-      if (s.durum === "yanlis") o.yanlis++;
-      else o.bos++;
-    }
-    return Array.from(map.values())
-      .sort((a, b) => a.yanlis + a.bos - (b.yanlis + b.bos))
-      .slice(0, 10)
-      .map((o) => ({ name: o.konu_adi, yanlis: o.yanlis, bos: o.bos }));
-  }, [sonuclar]);
+  const yanlisKonuDagilimi = useMemo(
+    () => yanlisKonuDagiliminiHesapla(sonuclar),
+    [sonuclar],
+  );
 
   const konuBazli = useMemo(() => {
     const map = new Map<string, { konu: string; dogru: number; toplam: number }>();
@@ -83,6 +81,28 @@ export default function Analiz() {
   }, [sonuclar]);
 
   if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+
+  if (hata) {
+    return (
+      <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <h1 className="page-title">Analiz</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Deneme performansı grafikleri</p>
+        </div>
+        <div className="card" role="alert" style={{ borderLeft: "4px solid #C4503A" }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#C4503A", marginBottom: 6 }}>
+            Analiz verileri yüklenemedi.
+          </p>
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.6)", marginBottom: 14 }}>
+            Bağlantını kontrol edip tekrar deneyebilirsin. Mevcut verilerin korunur.
+          </p>
+          <button className="btn btn-primary" type="button" onClick={() => void verileriYukle()}>
+            Tekrar Dene
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
