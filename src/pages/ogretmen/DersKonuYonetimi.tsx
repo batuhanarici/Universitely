@@ -1,7 +1,8 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
 import type { Ders, Konu } from "../../types/database";
 import { dersleriGetir, dersEkle, konulariGetir, konuEkle } from "../../lib/queries";
-import { Card, Input, Btn, useToast } from "../../components/ui";
+import { Card, Input, Btn } from "../../components/ui";
 
 export default function DersKonuYonetimi() {
   const { toast, show } = useToast();

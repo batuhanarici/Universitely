@@ -1,8 +1,9 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
-import { Tabs, Card, useToast } from "../../components/ui";
+import { Tabs, Card } from "../../components/ui";
 import { GuvvenlikBolumu, BildirimBolumu } from "../../components/ProfilBolumleri";
 import { emailBildirimGetir, emailBildirimKaydet } from "../../lib/ayarlarQueries";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/authContext";
 import VeriBolumu from "./VeriBolumu";
 import SikayetFormu from "../../components/SikayetFormu";
 

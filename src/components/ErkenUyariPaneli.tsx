@@ -1,8 +1,9 @@
+import { useToast } from "./useToast";
 import { useEffect, useMemo, useState } from "react";
 import { erkenUyarilariHesapla, type ErkenUyari } from "../lib/erkenUyariMotoru";
 import { kocUyariKapatmalariniGetir, kocUyariyiKapat } from "../lib/erkenUyariQueries";
 import type { KocAnalizVerisi } from "../lib/aiMotoru";
-import { Badge, Btn, Card, EmptyState, Select, useToast } from "./ui";
+import { Badge, Btn, Card, EmptyState, Select } from "./ui";
 
 const SEVIYE: Record<ErkenUyari["seviye"], { etiket: string; variant: "brick" | "gold" }> = {
   yuksek: { etiket: "Öncelikli görüşme", variant: "brick" },

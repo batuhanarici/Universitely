@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../lib/AuthContext";
+import { useAuth } from "../lib/authContext";
 import { Card, Btn, Input, Label, FormGroup } from "../components/ui";
 
 export default function SifreSifirlama() {

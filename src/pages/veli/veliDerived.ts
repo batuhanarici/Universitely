@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useVeliVeri } from "./VeliVeri";
+import { useVeliVeri } from "./veliContext";
 
 export interface DenemeOzeti {
   deneme_id: string | null;

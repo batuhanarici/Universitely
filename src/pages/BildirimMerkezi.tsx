@@ -1,6 +1,7 @@
+import { useToast } from "../components/useToast";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../lib/AuthContext";
+import { useAuth } from "../lib/authContext";
 import BildirimSatiri from "../components/BildirimSatiri";
 import {
   bildirimleriGetir,
@@ -13,7 +14,7 @@ import {
   type SistemHatirlatmasi,
 } from "../lib/bildirimQueries";
 import type { Bildirim } from "../types/database";
-import { Card, EmptyState, ErrorState, LoadingState, Tabs, useToast } from "../components/ui";
+import { Card, EmptyState, ErrorState, LoadingState, Tabs } from "../components/ui";
 
 type Sekme = "okunmamis" | "tumu" | "arsiv";
 

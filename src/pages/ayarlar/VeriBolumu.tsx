@@ -1,5 +1,6 @@
+import { useToast } from "../../components/useToast";
 import { useState } from "react";
-import { Card, Btn, useToast } from "../../components/ui";
+import { Card, Btn } from "../../components/ui";
 import { verileriTopla, jsonIndir } from "../../lib/ayarlarQueries";
 import HesapSilmeBolumu from "./HesapSilmeBolumu";
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../lib/AuthContext";
+import { useAuth } from "../lib/authContext";
 import { Card, Btn, Input, Label, FormGroup } from "./ui";
 
 function HataMetni({ mesaj }: { mesaj: string }) {

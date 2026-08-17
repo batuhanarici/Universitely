@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
 import type { Ders, Konu } from "../../types/database";
 import {
@@ -7,7 +8,7 @@ import {
   sablonSorulariniKaydet,
 } from "../../lib/queries";
 import { sablonlariGetirDetayli } from "../../lib/denemeQueries";
-import { Card, Input, Select, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
+import { Card, Input, Select, Btn, Badge, Label, FormGroup } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 interface Aralik {

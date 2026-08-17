@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useToast } from "./useToast";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   blokSaatiniKaydir,
   blokSuresiDakika,
@@ -14,7 +15,7 @@ import { gorevleriGetir, gorevTamamla } from "../lib/gorevQueries";
 import { okulDersPrograminiGetir } from "../lib/programQueries";
 import { tekrarPlanlariniGetir, tekrarPlanYapildi } from "../lib/tekrarPlanQueries";
 import type { CalismaBloku, Gorev, Gorusme, OgrenciMusaitligi, TakipMaddesi, TekrarPlan } from "../types/database";
-import { Badge, Btn, Card, FormGroup, Input, Label, ProgressBar, useToast } from "./ui";
+import { Badge, Btn, Card, FormGroup, Input, Label, ProgressBar } from "./ui";
 
 function bugunIso() {
   const d = new Date();
@@ -70,7 +71,7 @@ export function GunlukPlanPaneli() {
   const [musaitlikBitis, setMusaitlikBitis] = useState("22:00");
   const [musaitlikKaydediliyor, setMusaitlikKaydediliyor] = useState(false);
 
-  async function verileriYukle(guncelTarih = tarih) {
+  const verileriYukle = useCallback(async (guncelTarih = tarih) => {
     setYukleniyor(true);
     try {
       const [b, gorevler, takipler, tekrarlar, dersler, okulDersleri, musaitlikler] = await Promise.all([
@@ -92,11 +93,11 @@ export function GunlukPlanPaneli() {
     } finally {
       setYukleniyor(false);
     }
-  }
+  }, [show, tarih]);
 
   useEffect(() => {
     void verileriYukle();
-  }, [tarih]);
+  }, [verileriYukle]);
 
   const bugunDersleri = useMemo(() => kaynak.dersler.filter((ders) => ders.tur === "ders" && yerelTarih(ders.tarih) === tarih), [kaynak.dersler, tarih]);
   const bugunOkulDersleri = useMemo(() => kaynak.okulDersleri.filter((ders) => ders.gun === gunNumarasi(tarih)), [kaynak.okulDersleri, tarih]);

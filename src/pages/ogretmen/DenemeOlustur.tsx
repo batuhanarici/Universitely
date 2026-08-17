@@ -1,7 +1,8 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
 import type { DenemeSablonu, Deneme, DenemeTuru } from "../../types/database";
 import { sablonlariGetirDetayli, denemeOlustur, denemeleriGetir } from "../../lib/denemeQueries";
-import { Card, Input, Select, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
+import { Card, Input, Select, Btn, Badge, Label, FormGroup } from "../../components/ui";
 
 type SablonDetayli = DenemeSablonu & { ders_adi: string };
 type DenemeDetayli = Deneme & { sablon_adi: string };

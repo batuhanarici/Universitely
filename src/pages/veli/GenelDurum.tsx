@@ -1,5 +1,5 @@
 import { Card, KPICard, ProgressBar, AnimatedNumber, Badge } from "../../components/ui";
-import { useVeliVeri } from "./VeliVeri";
+import { useVeliVeri } from "./veliContext";
 import { useVeliDerived } from "./veliDerived";
 import { VeliHaftalikOzet } from "../../components/VeliHaftalikOzet";
 

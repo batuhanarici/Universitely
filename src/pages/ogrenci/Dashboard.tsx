@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -11,8 +12,8 @@ import {
 } from "../../lib/ogrenciQueries";
 import { gorevleriGetir, gorevTamamla } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
-import { AnimatedNumber, ProgressBar, Badge, Card, Checkbox, EmptyState, ErrorState, LoadingState, useToast } from "../../components/ui";
-import { useAuth } from "../../lib/AuthContext";
+import { AnimatedNumber, ProgressBar, Badge, Card, Checkbox, EmptyState, ErrorState, LoadingState } from "../../components/ui";
+import { useAuth } from "../../lib/authContext";
 import { GunlukPlanPaneli } from "../../components/GunlukPlanPaneli";
 
 const TEAL = "#2A9D8F";

@@ -1,6 +1,6 @@
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card } from "../../components/ui";
-import { useVeliVeri } from "./VeliVeri";
+import { useVeliVeri } from "./veliContext";
 import { useVeliDerived } from "./veliDerived";
 
 const tt = { contentStyle: { background: "#0F1B2D", border: "none", borderRadius: 8, color: "#F4EFE4", fontSize: 12 } };

@@ -212,34 +212,3 @@ export function StatusDot({ active }: { active: boolean }) {
     <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? '#2A9D8F' : '#9A9FA8', display: 'inline-block', flexShrink: 0 }} />
   );
 }
-
-// ── Toast ──────────────────────────────────────────────────────────────────
-export function Toast({ msg, visible }: { msg: string; visible: boolean }) {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      aria-hidden={!visible}
-      style={{
-        position: 'fixed', bottom: 24, left: '50%', transform: `translateX(-50%) translateY(${visible ? 0 : 12}px)`,
-        opacity: visible ? 1 : 0, transition: 'all 250ms ease',
-        background: '#0F1B2D', color: '#F4EFE4', padding: '10px 20px', borderRadius: 8,
-        fontSize: 13, fontWeight: 600, zIndex: 9999, pointerEvents: 'none',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
-      }}
-    >
-      {msg}
-    </div>
-  );
-}
-
-// ── useToast ───────────────────────────────────────────────────────────────
-export function useToast() {
-  const [state, setState] = useState({ msg: '', visible: false });
-  function show(msg: string) {
-    setState({ msg, visible: true });
-    setTimeout(() => setState(s => ({ ...s, visible: false })), 2200);
-  }
-  return { toast: <Toast msg={state.msg} visible={state.visible} />, show };
-}

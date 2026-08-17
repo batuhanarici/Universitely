@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
 import {
   ogrenciHedefiEkle,
@@ -9,7 +10,7 @@ import {
   type UniversiteKatalogKaydi,
 } from "../../lib/universiteQueries";
 import type { OgrenciHedefi } from "../../types/database";
-import { Badge, Btn, Card, FormGroup, Label, Select, useToast } from "../../components/ui";
+import { Badge, Btn, Card, FormGroup, Label, Select } from "../../components/ui";
 
 export default function Hedefler() {
   const { toast, show } = useToast();

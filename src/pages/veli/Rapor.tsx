@@ -1,6 +1,6 @@
 import { Card, Btn, KPICard } from "../../components/ui";
 import { pdfYazdir } from "../../lib/exportUtils";
-import { useVeliVeri } from "./VeliVeri";
+import { useVeliVeri } from "./veliContext";
 import { useVeliDerived } from "./veliDerived";
 
 function bugunIso(): string {

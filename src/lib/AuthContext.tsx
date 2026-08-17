@@ -1,32 +1,9 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { AuthContext } from "./authContext";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, supabaseConfigurada } from "./supabase";
 import { davetKodunuBagla } from "./ogrenciYonetimQueries";
 import { veliBagla } from "./veliQueries";
-
-interface AuthCtx {
-  session: Session | null;
-  yukleniyor: boolean;
-  ogrenciMi: boolean | null; // null = henüz kontrol edilmedi
-  veliMi: boolean;
-  adminMi: boolean;
-  hesapAskida: boolean;
-  hesapNedeni: string | null;
-  sifreSifirlama: boolean; // şifre sıfırlama linkiyle geldiyse true
-  setSifreSifirlama: (v: boolean) => void;
-}
-
-const Ctx = createContext<AuthCtx>({
-  session: null,
-  yukleniyor: true,
-  ogrenciMi: null,
-  veliMi: false,
-  adminMi: false,
-  hesapAskida: false,
-  hesapNedeni: null,
-  sifreSifirlama: false,
-  setSifreSifirlama: () => {},
-});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -108,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user.id]);
 
   return (
-    <Ctx.Provider
+    <AuthContext.Provider
       value={{
         session,
         yukleniyor,
@@ -122,10 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </Ctx.Provider>
+    </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(Ctx);
 }

@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
-import { useAuth } from "./lib/AuthContext";
+import { useAuth } from "./lib/authContext";
 import { supabase, supabaseConfigurada } from "./lib/supabase";
 import { turGosterilmeliMi, turGorulduIsaretle } from "./lib/ogretmenProfilQueries";
 import { kocRehberGiris, kocRehberGruplari, kocRehberKapanis } from "./lib/kocRehberIcerik";
 import KurulumEkrani from "./pages/KurulumEkrani";
-import { coachNav, PanelLayout } from "./components/Layout";
+import { PanelLayout } from "./components/Layout";
+import { coachNav } from "./components/navigation";
 import { useBrowserRoute } from "./lib/useBrowserRoute";
 import ProfilOverlay from "./components/ProfilOverlay";
 import ErrorBoundary from "./components/ErrorBoundary";

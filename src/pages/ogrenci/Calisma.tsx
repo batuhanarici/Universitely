@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useToast } from "../../components/useToast";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { calismalariGetir, calismaEkle, calismaSil, type CalismaKaydiDetayli } from "../../lib/calismaQueries";
-import { Card, Btn, Input, Label, FormGroup, AnimatedNumber, useToast } from "../../components/ui";
+import { Card, Btn, Input, Label, FormGroup, AnimatedNumber } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 const POMODORO_DK = 25;
@@ -63,15 +64,7 @@ export default function Calisma() {
     if (kalanMs === 0 && calisiyor) setCalisiyor(false);
   }, [kalanMs, calisiyor]);
 
-  useEffect(() => {
-    if (kalanMs === 0 && !calisiyor && !kayitEklendi.current) {
-      kayitEklendi.current = true;
-      setPomodoroBitti(true);
-      bittiKaydiEkle();
-    }
-  }, [kalanMs, calisiyor]);
-
-  async function bittiKaydiEkle() {
+  const bittiKaydiEkle = useCallback(async () => {
     setKaydediliyor(true);
     try {
       const yeni = await calismaEkle({ sure_dk: POMODORO_DK, soru_sayisi: null });
@@ -82,7 +75,15 @@ export default function Calisma() {
     } finally {
       setKaydediliyor(false);
     }
-  }
+  }, [show]);
+
+  useEffect(() => {
+    if (kalanMs === 0 && !calisiyor && !kayitEklendi.current) {
+      kayitEklendi.current = true;
+      setPomodoroBitti(true);
+      bittiKaydiEkle();
+    }
+  }, [kalanMs, calisiyor, bittiKaydiEkle]);
 
   function baslat() {
     kayitEklendi.current = false;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/authContext";
 import { mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
 import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";

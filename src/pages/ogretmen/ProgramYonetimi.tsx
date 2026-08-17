@@ -1,10 +1,11 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useMemo, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { haftalikProgramGetir, haftalikProgramKaydet } from "../../lib/programQueries";
 import { gorevSil } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
 import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
-import { Card, Select, Input, Label, FormGroup, Checkbox, useToast } from "../../components/ui";
+import { Card, Select, Input, Label, FormGroup, Checkbox } from "../../components/ui";
 
 const GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 

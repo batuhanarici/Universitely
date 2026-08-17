@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useMemo, useState } from "react";
 import type { Ogrenci } from "../../types/database";
 import { denemeleriGetir } from "../../lib/denemeQueries";
@@ -12,7 +13,7 @@ import {
 import type { Deneme } from "../../types/database";
 import { denemeAksiyonTaslagiOlustur } from "../../lib/denemeAksiyonQueries";
 import { DenemeAksiyonKocPaneli } from "../../components/DenemeAksiyonPaneli";
-import { Card, Select, Input, Textarea, Btn, Badge, Tabs, Label, FormGroup, useToast } from "../../components/ui";
+import { Card, Select, Input, Textarea, Btn, Badge, Tabs, Label, FormGroup } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
 type Mod = "grid" | "yapistir";

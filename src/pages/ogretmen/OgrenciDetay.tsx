@@ -1,9 +1,10 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
 import { ogrenciDetayiGetir, type OgrenciDetay } from "../../lib/ogrenciYonetimQueries";
 import { ogrenciTalepGetir, talepKarar, hesapSil } from "../../lib/ayarlarQueries";
 import type { HesapSilmeTalebi } from "../../types/database";
-import { useAuth } from "../../lib/AuthContext";
-import { Card, KPICard, ProgressBar, Checkbox, Btn, Badge, Input, Label, FormGroup, useToast } from "../../components/ui";
+import { useAuth } from "../../lib/authContext";
+import { Card, KPICard, ProgressBar, Checkbox, Btn, Badge, Input, Label, FormGroup } from "../../components/ui";
 
 export default function OgrenciDetay({ ogrenciId, onGeri }: { ogrenciId: string; onGeri: () => void }) {
   const { toast, show } = useToast();

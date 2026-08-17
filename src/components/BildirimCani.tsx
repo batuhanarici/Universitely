@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../lib/AuthContext";
+import { useAuth } from "../lib/authContext";
 import { Icon } from "./Icon";
 import BildirimSatiri from "./BildirimSatiri";
 import {

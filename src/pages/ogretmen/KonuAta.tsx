@@ -1,10 +1,11 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useMemo, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { konularVeDersler, type KonuDersBilgisi } from "../../lib/konuIlerlemeQueries";
 import { ogrenciKonuIlerlemeleriGetir, konuAta, konuAtamasiKaldir } from "../../lib/konuIlerlemeQueries";
 import type { KonuIlerleme } from "../../types/database";
 import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
-import { Card, Select, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
+import { Card, Select, Btn, Badge, Label, FormGroup } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 export default function KonuAta() {

@@ -1,9 +1,10 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useMemo, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { kocNotlariniGetir, kocNotEkle, kocNotSil } from "../../lib/kocAraclariQueries";
 import type { KocNot } from "../../types/database";
 import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
-import { Card, Select, Textarea, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
+import { Card, Select, Textarea, Btn, Badge, Label, FormGroup } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 const ONEMLER: { deger: string; etiket: string }[] = [

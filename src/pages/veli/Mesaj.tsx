@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/authContext";
 import { mesajOkunduIsaretle, mesajGonder } from "../../lib/mesajQueries";
 import { Card, Btn, Input, Select } from "../../components/ui";
-import { useVeliVeri } from "./VeliVeri";
+import { useVeliVeri } from "./veliContext";
 import { TUR_ETIKET, TUR_RENK } from "../../lib/bildirimUi";
 
 function zamanla(tarih: string): string {

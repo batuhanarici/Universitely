@@ -1,3 +1,4 @@
+import { useToast } from "./useToast";
 import { useEffect, useState } from "react";
 import type { Gorusme, SeansNotu, TakipMaddesi, TakipMaddesiDurumu, TakipMaddesiOnceligi } from "../types/database";
 import {
@@ -6,7 +7,7 @@ import {
   takipMaddesiDurumGuncelle,
   takipMaddesiniGoreveDonustur,
 } from "../lib/kocAraclariQueries";
-import { Badge, Btn, Checkbox, FormGroup, Input, Label, Select, Textarea, useToast } from "./ui";
+import { Badge, Btn, Checkbox, FormGroup, Input, Label, Select, Textarea } from "./ui";
 
 type Props = {
   ders: Gorusme;

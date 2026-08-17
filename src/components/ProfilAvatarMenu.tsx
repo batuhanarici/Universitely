@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../lib/AuthContext";
+import { useAuth } from "../lib/authContext";
 import { supabase } from "../lib/supabase";
 import ProfilAvatar from "./ProfilAvatar";
 import { Icon } from "./Icon";

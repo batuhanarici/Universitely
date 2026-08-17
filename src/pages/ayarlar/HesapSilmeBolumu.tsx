@@ -1,6 +1,7 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
-import { Card, Btn, Input, Label, FormGroup, useToast } from "../../components/ui";
-import { useAuth } from "../../lib/AuthContext";
+import { Card, Btn, Input, Label, FormGroup } from "../../components/ui";
+import { useAuth } from "../../lib/authContext";
 import { supabase } from "../../lib/supabase";
 import { kendiTalepDurumum, talepOlustur, hesapSil } from "../../lib/ayarlarQueries";
 import type { HesapSilmeTalebi } from "../../types/database";

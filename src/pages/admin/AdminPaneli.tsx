@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useBrowserRoute } from "../../lib/useBrowserRoute";
@@ -12,9 +13,10 @@ import {
   type AdminKullanici,
   type AdminSikayet,
 } from "../../lib/adminQueries";
-import { Badge, Btn, Card, FormGroup, Input, KPICard, Label, LoadingState, Select, Textarea, useToast } from "../../components/ui";
+import { Badge, Btn, Card, FormGroup, Input, KPICard, Label, LoadingState, Select, Textarea } from "../../components/ui";
 import { Icon } from "../../components/Icon";
-import { PanelLayout, type NavGroup } from "../../components/Layout";
+import { PanelLayout } from "../../components/Layout";
+import type { NavGroup } from "../../components/navigation";
 
 const adminNav: NavGroup[] = [
   { group: "Yönetim", items: [

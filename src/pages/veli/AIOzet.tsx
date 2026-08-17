@@ -1,5 +1,5 @@
 import { Card } from "../../components/ui";
-import { useVeliVeri } from "./VeliVeri";
+import { useVeliVeri } from "./veliContext";
 import { useVeliDerived } from "./veliDerived";
 
 interface OzetKart {

@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useMemo, useState } from "react";
 import { ogrencileriGetir } from "../../lib/sonucQueries";
 import { kocOgrencileri } from "../../lib/ogrenciYonetimQueries";
@@ -5,7 +6,7 @@ import { kocVelileriniGetir } from "../../lib/kocAraclariQueries";
 import { subeleriGetir, type Sube } from "../../lib/subeQueries";
 import { mesajGonder } from "../../lib/mesajQueries";
 import type { Ogrenci, VeliAlici } from "../../types/database";
-import { Card, Textarea, Btn, Checkbox, useToast } from "../../components/ui";
+import { Card, Textarea, Btn, Checkbox } from "../../components/ui";
 
 interface Secim {
   ogrenciler: Set<string>;

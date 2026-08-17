@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/authContext";
 import { benimOgretmenId, mesajlariGetir, mesajGonder, mesajOkunduIsaretle } from "../../lib/mesajQueries";
 import { Card, Input, Btn, Select } from "../../components/ui";
 import type { Mesaj } from "../../types/database";

@@ -1,10 +1,11 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useRef, useState } from "react";
 import { veliProfilGetir, veliProfilKaydet, veliAdSoyadKaydet } from "../../lib/veliQueries";
 import { avatarYukle, avatarSil } from "../../lib/avatarQueries";
-import { Card, Btn, Input, Label, FormGroup, useToast } from "../../components/ui";
+import { Card, Btn, Input, Label, FormGroup } from "../../components/ui";
 import ProfilAvatar from "../../components/ProfilAvatar";
 import { AdSoyadBolumu, GuvvenlikBolumu, BildirimBolumu } from "../../components/ProfilBolumleri";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/authContext";
 
 const YAKINLIK_SECENEKLERI = ["Anne", "Baba", "Yasal Vasi", "Diğer"];
 

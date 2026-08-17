@@ -1,0 +1,15 @@
+özellik,kullanıcı_değeri,farklılaşma,aciliyet,teknik_zorluk,önerilen_faz,karar
+Günlük akıllı çalışma planı,5,5,5,3,Faz A,Öncelikli yap
+Deneme sonrası aksiyon motoru,5,5,5,3,Faz A,Öncelikli yap
+Koç seans notu ve takip maddeleri,5,5,4,2,Faz A,Öncelikli yap
+Öğrenci ilerleme/erken uyarı panosu,5,5,4,3,Faz A,Öncelikli yap
+Veli haftalık özet ve destek önerisi,4,4,4,2,Faz A,Öncelikli yap
+AI koç yardımcısı ve PDF mini test,4,5,3,4,Faz B,Kontrollü pilot yap
+Öğrenci alışkanlıkları ve hafif oyunlaştırma,4,3,3,2,Faz B,İkinci dalgada yap
+Tercih sepeti ve koşul kontrolü,4,3,2,3,Faz B,Tercih sezonundan önce yap
+Koç kapasite ve işletme analitiği,4,5,3,4,Faz B,Koç sayısı artınca yap
+PWA/mobil deneyim ve bildirim izinleri,4,3,4,4,Faz B,Çekirdek kullanım doğrulanınca yap
+İçerik kütüphanesi ve geniş soru bankası,4,2,2,5,Faz C,Şimdilik ertele
+Topluluk ve sosyal rekabet,3,2,1,5,Faz C,Şimdilik ertele
+Ödeme/abonelik/komisyon,2,2,1,4,Faz C,Ücretli model başlayınca yap
+Görüşme kaydı ve AI moderasyon,3,3,1,5,Faz C,KVKK ve rıza tasarımı olmadan yapma

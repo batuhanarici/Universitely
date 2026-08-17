@@ -1,3 +1,4 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useRef, useState } from "react";
 import {
   profiliGetir,
@@ -7,10 +8,10 @@ import {
 } from "../../lib/profilQueries";
 import { avatarYukle, avatarSil } from "../../lib/avatarQueries";
 import type { OgrenciProfili, SinavTuru } from "../../types/database";
-import { Card, Btn, Input, Label, FormGroup, Badge, useToast } from "../../components/ui";
+import { Card, Btn, Input, Label, FormGroup, Badge } from "../../components/ui";
 import ProfilAvatar from "../../components/ProfilAvatar";
 import { AdSoyadBolumu, GuvvenlikBolumu, BildirimBolumu } from "../../components/ProfilBolumleri";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/authContext";
 
 const SINAV_SECENEKLERI: { deger: SinavTuru; etiket: string }[] = [
   { deger: "tyt", etiket: "TYT" },

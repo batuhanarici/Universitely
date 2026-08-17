@@ -1,7 +1,8 @@
+import { useToast } from "../../components/useToast";
 import { useEffect, useState } from "react";
 import { kocOgrencileri, davetKoduUret, ogrenciAktifYap, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { subeleriGetir, subeOlustur, subeAdiGuncelle, subeSil, ogrenciyiSubeyeAta, type Sube } from "../../lib/subeQueries";
-import { Card, Input, Select, Btn, Label, FormGroup, Badge, StatusDot, useToast } from "../../components/ui";
+import { Card, Input, Select, Btn, Label, FormGroup, Badge, StatusDot } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 export default function OgrenciYonetimi({ onOgrenciSec }: { onOgrenciSec: (id: string) => void }) {
