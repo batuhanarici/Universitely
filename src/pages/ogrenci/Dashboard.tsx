@@ -233,27 +233,29 @@ export default function Dashboard() {
       <div className="card tape-accent" style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center" }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 8 }}>
-            Son Net {sonDeneme ? `· ${sonDeneme.deneme_adi}` : ""}
+            Bugünün odağı
           </p>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-            <span className="metric-value" style={{ fontSize: 56, fontWeight: 700, color: "#0F1B2D", lineHeight: 1 }}>
-              <AnimatedNumber value={sonNet} decimals={1} />
+            <span className="metric-value" style={{ fontSize: 42, fontWeight: 700, color: "#0F1B2D", lineHeight: 1 }}>
+              {bugunkuGorevler.length === 0 ? "Hazır" : `${tamamlananBugun}/${bugunkuGorevler.length}`}
             </span>
-            {netDiff !== null && (
-              <span style={{ fontSize: 20, fontWeight: 600, color: netDiff >= 0 ? TEAL : RUST, display: "flex", alignItems: "center", gap: 4 }}>
-                {netDiff >= 0 ? "↑" : "↓"} {Math.abs(netDiff).toFixed(1)}
-              </span>
-            )}
+            <span style={{ fontSize: 13, color: "rgba(15,27,45,0.5)" }}>
+              {bugunkuGorevler.length === 0 ? "Bugün için görev yok" : "görev tamamlandı"}
+            </span>
           </div>
-          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", marginTop: 6 }} dangerouslySetInnerHTML={{ __html: tesvik(kalanTekrar, zayifKonular) }} />
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.5)", marginTop: 8 }} dangerouslySetInnerHTML={{ __html: tesvik(kalanTekrar, zayifKonular) }} />
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ width: 80, height: 80, borderRadius: "50%", border: `3px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-            <span style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700 }}>D/Y/B</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#0F1B2D" }}>
-              {sonDeneme ? `${sonDeneme.dogru}/${sonDeneme.yanlis}/${sonDeneme.bos}` : "0/0/0"}
+          <p style={{ fontSize: 11, color: "rgba(15,27,45,0.4)", fontWeight: 700, marginBottom: 4 }}>Son net</p>
+          <span className="metric-value" style={{ fontSize: 28, fontWeight: 700, color: "#0F1B2D", lineHeight: 1 }}>
+            <AnimatedNumber value={sonNet} decimals={1} />
+          </span>
+          {netDiff !== null && (
+            <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: netDiff >= 0 ? TEAL : RUST, marginTop: 4 }}>
+              {netDiff >= 0 ? "↑" : "↓"} {Math.abs(netDiff).toFixed(1)}
             </span>
-          </div>
+          )}
+          <span style={{ display: "block", fontSize: 11, color: "rgba(15,27,45,0.4)", marginTop: 8 }}>D/Y/B {sonDeneme ? `${sonDeneme.dogru}/${sonDeneme.yanlis}/${sonDeneme.bos}` : "0/0/0"}</span>
         </div>
       </div>
 
@@ -278,15 +280,15 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <h3 className="section-title" style={{ marginBottom: 4, fontSize: 16 }}>Bugünkü Tamamlanma</h3>
+          <h3 className="section-title" style={{ marginBottom: 4, fontSize: 16 }}>Haftalık tempo</h3>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
-            <span className="metric-value" style={{ fontSize: 40, fontWeight: 700, color: bugunYuzde >= 70 ? TEAL : GOLD }}>
-              <AnimatedNumber value={bugunYuzde} />%
+            <span className="metric-value" style={{ fontSize: 40, fontWeight: 700, color: haftalikYuzde >= 70 ? TEAL : GOLD }}>
+              <AnimatedNumber value={haftalikYuzde} />%
             </span>
           </div>
-          <ProgressBar pct={bugunYuzde} color={bugunYuzde >= 70 ? TEAL : GOLD} />
+          <ProgressBar pct={haftalikYuzde} color={haftalikYuzde >= 70 ? TEAL : GOLD} />
           <p style={{ fontSize: 12, color: "rgba(15,27,45,0.45)", marginTop: 10 }}>
-            Bu hafta ortalama tamamlanma: <strong style={{ color: "#0F1B2D" }}>{haftalikYuzde}%</strong>
+            Bugünkü ilerleme: <strong style={{ color: "#0F1B2D" }}>{bugunYuzde}%</strong>
           </p>
         </Card>
       </div>

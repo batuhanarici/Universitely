@@ -10,16 +10,16 @@ export interface NavGroup { group: string; items: NavItem[] }
 
 export const studentNav: NavGroup[] = [
   { group: 'Genel', items: [
-    { path: '/student/dashboard', label: 'Günlük', icon: 'home' },
+    { path: '/student/dashboard', label: 'Bugün', icon: 'home' },
   ]},
   { group: 'Çalışma', items: [
     { path: '/student/study', label: 'Çalışma', icon: 'pen' },
-    { path: '/student/subjects', label: 'Konular', icon: 'book' },
-    { path: '/student/resources', label: 'Kaynaklar', icon: 'resource' },
     { path: '/student/tasks', label: 'Görevler', icon: 'task' },
     { path: '/student/calendar', label: 'Takvim', icon: 'calendar' },
+    { path: '/student/subjects', label: 'Konular', icon: 'book' },
+    { path: '/student/resources', label: 'Kaynaklar', icon: 'resource' },
   ]},
-  { group: 'Ölçme', items: [
+  { group: 'Ölçme & Tekrar', items: [
     { path: '/student/exams', label: 'Denemeler', icon: 'folder' },
     { path: '/student/analysis', label: 'Analiz', icon: 'chart' },
     { path: '/student/wrongs', label: 'Yanlışlar', icon: 'x' },
