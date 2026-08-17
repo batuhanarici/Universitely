@@ -82,7 +82,7 @@ export default function Kaynaklar() {
         <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Kitap, soru bankası ve deneme takibi</p>
       </div>
 
-      <div className="card tape-accent" style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div className="kaynak-ozet card tape-accent" style={{ display: "flex", alignItems: "center", gap: 24 }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)" }}>Genel İlerleme</p>
           <span className="metric-value" style={{ fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
@@ -133,21 +133,21 @@ export default function Kaynaklar() {
               const done = p >= 100;
               const tur = TURLER.find((t) => t.deger === k.kaynak_turu)?.etiket ?? k.kaynak_turu;
               return (
-                <div key={k.id} style={{ borderBottom: "1px solid rgba(15,27,45,0.07)", paddingBottom: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <div>
-                      <span style={{ fontSize: 14, fontWeight: 600 }}>{k.ad}</span>
+                <div key={k.id} className="kaynak-satiri" style={{ borderBottom: "1px solid rgba(15,27,45,0.07)", paddingBottom: 16 }}>
+                  <div className="kaynak-satiri-ust" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                    <div className="kaynak-baslik" style={{ minWidth: 0 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, overflowWrap: "anywhere" }}>{k.ad}</span>
                       <Badge variant="gray">{tur}</Badge>
                       {over && <Badge variant="brick">Gecikmiş</Badge>}
                       {done && <Badge variant="teal">Bitti ✓</Badge>}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => ilerlemeyiGuncelle(k, -1)}>−</button>
+                    <div className="kaynak-aksiyonlar" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button type="button" className="btn btn-ghost btn-sm" aria-label={`${k.ad} ilerlemesini azalt`} onClick={() => void ilerlemeyiGuncelle(k, -1)}>−</button>
                       <span className="tabular" style={{ fontSize: 14, fontWeight: 600, minWidth: 60, textAlign: "center" }}>
                         {k.ilerleme} / {k.toplam}
                       </span>
-                      <button className="btn btn-ghost btn-sm" onClick={() => ilerlemeyiGuncelle(k, 1)}>+</button>
-                      <button className="btn btn-danger btn-sm btn-icon" onClick={() => handleSil(k.id)}><Icon name="trash" size={14} /></button>
+                      <button type="button" className="btn btn-ghost btn-sm" aria-label={`${k.ad} ilerlemesini artır`} onClick={() => void ilerlemeyiGuncelle(k, 1)}>+</button>
+                      <button type="button" className="btn btn-danger btn-sm btn-icon" aria-label={`${k.ad} kaynağını sil`} onClick={() => void handleSil(k.id)}><Icon name="trash" size={14} /></button>
                     </div>
                   </div>
                   <ProgressBar pct={p} color={over ? "#C4503A" : done ? "#2A9D8F" : "#E4BB60"} />

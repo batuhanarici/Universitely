@@ -72,8 +72,11 @@ export default function ProfilAvatarMenu({ onProfilAcil, onAyarlarAcil }: {
   return (
     <div ref={kutu} style={{ position: "relative" }}>
       <button
+        type="button"
         onClick={() => setAcik((a) => !a)}
         aria-label="Profil menüsü"
+        aria-haspopup="menu"
+        aria-expanded={acik}
         style={{ border: "none", background: "none", padding: 0, cursor: "pointer", borderRadius: "50%", display: "block" }}
       >
         <ProfilAvatar adSoyad={adSoyad} tohum={user?.id ?? email} yol={avatarYol} boyut={38} />
@@ -81,7 +84,9 @@ export default function ProfilAvatarMenu({ onProfilAcil, onAyarlarAcil }: {
 
       {acik && (
         <div
-          className="anim-fade"
+          className="profile-menu anim-fade"
+          role="menu"
+          aria-label="Profil seçenekleri"
           style={{
             position: "absolute",
             right: 0,
@@ -105,6 +110,8 @@ export default function ProfilAvatarMenu({ onProfilAcil, onAyarlarAcil }: {
           </div>
           <div style={{ padding: 6 }}>
             <button
+              type="button"
+              role="menuitem"
               className="menu-item"
               onClick={() => {
                 setAcik(false);
@@ -116,6 +123,8 @@ export default function ProfilAvatarMenu({ onProfilAcil, onAyarlarAcil }: {
             </button>
             {onAyarlarAcil && (
               <button
+                type="button"
+                role="menuitem"
                 className="menu-item"
                 onClick={() => {
                   setAcik(false);
@@ -126,7 +135,7 @@ export default function ProfilAvatarMenu({ onProfilAcil, onAyarlarAcil }: {
                 <span>Ayarlar</span>
               </button>
             )}
-            <button className="menu-item" onClick={() => supabase.auth.signOut()}>
+            <button type="button" role="menuitem" className="menu-item" onClick={() => supabase.auth.signOut()}>
               <Icon name="logout" size={16} />
               <span>Çıkış Yap</span>
             </button>

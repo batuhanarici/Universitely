@@ -64,16 +64,15 @@ export default function Gorevler() {
 
   function KendiGorevSatiri({ g }: { g: Gorev }) {
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
+      <div className="gorev-satiri" style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid rgba(15,27,45,0.06)" }}>
         <Checkbox checked={g.tamamlandi} onChange={() => toggleGorev(g)} />
-        <span style={{ flex: 1, fontSize: 13, textDecoration: g.tamamlandi ? "line-through" : "none", color: g.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>{g.baslik}</span>
-        <span style={{ fontSize: 11, color: "rgba(15,27,45,0.4)" }}>{tarihEtiketi(g.tarih)}</span>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 13, textDecoration: g.tamamlandi ? "line-through" : "none", color: g.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D", overflowWrap: "anywhere" }}>{g.baslik}</span>
+        <span style={{ flexShrink: 0, fontSize: 11, color: "rgba(15,27,45,0.4)" }}>{tarihEtiketi(g.tarih)}</span>
         <button
-          className="btn btn-danger btn-sm"
-          style={{ opacity: 0 }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
-          onClick={() => handleSil(g.id)}
+          type="button"
+          className="gorev-sil btn btn-danger btn-sm"
+          aria-label={`${g.baslik} görevini sil`}
+          onClick={() => void handleSil(g.id)}
         >
           <Icon name="trash" size={13} />
         </button>
