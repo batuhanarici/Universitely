@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabase";
 import { turGosterilmeliMi, turGorulduIsaretle } from "../../lib/profilQueries";
 import { ogrenciRehberGiris, ogrenciRehberGruplari, ogrenciRehberKapanis } from "../../lib/ogrenciRehberIcerik";
 import { StudentLayout } from "../../components/Layout";
+import { useBrowserRoute } from "../../lib/useBrowserRoute";
 import ProfilOverlay from "../../components/ProfilOverlay";
 import PageLoading from "../../components/PageLoading";
 
@@ -33,8 +34,15 @@ type Sekme =
   | "/student/calendar" | "/student/messages" | "/student/notifications" | "/student/ai-coach" | "/student/weekly-report"
   | "/student/compare" | "/student/motivation";
 
+const OGRENCI_ROUTE_LISTESI = [
+  "/student/dashboard", "/student/study", "/student/subjects", "/student/tasks",
+  "/student/resources", "/student/exams", "/student/analysis", "/student/wrongs", "/student/repetition",
+  "/student/calendar", "/student/messages", "/student/notifications", "/student/ai-coach", "/student/weekly-report",
+  "/student/compare", "/student/motivation",
+] as const satisfies readonly Sekme[];
+
 export default function OgrenciPaneli() {
-  const [sekme, setSekme] = useState<Sekme>("/student/dashboard");
+  const [sekme, navigate] = useBrowserRoute(OGRENCI_ROUTE_LISTESI, "/student/dashboard");
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
   const [yardimAcilik, setYardimAcilik] = useState(false);
@@ -62,7 +70,7 @@ export default function OgrenciPaneli() {
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
     if (yardimAcilik) setYardimAcilik(false);
-    setSekme(path as Sekme);
+    if (OGRENCI_ROUTE_LISTESI.includes(path as Sekme)) navigate(path as Sekme);
   };
 
   return (

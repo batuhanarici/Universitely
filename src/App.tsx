@@ -4,9 +4,9 @@ import { supabase, supabaseConfigurada } from "./lib/supabase";
 import { turGosterilmeliMi, turGorulduIsaretle } from "./lib/ogretmenProfilQueries";
 import { kocRehberGiris, kocRehberGruplari, kocRehberKapanis } from "./lib/kocRehberIcerik";
 import KurulumEkrani from "./pages/KurulumEkrani";
-import { PanelLayout } from "./components/Layout";
+import { coachNav, PanelLayout } from "./components/Layout";
+import { useBrowserRoute } from "./lib/useBrowserRoute";
 import ProfilOverlay from "./components/ProfilOverlay";
-import type { NavGroup } from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PageLoading from "./components/PageLoading";
 
@@ -42,44 +42,23 @@ const BildirimMerkezi = lazy(() => import("./pages/BildirimMerkezi"));
 const YardimSayfasi = lazy(() => import("./pages/ogretmen/YardimSayfasi"));
 const OnboardingTuru = lazy(() => import("./components/OnboardingTuru"));
 
-type Sekme = "koc-dashboard" | "sinif" | "sinif-analiz" | "ogrenciler" | "ogrenci-detay" | "ders-konu" | "sablon" | "deneme" | "sonuc" | "toplu-sonuc" | "program" | "kaynak-ata" | "konu-ata" | "gorev-yonetim" | "mesajlar" | "koc-notlar" | "gorusme-yonetim" | "toplu-bildirim" | "ogretmen-rapor" | "koc-ai" | "muhasebe" | "bildirimler";
+type Sekme =
+  | "/coach/dashboard" | "/coach/risk" | "/coach/accounting" | "/coach/class-overview" | "/coach/class-analysis"
+  | "/coach/students" | "/coach/student-detail" | "/coach/weekly-program" | "/coach/task-management"
+  | "/coach/assign-resource" | "/coach/assign-subject" | "/coach/lesson-management" | "/coach/exam-template"
+  | "/coach/create-exam" | "/coach/enter-result" | "/coach/bulk-result" | "/coach/messages"
+  | "/coach/notifications" | "/coach/notes" | "/coach/meetings" | "/coach/bulk-notify" | "/coach/class-report";
 
-const KOC_NAV: NavGroup[] = [
-  { group: "Genel", items: [
-    { path: "koc-dashboard", label: "Koç Paneli", icon: "home" },
-    { path: "koc-ai", label: "AI Risk", icon: "alert" },
-    { path: "muhasebe", label: "Muhasebe", icon: "money" },
-  ]},
-  { group: "Sınıf", items: [
-    { path: "sinif", label: "Sınıf Genel", icon: "chart" },
-    { path: "sinif-analiz", label: "Sınıf Analiz", icon: "grid" },
-    { path: "ogrenciler", label: "Öğrenciler", icon: "students" },
-    { path: "program", label: "Haftalık Program", icon: "calendar" },
-  ]},
-  { group: "Atama", items: [
-    { path: "gorev-yonetim", label: "Görev Yönetimi", icon: "task" },
-    { path: "kaynak-ata", label: "Kaynak Ata", icon: "resource" },
-    { path: "konu-ata", label: "Konu Ata", icon: "book" },
-    { path: "ders-konu", label: "Ders / Konu", icon: "template" },
-  ]},
-  { group: "Denemeler", items: [
-    { path: "sablon", label: "Deneme Şablonu", icon: "template" },
-    { path: "deneme", label: "Deneme Oluştur", icon: "plus" },
-    { path: "sonuc", label: "Sonuç Gir", icon: "check" },
-    { path: "toplu-sonuc", label: "Toplu Sonuç", icon: "grid" },
-  ]},
-  { group: "İletişim", items: [
-    { path: "mesajlar", label: "Mesajlar", icon: "message" },
-    { path: "bildirimler", label: "Bildirimler", icon: "bell" },
-    { path: "koc-notlar", label: "Koç Notları", icon: "note" },
-    { path: "gorusme-yonetim", label: "Görüşmeler", icon: "meeting" },
-    { path: "toplu-bildirim", label: "Toplu Bildirim", icon: "send" },
-    { path: "ogretmen-rapor", label: "Sınıf Raporu", icon: "report" },
-  ]},
-];
+const KOC_ROUTE_LISTESI = [
+  "/coach/dashboard", "/coach/risk", "/coach/accounting", "/coach/class-overview", "/coach/class-analysis",
+  "/coach/students", "/coach/student-detail", "/coach/weekly-program", "/coach/task-management",
+  "/coach/assign-resource", "/coach/assign-subject", "/coach/lesson-management", "/coach/exam-template",
+  "/coach/create-exam", "/coach/enter-result", "/coach/bulk-result", "/coach/messages", "/coach/notifications",
+  "/coach/notes", "/coach/meetings", "/coach/bulk-notify", "/coach/class-report",
+] as const satisfies readonly Sekme[];
 
 function OgretmenUygulamasi() {
-  const [sekme, setSekme] = useState<Sekme>("koc-dashboard");
+  const [sekme, navigate] = useBrowserRoute(KOC_ROUTE_LISTESI, "/coach/dashboard");
   const [seciliOgrenci, setSeciliOgrenci] = useState<string | null>(null);
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
@@ -103,7 +82,7 @@ function OgretmenUygulamasi() {
 
   function ogrenciDetayinaGit(id: string) {
     setSeciliOgrenci(id);
-    setSekme("ogrenci-detay");
+    navigate("/coach/student-detail");
   }
 
   function git(path: string) {
@@ -113,7 +92,7 @@ function OgretmenUygulamasi() {
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
     if (yardimAcilik) setYardimAcilik(false);
-    setSekme(path as Sekme);
+    if (KOC_ROUTE_LISTESI.includes(path as Sekme)) navigate(path as Sekme);
   }
 
   return (
@@ -124,9 +103,9 @@ function OgretmenUygulamasi() {
         </Suspense>
       )}
       <PanelLayout
-        navConfig={KOC_NAV}
+        navConfig={coachNav}
         roleLabel="Koç Paneli"
-        activePath={sekme === "ogrenci-detay" ? "ogrenciler" : sekme}
+        activePath={sekme === "/coach/student-detail" ? "/coach/students" : sekme}
         onNavigate={git}
         onProfilAcil={() => setProfilAcilik(true)}
         onAyarlarAcil={() => setAyarlarAcilik(true)}
@@ -138,28 +117,28 @@ function OgretmenUygulamasi() {
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Suspense fallback={<PageLoading />}>
-          {sekme === "koc-dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
-          {sekme === "sinif" && <SinifGenel />}
-          {sekme === "sinif-analiz" && <SinifAnaliz />}
-          {sekme === "ogrenciler" && <OgrenciYonetimi onOgrenciSec={ogrenciDetayinaGit} />}
-          {sekme === "ogrenci-detay" && <OgrenciDetay ogrenciId={seciliOgrenci ?? ""} onGeri={() => setSekme("ogrenciler")} />}
-          {sekme === "ders-konu" && <DersKonuYonetimi />}
-          {sekme === "sablon" && <SablonOlustur />}
-          {sekme === "deneme" && <DenemeOlustur />}
-          {sekme === "sonuc" && <SonucGir />}
-          {sekme === "toplu-sonuc" && <TopluSonucGir />}
-          {sekme === "program" && <ProgramYonetimi />}
-          {sekme === "gorev-yonetim" && <GorevYonetimi />}
-          {sekme === "kaynak-ata" && <KaynakAta />}
-          {sekme === "konu-ata" && <KonuAta />}
-          {sekme === "mesajlar" && <OgretmenMesajlar />}
-          {sekme === "bildirimler" && <BildirimMerkezi onNavigate={git} />}
-          {sekme === "koc-notlar" && <KocNotlar />}
-          {sekme === "gorusme-yonetim" && <GorusmeYonetimi />}
-          {sekme === "toplu-bildirim" && <TopluBildirim />}
-          {sekme === "ogretmen-rapor" && <OgretmenRapor />}
-          {sekme === "koc-ai" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
-          {sekme === "muhasebe" && <Muhasebe />}
+          {sekme === "/coach/dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "/coach/class-overview" && <SinifGenel />}
+          {sekme === "/coach/class-analysis" && <SinifAnaliz />}
+          {sekme === "/coach/students" && <OgrenciYonetimi onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "/coach/student-detail" && <OgrenciDetay ogrenciId={seciliOgrenci ?? ""} onGeri={() => navigate("/coach/students")} />}
+          {sekme === "/coach/lesson-management" && <DersKonuYonetimi />}
+          {sekme === "/coach/exam-template" && <SablonOlustur />}
+          {sekme === "/coach/create-exam" && <DenemeOlustur />}
+          {sekme === "/coach/enter-result" && <SonucGir />}
+          {sekme === "/coach/bulk-result" && <TopluSonucGir />}
+          {sekme === "/coach/weekly-program" && <ProgramYonetimi />}
+          {sekme === "/coach/task-management" && <GorevYonetimi />}
+          {sekme === "/coach/assign-resource" && <KaynakAta />}
+          {sekme === "/coach/assign-subject" && <KonuAta />}
+          {sekme === "/coach/messages" && <OgretmenMesajlar />}
+          {sekme === "/coach/notifications" && <BildirimMerkezi onNavigate={git} />}
+          {sekme === "/coach/notes" && <KocNotlar />}
+          {sekme === "/coach/meetings" && <GorusmeYonetimi />}
+          {sekme === "/coach/bulk-notify" && <TopluBildirim />}
+          {sekme === "/coach/class-report" && <OgretmenRapor />}
+          {sekme === "/coach/risk" && <KocAI onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "/coach/accounting" && <Muhasebe />}
           </Suspense>
         </div>
         )}

@@ -22,7 +22,7 @@ export default function BildirimCani({ onNavigate }: { onNavigate: (p: string) =
   const kutu = useRef<HTMLDivElement>(null);
 
   const uid = session?.user.id;
-  const bildirimSayfasi = veliMi ? "/parent/notifications" : ogrenciMi ? "/student/notifications" : "bildirimler";
+  const bildirimSayfasi = veliMi ? "/parent/notifications" : ogrenciMi ? "/student/notifications" : "/coach/notifications";
 
   const yenile = useCallback(async () => {
     try {

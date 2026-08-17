@@ -61,6 +61,7 @@ export const coachNav: NavGroup[] = [
   ]},
   { group: 'İletişim', items: [
     { path: '/coach/messages', label: 'Mesajlar', icon: 'message' },
+    { path: '/coach/notifications', label: 'Bildirimler', icon: 'bell' },
     { path: '/coach/notes', label: 'Koç Notları', icon: 'note' },
     { path: '/coach/meetings', label: 'Görüşme & Ödeme', icon: 'meeting' },
     { path: '/coach/bulk-notify', label: 'Toplu Bildirim', icon: 'send' },

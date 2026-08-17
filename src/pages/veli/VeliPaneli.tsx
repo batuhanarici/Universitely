@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabase";
 import { turGosterilmeliMi, turGorulduIsaretle } from "../../lib/veliQueries";
 import { veliRehberGiris, veliRehberGruplari, veliRehberKapanis } from "../../lib/veliRehberIcerik";
 import { ParentLayout } from "../../components/Layout";
+import { useBrowserRoute } from "../../lib/useBrowserRoute";
 import ProfilOverlay from "../../components/ProfilOverlay";
 import PageLoading from "../../components/PageLoading";
 import { VeliVeriProvider } from "./VeliVeri";
@@ -25,6 +26,11 @@ type Sekme =
   | "/parent/overview" | "/parent/charts" | "/parent/calendar" | "/parent/notifications"
   | "/parent/report" | "/parent/ai-summary" | "/parent/message";
 
+const VELI_ROUTE_LISTESI = [
+  "/parent/overview", "/parent/charts", "/parent/calendar", "/parent/notifications",
+  "/parent/report", "/parent/ai-summary", "/parent/message",
+] as const satisfies readonly Sekme[];
+
 // Veli paneli yüklenince hatırlatmalar bildirim tablosuna eklenir (çan için).
 function VeliBildirimEkim() {
   const d = useVeliDerived();
@@ -44,7 +50,7 @@ function VeliBildirimEkim() {
 }
 
 export default function VeliPaneli() {
-  const [sekme, setSekme] = useState<Sekme>("/parent/overview");
+  const [sekme, navigate] = useBrowserRoute(VELI_ROUTE_LISTESI, "/parent/overview");
   const [profilAcilik, setProfilAcilik] = useState(false);
   const [ayarlarAcilik, setAyarlarAcilik] = useState(false);
   const [yardimAcilik, setYardimAcilik] = useState(false);
@@ -72,7 +78,7 @@ export default function VeliPaneli() {
     }
     if (ayarlarAcilik) setAyarlarAcilik(false);
     if (yardimAcilik) setYardimAcilik(false);
-    setSekme(path as Sekme);
+    if (VELI_ROUTE_LISTESI.includes(path as Sekme)) navigate(path as Sekme);
   };
 
   return (
