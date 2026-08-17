@@ -137,8 +137,9 @@ export function Btn({ children, variant = 'primary', size = 'md', ...props }: {
   variant?: 'primary' | 'gold' | 'ghost' | 'danger';
   size?: 'sm' | 'md';
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { className, type = 'button', ...buttonProps } = props;
   return (
-    <button {...props} className={`btn btn-${variant} ${size === 'sm' ? 'btn-sm' : ''} ${props.className ?? ''}`}>
+    <button {...buttonProps} type={type} className={`btn btn-${variant} ${size === 'sm' ? 'btn-sm' : ''} ${className ?? ''}`}>
       {children}
     </button>
   );

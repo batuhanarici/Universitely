@@ -80,6 +80,7 @@ export default function Dashboard() {
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState(false);
+  const [bekleyenIslemler, setBekleyenIslemler] = useState<Set<string>>(() => new Set());
 
   const verileriYukle = useCallback(async () => {
     setYukleniyor(true);
@@ -149,16 +150,47 @@ export default function Dashboard() {
     : Math.round((haftalikTamamlanan / haftalikGorevler.length) * 100);
 
   async function toggleGorev(g: Gorev) {
-    const yeniDurum = !g.tamamlandi;
+    const islemId = `gorev:${g.id}`;
+    if (bekleyenIslemler.has(islemId)) return;
+    setBekleyenIslemler((ids) => new Set(ids).add(islemId));
+    const oncekiDurum = g.tamamlandi;
+    const yeniDurum = !oncekiDurum;
     setGorevler((gs) => gs.map((x) => (x.id === g.id ? { ...x, tamamlandi: yeniDurum } : x)));
-    await gorevTamamla(g.id, yeniDurum);
+    try {
+      await gorevTamamla(g.id, yeniDurum);
+      show(yeniDurum ? "Görev tamamlandı ✓" : "Görev yeniden açıldı ✓");
+    } catch {
+      setGorevler((gs) => gs.map((x) => (x.id === g.id ? { ...x, tamamlandi: oncekiDurum } : x)));
+      show("Görev güncellenemedi. Değişiklik geri alındı.");
+    } finally {
+      setBekleyenIslemler((ids) => {
+        const sonraki = new Set(ids);
+        sonraki.delete(islemId);
+        return sonraki;
+      });
+    }
   }
 
   async function toggleCozuldu(kayit: TekrarKaydi) {
-    const yeniDurum = !kayit.cozuldu;
+    const islemId = `tekrar:${kayit.sonuc_id}`;
+    if (bekleyenIslemler.has(islemId)) return;
+    setBekleyenIslemler((ids) => new Set(ids).add(islemId));
+    const oncekiDurum = kayit.cozuldu;
+    const yeniDurum = !oncekiDurum;
     setHavuz((h) => h.map((k) => (k.sonuc_id === kayit.sonuc_id ? { ...k, cozuldu: yeniDurum } : k)));
-    await tekrarCozulduIsaretle(kayit.sonuc_id, yeniDurum);
-    show("Tekrar kaydedildi ✓");
+    try {
+      await tekrarCozulduIsaretle(kayit.sonuc_id, yeniDurum);
+      show("Tekrar kaydedildi ✓");
+    } catch {
+      setHavuz((h) => h.map((k) => (k.sonuc_id === kayit.sonuc_id ? { ...k, cozuldu: oncekiDurum } : k)));
+      show("Tekrar güncellenemedi. Değişiklik geri alındı.");
+    } finally {
+      setBekleyenIslemler((ids) => {
+        const sonraki = new Set(ids);
+        sonraki.delete(islemId);
+        return sonraki;
+      });
+    }
   }
 
   if (yukleniyor) return <LoadingState className="page-loading" />;
@@ -237,7 +269,7 @@ export default function Dashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {bugunkuGorevler.slice(0, 5).map((g) => (
                 <label key={g.id} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                  <Checkbox checked={g.tamamlandi} onChange={() => toggleGorev(g)} />
+                  <Checkbox checked={g.tamamlandi} disabled={bekleyenIslemler.has(`gorev:${g.id}`)} onChange={() => void toggleGorev(g)} />
                   <span style={{ fontSize: 13, textDecoration: g.tamamlandi ? "line-through" : "none", color: g.tamamlandi ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>{g.baslik}</span>
                 </label>
               ))}
@@ -319,7 +351,7 @@ export default function Dashboard() {
               <div className="rule-lines" style={{ borderRadius: 8, overflow: "hidden" }}>
                 {havuz.map((k) => (
                   <label key={k.sonuc_id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px", cursor: "pointer" }}>
-                    <Checkbox checked={k.cozuldu} onChange={() => toggleCozuldu(k)} />
+                    <Checkbox checked={k.cozuldu} disabled={bekleyenIslemler.has(`tekrar:${k.sonuc_id}`)} onChange={() => void toggleCozuldu(k)} />
                     <span style={{ flex: 1, fontSize: 13, textDecoration: k.cozuldu ? "line-through" : "none", color: k.cozuldu ? "rgba(15,27,45,0.35)" : "#0F1B2D" }}>
                       {k.deneme_adi} — Soru {k.soru_no}
                     </span>

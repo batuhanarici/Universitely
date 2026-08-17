@@ -13,7 +13,7 @@ import {
   type SistemHatirlatmasi,
 } from "../lib/bildirimQueries";
 import type { Bildirim } from "../types/database";
-import { Card, EmptyState, Tabs } from "../components/ui";
+import { Card, EmptyState, ErrorState, LoadingState, Tabs, useToast } from "../components/ui";
 
 type Sekme = "okunmamis" | "tumu" | "arsiv";
 
@@ -22,18 +22,22 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
   hatirlatmalar?: SistemHatirlatmasi[];
 }) {
   const { session, ogrenciMi } = useAuth();
+  const { toast, show } = useToast();
   const [sekme, setSekme] = useState<Sekme>("okunmamis");
   const [bildirimler, setBildirimler] = useState<Bildirim[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [hata, setHata] = useState(false);
 
   const uid = session?.user.id;
 
   const yenile = useCallback(async () => {
+    setYukleniyor(true);
+    setHata(false);
     try {
       const l = await bildirimleriGetir();
       setBildirimler(l);
     } catch {
-      // sessiz
+      setHata(true);
     } finally {
       setYukleniyor(false);
     }
@@ -43,14 +47,18 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
     if (!uid) return;
     let iptal = false;
     (async () => {
-      await yenile();
-      let kaynak: SistemHatirlatmasi[] = hatirlatmalar ?? [];
-      if (hatirlatmalar === undefined && ogrenciMi) {
-        kaynak = await ogrenciHatirlatmalariniHesapla();
-      }
-      if (kaynak.length > 0) {
-        await sistemHatirlatmalariniSenkronla(kaynak);
-        if (!iptal) await yenile();
+      try {
+        await yenile();
+        let kaynak: SistemHatirlatmasi[] = hatirlatmalar ?? [];
+        if (hatirlatmalar === undefined && ogrenciMi) {
+          kaynak = await ogrenciHatirlatmalariniHesapla();
+        }
+        if (kaynak.length > 0) {
+          await sistemHatirlatmalariniSenkronla(kaynak);
+          if (!iptal) await yenile();
+        }
+      } catch {
+        if (!iptal) setHata(true);
       }
     })();
     return () => {
@@ -74,19 +82,34 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
   function tikla(b: Bildirim) {
     if (!b.okundu) {
       setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, okundu: true } : x)));
-      bildirimOkunduYap(b.id).catch(() => {});
+      bildirimOkunduYap(b.id).catch(() => {
+        setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, okundu: false } : x)));
+        show("Bildirim okunmuş olarak kaydedilemedi. Değişiklik geri alındı.");
+      });
     }
     if (b.hedef) onNavigate(b.hedef);
   }
 
   function arsivle(b: Bildirim) {
-    setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, arsivlendi: !x.arsivlendi } : x)));
-    bildirimArsivle(b.id).catch(() => {});
+    setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, arsivlendi: true } : x)));
+    bildirimArsivle(b.id).catch(() => {
+      setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, arsivlendi: b.arsivlendi } : x)));
+      show("Bildirim arşivlenemedi. Değişiklik geri alındı.");
+    });
   }
 
   function sil(b: Bildirim) {
+    const eskiIndex = bildirimler.findIndex((x) => x.id === b.id);
     setBildirimler((l) => l.filter((x) => x.id !== b.id));
-    bildirimSil(b.id).catch(() => {});
+    bildirimSil(b.id).catch(() => {
+      setBildirimler((l) => {
+        if (l.some((x) => x.id === b.id)) return l;
+        const geriAlinan = [...l];
+        geriAlinan.splice(Math.min(eskiIndex < 0 ? geriAlinan.length : eskiIndex, geriAlinan.length), 0, b);
+        return geriAlinan;
+      });
+      show("Bildirim silinemedi. Değişiklik geri alındı.");
+    });
   }
 
   const filtrelenenler = bildirimler
@@ -102,6 +125,7 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
 
   return (
     <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast}
       <div>
         <h1 className="page-title">Bildirimler</h1>
         <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>
@@ -120,9 +144,13 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
       />
 
       {yukleniyor ? (
-        <Card>
-          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Yükleniyor…</p>
-        </Card>
+        <LoadingState />
+      ) : hata ? (
+        <ErrorState
+          title="Bildirimler yüklenemedi."
+          description="Bağlantını kontrol edip tekrar deneyebilirsin."
+          onRetry={() => void yenile()}
+        />
       ) : filtrelenenler.length === 0 ? (
         <Card>
           <EmptyState icon="🔔" title="Bildirim yok" desc="Bu sekmede gösterilecek bildirim bulunmuyor." />
@@ -135,7 +163,7 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
                 bildirim={b}
                 onAc={() => tikla(b)}
                 onOkundu={b.okundu ? undefined : () => okunduYap(b)}
-                onArsivle={() => arsivle(b)}
+                onArsivle={b.arsivlendi ? undefined : () => arsivle(b)}
                 onSil={() => sil(b)}
               />
             </Card>
@@ -147,6 +175,9 @@ export default function BildirimMerkezi({ onNavigate, hatirlatmalar }: {
 
   function okunduYap(b: Bildirim) {
     setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, okundu: true } : x)));
-    bildirimOkunduYap(b.id).catch(() => {});
+    bildirimOkunduYap(b.id).catch(() => {
+      setBildirimler((l) => l.map((x) => (x.id === b.id ? { ...x, okundu: false } : x)));
+      show("Bildirim okunmuş olarak kaydedilemedi. Değişiklik geri alındı.");
+    });
   }
 }
