@@ -4,7 +4,9 @@ import {
 } from "recharts";
 import { sinifSonuclariniGetir, type SinifSonucSatiri } from "../../lib/sinifQueries";
 import { denemeleriGetir } from "../../lib/denemeQueries";
+import { kocOgrencileri } from "../../lib/ogrenciYonetimQueries";
 import type { Deneme, DenemeTuru } from "../../types/database";
+import { subeleriGetir, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Label, FormGroup, ProgressBar, Badge } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
@@ -27,16 +29,21 @@ interface OgrenciOzeti {
 export default function SinifAnaliz() {
   const [satirlar, setSatirlar] = useState<SinifSonucSatiri[]>([]);
   const [denemeler, setDenemeler] = useState<DenemeDetayli[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [subeHaritasi, setSubeHaritasi] = useState<Map<string, string | null>>(new Map());
+  const [subeFiltre, setSubeFiltre] = useState<string>("tumu");
   const [turFiltre, setTurFiltre] = useState<string>("tumu");
   const [dersFiltre, setDersFiltre] = useState<string>("tumu");
   const [denemeFiltre, setDenemeFiltre] = useState<string>("tumu");
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
-    Promise.all([sinifSonuclariniGetir(), denemeleriGetir()])
-      .then(([s, d]) => {
+    Promise.all([sinifSonuclariniGetir(), denemeleriGetir(), subeleriGetir(), kocOgrencileri()])
+      .then(([s, d, sb, ko]) => {
         setSatirlar(s);
         setDenemeler(d);
+        setSubeler(sb);
+        setSubeHaritasi(new Map(ko.map((k) => [k.id, k.sube_id])));
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
@@ -59,9 +66,10 @@ export default function SinifAnaliz() {
       if (denemeFiltre !== "tumu" && s.deneme_id !== denemeFiltre) return false;
       if (turFiltre !== "tumu" && denemeTurHaritasi.get(s.deneme_id) !== turFiltre) return false;
       if (dersFiltre !== "tumu" && s.ders_adi !== dersFiltre) return false;
+      if (subeFiltre !== "tumu" && subeHaritasi.get(s.ogrenci_id) !== subeFiltre) return false;
       return true;
     });
-  }, [satirlar, denemeFiltre, turFiltre, dersFiltre, denemeTurHaritasi]);
+  }, [satirlar, denemeFiltre, turFiltre, dersFiltre, subeFiltre, denemeTurHaritasi, subeHaritasi]);
 
   const ogrenciHaritasi = useMemo(() => {
     const map = new Map<string, string>();
@@ -173,6 +181,17 @@ export default function SinifAnaliz() {
 
       <Card style={{ padding: "14px 20px" }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+          {subeler.length > 0 && (
+            <FormGroup style={{ minWidth: 140 }}>
+              <Label>Şube</Label>
+              <Select value={subeFiltre} onChange={(e) => setSubeFiltre(e.target.value)}>
+                <option value="tumu">Tüm Şubeler</option>
+                {subeler.map((s) => (
+                  <option key={s.id} value={s.id}>{s.ad}</option>
+                ))}
+              </Select>
+            </FormGroup>
+          )}
           <FormGroup style={{ minWidth: 120 }}>
             <Label>Tür</Label>
             <Select value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)}>

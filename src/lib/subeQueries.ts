@@ -40,6 +40,13 @@ export async function subeSil(subeId: string): Promise<boolean> {
   return data ?? false;
 }
 
+// Öğrenci dropdown'larını seçili şubeye göre daraltmak için ortak yardımcı.
+// subeId boşsa (Tüm Şubeler) listeyi olduğu gibi döner.
+export function subeyeGoreFiltrele<T extends { sube_id?: string | null }>(liste: T[], subeId: string): T[] {
+  if (!subeId) return liste;
+  return liste.filter((o) => o.sube_id === subeId);
+}
+
 // null gönderilirse öğrenci şubesiz bırakılır
 export async function ogrenciyiSubeyeAta(ogrenciId: string, subeId: string | null): Promise<boolean> {
   const { data, error } = await supabase.rpc("ogrenciyi_subeye_ata", {

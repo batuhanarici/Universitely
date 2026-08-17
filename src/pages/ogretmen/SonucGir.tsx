@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Ogrenci, SoruDurumu } from "../../types/database";
 import { denemeleriGetir } from "../../lib/denemeQueries";
 import {
@@ -9,6 +9,7 @@ import {
   type SablonSorusuDetayli,
 } from "../../lib/sonucQueries";
 import type { Deneme } from "../../types/database";
+import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
@@ -35,6 +36,8 @@ export default function SonucGir() {
   const { toast, show } = useToast();
   const [denemeler, setDenemeler] = useState<DenemeDetayli[]>([]);
   const [ogrenciler, setOgrenciler] = useState<Ogrenci[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [seciliSubeId, setSeciliSubeId] = useState("");
   const [denemeId, setDenemeId] = useState("");
   const [ogrenciId, setOgrenciId] = useState("");
   const [sorular, setSorular] = useState<SablonSorusuDetayli[]>([]);
@@ -45,15 +48,26 @@ export default function SonucGir() {
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
   useEffect(() => {
-    Promise.all([denemeleriGetir(), ogrencileriGetir()])
-      .then(([d, o]) => {
+    Promise.all([denemeleriGetir(), ogrencileriGetir(), subeleriGetir()])
+      .then(([d, o, s]) => {
         setDenemeler(d);
         setOgrenciler(o);
+        setSubeler(s);
         if (d.length > 0) setDenemeId(d[0].id);
         if (o.length > 0) setOgrenciId(o[0].id);
       })
       .finally(() => setYukleniyor(false));
   }, []);
+
+  const filtreliOgrenciler = useMemo(() => subeyeGoreFiltrele(ogrenciler, seciliSubeId), [ogrenciler, seciliSubeId]);
+
+  // Şube filtresi seçildiğinde, listede olmayan bir öğrenci seçili kalmasın
+  useEffect(() => {
+    if (filtreliOgrenciler.length === 0) return;
+    if (!filtreliOgrenciler.some((o) => o.id === ogrenciId)) {
+      setOgrenciId(filtreliOgrenciler[0].id);
+    }
+  }, [filtreliOgrenciler, ogrenciId]);
 
   useEffect(() => {
     const secilenDeneme = denemeler.find((d) => d.id === denemeId);
@@ -139,10 +153,21 @@ export default function SonucGir() {
                   ))}
                 </Select>
               </FormGroup>
+              {subeler.length > 0 && (
+                <FormGroup style={{ minWidth: 160 }}>
+                  <Label>Şube</Label>
+                  <Select value={seciliSubeId} onChange={(e) => setSeciliSubeId(e.target.value)}>
+                    <option value="">Tüm Şubeler</option>
+                    {subeler.map((s) => (
+                      <option key={s.id} value={s.id}>{s.ad}</option>
+                    ))}
+                  </Select>
+                </FormGroup>
+              )}
               <FormGroup style={{ minWidth: 200 }}>
                 <Label>Öğrenci</Label>
                 <Select value={ogrenciId} onChange={(e) => { setOgrenciId(e.target.value); setCevaplar({}); }}>
-                  {ogrenciler.map((o) => (
+                  {filtreliOgrenciler.map((o) => (
                     <option key={o.id} value={o.id}>{o.ad_soyad}</option>
                   ))}
                 </Select>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { gorusmeleriGetir, gorusmeEkle, gorusmeDurumGuncelle, gorusmeSil } from "../../lib/kocAraclariQueries";
 import type { Gorusme } from "../../types/database";
+import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Input, Textarea, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
@@ -16,6 +17,8 @@ const DURUM_VAZIAN: Record<string, "gold" | "teal" | "brick"> = {
 export default function GorusmeYonetimi() {
   const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [seciliSubeId, setSeciliSubeId] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
 
   const [gorusmeler, setGorusmeler] = useState<Gorusme[]>([]);
@@ -27,21 +30,42 @@ export default function GorusmeYonetimi() {
   const [gKaydediliyor, setGKaydediliyor] = useState(false);
 
   useEffect(() => {
-    Promise.all([kocOgrencileri(), gorusmeleriGetir()])
-      .then(([o, g]) => {
+    Promise.all([kocOgrencileri(), gorusmeleriGetir(), subeleriGetir()])
+      .then(([o, g, s]) => {
         setOgrenciler(o);
         setGorusmeler(g);
+        setSubeler(s);
         if (o.length > 0) setGOgrenciId(o[0].id);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
 
+  const filtreliOgrenciler = useMemo(() => subeyeGoreFiltrele(ogrenciler, seciliSubeId), [ogrenciler, seciliSubeId]);
+
+  useEffect(() => {
+    if (filtreliOgrenciler.length === 0) return;
+    if (!filtreliOgrenciler.some((o) => o.id === gOgrenciId)) {
+      setGOgrenciId(filtreliOgrenciler[0].id);
+    }
+  }, [filtreliOgrenciler, gOgrenciId]);
+
   const ogrenciAdi = useMemo(() => {
     const map = new Map<string, string>();
     for (const o of ogrenciler) map.set(o.id, o.ad_soyad);
     return map;
   }, [ogrenciler]);
+
+  const subeHaritasi = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const o of ogrenciler) map.set(o.id, o.sube_id);
+    return map;
+  }, [ogrenciler]);
+
+  const filtreliGorusmeler = useMemo(() => {
+    if (!seciliSubeId) return gorusmeler;
+    return gorusmeler.filter((g) => subeHaritasi.get(g.ogrenci_id) === seciliSubeId);
+  }, [gorusmeler, subeHaritasi, seciliSubeId]);
 
   async function handleGorusmeEkle(e: React.FormEvent) {
     e.preventDefault();
@@ -97,7 +121,7 @@ export default function GorusmeYonetimi() {
           <FormGroup>
             <Label>Öğrenci *</Label>
             <Select value={gOgrenciId} onChange={(e) => setGOgrenciId(e.target.value)}>
-              {ogrenciler.map((o) => (
+              {filtreliOgrenciler.map((o) => (
                 <option key={o.id} value={o.id}>{o.ad_soyad}</option>
               ))}
             </Select>
@@ -130,12 +154,22 @@ export default function GorusmeYonetimi() {
       </Card>
 
       <Card>
-        <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Görüşmeler</h3>
-        {gorusmeler.length === 0 ? (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+          <h3 className="section-title" style={{ marginBottom: 0, fontSize: 16 }}>Görüşmeler</h3>
+          {subeler.length > 0 && (
+            <Select value={seciliSubeId} onChange={(e) => setSeciliSubeId(e.target.value)} style={{ maxWidth: 160 }}>
+              <option value="">Tüm Şubeler</option>
+              {subeler.map((s) => (
+                <option key={s.id} value={s.id}>{s.ad}</option>
+              ))}
+            </Select>
+          )}
+        </div>
+        {filtreliGorusmeler.length === 0 ? (
           <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Henüz görüşme yok.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {gorusmeler.map((m) => (
+            {filtreliGorusmeler.map((m) => (
               <div key={m.id} style={{ display: "flex", gap: 12, padding: "12px", borderRadius: 8, background: "rgba(15,27,45,0.02)", border: "1px solid rgba(15,27,45,0.07)" }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>

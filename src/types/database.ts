@@ -12,6 +12,8 @@ export interface Konu {
 export interface Ogrenci {
   id: string;
   ad_soyad: string;
+  sube_id?: string | null;
+  sube_adi?: string | null;
 }
 
 export interface DenemeSablonu {

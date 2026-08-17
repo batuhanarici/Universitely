@@ -4,7 +4,7 @@ import type { Ogrenci, SoruDurumu } from "../types/database";
 export async function ogrencileriGetir(): Promise<Ogrenci[]> {
   const { data, error } = await supabase.rpc("koc_ogrencileri");
   if (error) throw error;
-  return (data ?? []).map((o: any) => ({ id: o.id, ad_soyad: o.ad_soyad }));
+  return (data ?? []).map((o: any) => ({ id: o.id, ad_soyad: o.ad_soyad, sube_id: o.sube_id, sube_adi: o.sube_adi }));
 }
 
 export interface SablonSorusuDetayli {

@@ -3,6 +3,7 @@ import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueri
 import { haftalikProgramGetir, haftalikProgramKaydet } from "../../lib/programQueries";
 import { gorevSil } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
+import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Input, Label, FormGroup, Checkbox, useToast } from "../../components/ui";
 
 const GUN_ADLARI = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
@@ -34,6 +35,8 @@ function gunEkle(tarih: string, n: number): string {
 export default function ProgramYonetimi() {
   const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [seciliSubeId, setSeciliSubeId] = useState("");
   const [ogrenciId, setOgrenciId] = useState("");
   const [haftaTarih, setHaftaTarih] = useState(bugunIso());
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
@@ -48,14 +51,24 @@ export default function ProgramYonetimi() {
   const bitis = gunler[6].tarih;
 
   useEffect(() => {
-    kocOgrencileri()
-      .then((o) => {
+    Promise.all([kocOgrencileri(), subeleriGetir()])
+      .then(([o, s]) => {
         setOgrenciler(o);
+        setSubeler(s);
         if (o.length > 0) setOgrenciId(o[0].id);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
+
+  const filtreliOgrenciler = useMemo(() => subeyeGoreFiltrele(ogrenciler, seciliSubeId), [ogrenciler, seciliSubeId]);
+
+  useEffect(() => {
+    if (filtreliOgrenciler.length === 0) return;
+    if (!filtreliOgrenciler.some((o) => o.id === ogrenciId)) {
+      setOgrenciId(filtreliOgrenciler[0].id);
+    }
+  }, [filtreliOgrenciler, ogrenciId]);
 
   useEffect(() => {
     if (!ogrenciId) {
@@ -123,10 +136,21 @@ export default function ProgramYonetimi() {
 
       <Card style={{ padding: "14px 20px" }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+          {subeler.length > 0 && (
+            <FormGroup style={{ minWidth: 160 }}>
+              <Label>Şube</Label>
+              <Select value={seciliSubeId} onChange={(e) => setSeciliSubeId(e.target.value)}>
+                <option value="">Tüm Şubeler</option>
+                {subeler.map((s) => (
+                  <option key={s.id} value={s.id}>{s.ad}</option>
+                ))}
+              </Select>
+            </FormGroup>
+          )}
           <FormGroup style={{ minWidth: 180 }}>
             <Label>Öğrenci</Label>
             <Select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)}>
-              {ogrenciler.map((o) => (
+              {filtreliOgrenciler.map((o) => (
                 <option key={o.id} value={o.id}>{o.ad_soyad}</option>
               ))}
             </Select>

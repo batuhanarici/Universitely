@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import { kitapAta, ogrenciKitaplariGetir, kitapSil } from "../../lib/kaynakQueries";
 import type { KaynakTuru, Kitap } from "../../types/database";
+import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Input, Label, FormGroup, Btn, Badge, ProgressBar, useToast } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
@@ -15,6 +16,8 @@ const TURLER: { deger: KaynakTuru; etiket: string }[] = [
 export default function KaynakAta() {
   const { toast, show } = useToast();
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
+  const [subeler, setSubeler] = useState<Sube[]>([]);
+  const [seciliSubeId, setSeciliSubeId] = useState("");
   const [ogrenciId, setOgrenciId] = useState("");
   const [kitaplar, setKitaplar] = useState<Kitap[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -25,14 +28,24 @@ export default function KaynakAta() {
   const [bitisHedefi, setBitisHedefi] = useState("");
 
   useEffect(() => {
-    kocOgrencileri()
-      .then((o) => {
+    Promise.all([kocOgrencileri(), subeleriGetir()])
+      .then(([o, s]) => {
         setOgrenciler(o);
+        setSubeler(s);
         if (o.length > 0) setOgrenciId(o[0].id);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
+
+  const filtreliOgrenciler = useMemo(() => subeyeGoreFiltrele(ogrenciler, seciliSubeId), [ogrenciler, seciliSubeId]);
+
+  useEffect(() => {
+    if (filtreliOgrenciler.length === 0) return;
+    if (!filtreliOgrenciler.some((o) => o.id === ogrenciId)) {
+      setOgrenciId(filtreliOgrenciler[0].id);
+    }
+  }, [filtreliOgrenciler, ogrenciId]);
 
   useEffect(() => {
     if (!ogrenciId) {
@@ -86,14 +99,27 @@ export default function KaynakAta() {
       </div>
 
       <Card style={{ padding: "14px 20px" }}>
-        <FormGroup>
-          <Label>Öğrenci</Label>
-          <Select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)} style={{ maxWidth: 220 }}>
-            {ogrenciler.map((o) => (
-              <option key={o.id} value={o.id}>{o.ad_soyad}</option>
-            ))}
-          </Select>
-        </FormGroup>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {subeler.length > 0 && (
+            <FormGroup>
+              <Label>Şube</Label>
+              <Select value={seciliSubeId} onChange={(e) => setSeciliSubeId(e.target.value)} style={{ maxWidth: 160 }}>
+                <option value="">Tüm Şubeler</option>
+                {subeler.map((s) => (
+                  <option key={s.id} value={s.id}>{s.ad}</option>
+                ))}
+              </Select>
+            </FormGroup>
+          )}
+          <FormGroup>
+            <Label>Öğrenci</Label>
+            <Select value={ogrenciId} onChange={(e) => setOgrenciId(e.target.value)} style={{ maxWidth: 220 }}>
+              {filtreliOgrenciler.map((o) => (
+                <option key={o.id} value={o.id}>{o.ad_soyad}</option>
+              ))}
+            </Select>
+          </FormGroup>
+        </div>
       </Card>
 
       <Card>
