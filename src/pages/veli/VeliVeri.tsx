@@ -13,6 +13,8 @@ const BOS_VERI: VeliCocukVerisi = {
   konuIlerlemeleri: [],
   tekrarPlanlari: [],
   gorusmeler: [],
+  seansNotlari: [],
+  takipMaddeleri: [],
   konular: [],
 };
 

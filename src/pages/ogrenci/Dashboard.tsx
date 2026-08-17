@@ -13,6 +13,7 @@ import { gorevleriGetir, gorevTamamla } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
 import { AnimatedNumber, ProgressBar, Badge, Card, Checkbox, EmptyState, ErrorState, LoadingState, useToast } from "../../components/ui";
 import { useAuth } from "../../lib/AuthContext";
+import { GunlukPlanPaneli } from "../../components/GunlukPlanPaneli";
 
 const TEAL = "#2A9D8F";
 const RUST = "#C4503A";
@@ -258,6 +259,8 @@ export default function Dashboard() {
           <span style={{ display: "block", fontSize: 11, color: "rgba(15,27,45,0.4)", marginTop: 8 }}>D/Y/B {sonDeneme ? `${sonDeneme.dogru}/${sonDeneme.yanlis}/${sonDeneme.bos}` : "0/0/0"}</span>
         </div>
       </div>
+
+      <GunlukPlanPaneli />
 
       <div className="grid-2">
         <Card>

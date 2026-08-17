@@ -10,6 +10,8 @@ import {
   type TopluSonucGirdisi,
 } from "../../lib/sonucQueries";
 import type { Deneme } from "../../types/database";
+import { denemeAksiyonTaslagiOlustur } from "../../lib/denemeAksiyonQueries";
+import { DenemeAksiyonKocPaneli } from "../../components/DenemeAksiyonPaneli";
 import { Card, Select, Input, Textarea, Btn, Badge, Tabs, Label, FormGroup, useToast } from "../../components/ui";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
@@ -43,6 +45,7 @@ export default function TopluSonucGir() {
   const [hata, setHata] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
   const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [aksiyonYenileme, setAksiyonYenileme] = useState(0);
 
   useEffect(() => {
     Promise.all([denemeleriGetir(), ogrencileriGetir()])
@@ -173,7 +176,10 @@ export default function TopluSonucGir() {
         return;
       }
       await topluSonucGir(denemeId, girdi);
-      setMesaj(`${girdi.length} öğrenci kaydedildi.${eksikler.length ? ` Eksik bırakıldı: ${eksikler.join(", ")}` : ""}`);
+      const aksiyonSonuclari = await Promise.allSettled(girdi.map((satir) => denemeAksiyonTaslagiOlustur(denemeId, satir.ogrenci_id)));
+      const aksiyonHatasi = aksiyonSonuclari.some((sonuc) => sonuc.status === "rejected");
+      setMesaj(`${girdi.length} öğrenci kaydedildi.${eksikler.length ? ` Eksik bırakıldı: ${eksikler.join(", ")}` : ""}${aksiyonHatasi ? " Bazı aksiyon taslakları oluşturulamadı." : " Aksiyon taslakları koç incelemesine hazır."}`);
+      setAksiyonYenileme((anahtar) => anahtar + 1);
       setGrid({});
       setPasteMetin("");
     } catch (e: any) {
@@ -313,6 +319,8 @@ export default function TopluSonucGir() {
           </div>
         </div>
       </Card>
+
+      <DenemeAksiyonKocPaneli denemeId={denemeId} ogrenciler={ogrenciler} yenilemeAnahtari={aksiyonYenileme} />
     </div>
   );
 }

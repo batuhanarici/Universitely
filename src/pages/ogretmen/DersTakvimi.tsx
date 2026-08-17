@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { kocOgrencileri, type KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
-import { dersleriGetir, dersEkle, gorusmeDurumGuncelle, gorusmeSil } from "../../lib/kocAraclariQueries";
-import type { Gorusme } from "../../types/database";
+import {
+  dersleriGetir,
+  dersEkle,
+  gorusmeDurumGuncelle,
+  gorusmeSil,
+  seansNotlariniGetir,
+  takipMaddeleriniGetir,
+} from "../../lib/kocAraclariQueries";
+import type { Gorusme, SeansNotu, TakipMaddesi } from "../../types/database";
+import { SeansKapanisPaneli } from "../../components/SeansKapanisPaneli";
 import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Input, Btn, Badge, Label, FormGroup, useToast } from "../../components/ui";
 
@@ -41,6 +49,8 @@ export default function DersTakvimi() {
   const [subeler, setSubeler] = useState<Sube[]>([]);
   const [seciliSubeId, setSeciliSubeId] = useState("");
   const [dersler, setDersler] = useState<Gorusme[]>([]);
+  const [seansNotlari, setSeansNotlari] = useState<SeansNotu[]>([]);
+  const [takipMaddeleri, setTakipMaddeleri] = useState<TakipMaddesi[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
@@ -50,11 +60,13 @@ export default function DersTakvimi() {
   const [notlar, setNotlar] = useState("");
 
   useEffect(() => {
-    Promise.all([kocOgrencileri(), dersleriGetir(), subeleriGetir()])
-      .then(([o, d, s]) => {
+    Promise.all([kocOgrencileri(), dersleriGetir(), subeleriGetir(), seansNotlariniGetir(), takipMaddeleriniGetir()])
+      .then(([o, d, s, notlar, takipler]) => {
         setOgrenciler(o);
         setDersler(d);
         setSubeler(s);
+        setSeansNotlari(notlar);
+        setTakipMaddeleri(takipler);
         if (o.length > 0) setOgrenciId(o[0].id);
       })
       .catch((error) => console.error("Ders takvimi yüklenemedi:", error))
@@ -91,6 +103,20 @@ export default function DersTakvimi() {
       : dersler;
     return [...liste].sort((a, b) => new Date(a.tarih).getTime() - new Date(b.tarih).getTime());
   }, [dersler, seciliSubeId, subeHaritasi]);
+
+  const seansNotuHaritasi = useMemo(() => new Map(seansNotlari.map((not) => [not.gorusme_id, not])), [seansNotlari]);
+
+  function dersSeansNotunuGuncelle(not: SeansNotu) {
+    setSeansNotlari((mevcut) => [...mevcut.filter((x) => x.gorusme_id !== not.gorusme_id), not]);
+  }
+
+  function takipMaddesiEklendi(takip: TakipMaddesi) {
+    setTakipMaddeleri((mevcut) => [...mevcut, takip].sort((a, b) => a.son_tarih.localeCompare(b.son_tarih)));
+  }
+
+  function takipMaddesiGuncellendi(takip: TakipMaddesi) {
+    setTakipMaddeleri((mevcut) => mevcut.map((x) => (x.id === takip.id ? takip : x)));
+  }
 
   async function handleDersEkle(e: React.FormEvent) {
     e.preventDefault();
@@ -216,6 +242,16 @@ export default function DersTakvimi() {
                   <p style={{ fontSize: 13, color: "#0F1B2D" }}>{ogrenciAdi.get(ders.ogrenci_id) ?? "Öğrenci"}</p>
                   <p style={{ fontSize: 11, color: "rgba(15,27,45,0.5)" }}>{tarihSaatEtiketi(ders.tarih)}</p>
                   {ders.notlar && <p style={{ fontSize: 12, color: "rgba(15,27,45,0.6)", marginTop: 4, whiteSpace: "pre-wrap" }}>{ders.notlar}</p>}
+                  {ders.durum === "tamamlandi" && (
+                    <SeansKapanisPaneli
+                      ders={ders}
+                      seansNotu={seansNotuHaritasi.get(ders.id) ?? null}
+                      takipMaddeleri={takipMaddeleri.filter((takip) => takip.gorusme_id === ders.id)}
+                      onNotKaydedildi={dersSeansNotunuGuncelle}
+                      onTakipEklendi={takipMaddesiEklendi}
+                      onTakipGuncellendi={takipMaddesiGuncellendi}
+                    />
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {ders.durum === "planlandi" && (

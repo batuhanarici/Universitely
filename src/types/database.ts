@@ -39,6 +39,38 @@ export interface Deneme {
 
 export type DenemeTuru = "tyt" | "ayt" | "brans";
 
+export type DenemeAksiyonuTuru = "gorev" | "tekrar";
+export type DenemeAksiyonuDurumu = "taslak" | "onaylandi" | "reddedildi" | "uygulandi" | "tamamlandi";
+
+export interface KocUyariKapatma {
+  id: string;
+  ogrenci_id: string;
+  uyari_turu: string;
+  kaynak_tarihi: string;
+  kapatan_id: string;
+  kapatildi_at: string;
+}
+
+export interface DenemeAksiyonu {
+  id: string;
+  deneme_id: string;
+  ogrenci_id: string;
+  konu_id: string | null;
+  aksiyon_turu: DenemeAksiyonuTuru;
+  baslik: string;
+  detay: string;
+  dayanak: string;
+  oncelik: "yuksek" | "orta" | "dusuk";
+  onerilen_tarih: string;
+  durum: DenemeAksiyonuDurumu;
+  gorev_id: string | null;
+  tekrar_plan_id: string | null;
+  onaylayan_id: string | null;
+  onay_notu: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type SoruDurumu = "dogru" | "yanlis" | "bos";
 
 export interface Sonuc {
@@ -76,6 +108,37 @@ export interface CalismaKaydi {
   soru_sayisi: number | null;
   konu_id: string | null;
   not: string | null;
+}
+
+export type CalismaBlokuDurumu = "planlandi" | "tamamlandi" | "ertelendi" | "iptal";
+
+export interface CalismaBloku {
+  id: string;
+  ogrenci_id: string;
+  gorev_id: string | null;
+  takip_maddesi_id: string | null;
+  tekrar_plan_id: string | null;
+  plan_tarihi: string;
+  baslangic: string;
+  bitis: string;
+  baslik: string;
+  neden: string;
+  durum: CalismaBlokuDurumu;
+  kilitli: boolean;
+  erteleme_sayisi: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OgrenciMusaitligi {
+  id: string;
+  ogrenci_id: string;
+  gun: number;
+  baslangic: string;
+  bitis: string;
+  aktif: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export type GorevTipi = "gunluk" | "haftalik" | "koc";
@@ -192,6 +255,39 @@ export interface Gorusme {
   notlar: string | null;
   created_at: string;
   tur: GorusmeTuru;
+}
+
+export interface SeansNotu {
+  id: string;
+  gorusme_id: string;
+  ogrenci_id: string;
+  ozet: string;
+  guclu_yonler: string | null;
+  gelisim_alanlari: string | null;
+  veli_gorur: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TakipMaddesiOnceligi = "dusuk" | "orta" | "yuksek";
+export type TakipMaddesiDurumu = "bekliyor" | "devam_ediyor" | "tamamlandi" | "ertelendi";
+
+export interface TakipMaddesi {
+  id: string;
+  gorusme_id: string;
+  seans_notu_id: string | null;
+  ogrenci_id: string;
+  baslik: string;
+  aciklama: string | null;
+  son_tarih: string;
+  oncelik: TakipMaddesiOnceligi;
+  durum: TakipMaddesiDurumu;
+  veli_gorur: boolean;
+  gorev_id: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OkulDersProgrami {

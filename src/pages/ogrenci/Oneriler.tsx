@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { motorVerisiniGetir, onerileriUret, type Oneri } from "../../lib/oneriMotoru";
 import { Card, Badge, Btn, EmptyState, ErrorState, LoadingState } from "../../components/ui";
+import { DenemeAksiyonOgrenciPaneli } from "../../components/DenemeAksiyonPaneli";
 
 const priorityVariant: Record<Oneri["oncelik"], { badge: "brick" | "gold" | "teal"; etiket: string }> = {
   yuksek: { badge: "brick", etiket: "Öncelikli" },
@@ -59,6 +60,8 @@ export default function Oneriler() {
           {yenileniyor ? "Analiz…" : "↻ Yenile"}
         </Btn>
       </div>
+
+      <DenemeAksiyonOgrenciPaneli />
 
       {hata ? (
         <ErrorState

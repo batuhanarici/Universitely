@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { dersleriGetir } from "../../lib/kocAraclariQueries";
+import {
+  dersleriGetir,
+  seansNotlariniGetir,
+  takipMaddeleriniGetir,
+  takipMaddesiDurumGuncelle,
+} from "../../lib/kocAraclariQueries";
 import {
   okulDersProgramiEkle,
   okulDersProgramiSil,
@@ -7,7 +12,7 @@ import {
 } from "../../lib/programQueries";
 import { gorevleriGetir, gorevTamamla } from "../../lib/gorevQueries";
 import { tekrarPlanlariniGetir, tekrarPlanYapildi } from "../../lib/tekrarPlanQueries";
-import type { Gorusme, Gorev, OkulDersProgrami, TekrarPlan } from "../../types/database";
+import type { Gorusme, Gorev, OkulDersProgrami, TekrarPlan, SeansNotu, TakipMaddesi } from "../../types/database";
 import { Card, Checkbox, Select, Input, Btn, Label, FormGroup } from "../../components/ui";
 
 const dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
@@ -44,6 +49,8 @@ export default function Takvim() {
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
   const [planlar, setPlanlar] = useState<TekrarPlan[]>([]);
   const [dersler, setDersler] = useState<Gorusme[]>([]);
+  const [seansNotlari, setSeansNotlari] = useState<SeansNotu[]>([]);
+  const [takipMaddeleri, setTakipMaddeleri] = useState<TakipMaddesi[]>([]);
   const [okulDersleri, setOkulDersleri] = useState<OkulDersProgrami[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [programKaydediliyor, setProgramKaydediliyor] = useState(false);
@@ -60,12 +67,16 @@ export default function Takvim() {
       tekrarPlanlariniGetir(),
       dersleriGetir(),
       okulDersPrograminiGetir(),
+      seansNotlariniGetir(),
+      takipMaddeleriniGetir(),
     ])
-      .then(([g, p, d, okul]) => {
+      .then(([g, p, d, okul, notlar, takipler]) => {
         setGorevler(g);
         setPlanlar(p);
         setDersler(d);
         setOkulDersleri(okul);
+        setSeansNotlari(notlar);
+        setTakipMaddeleri(takipler);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
@@ -86,6 +97,16 @@ export default function Takvim() {
     const yeni = !p.yapildi;
     setPlanlar((ps) => ps.map((x) => (x.id === p.id ? { ...x, yapildi: yeni } : x)));
     await tekrarPlanYapildi(p.id, yeni);
+  }
+
+  async function takipDurumunuDegistir(takip: TakipMaddesi, durum: TakipMaddesi["durum"]) {
+    setTakipMaddeleri((liste) => liste.map((x) => (x.id === takip.id ? { ...x, durum } : x)));
+    try {
+      const basarili = await takipMaddesiDurumGuncelle(takip.id, durum);
+      if (!basarili) throw new Error("Takip maddesi güncellenemedi");
+    } catch {
+      setTakipMaddeleri((liste) => liste.map((x) => (x.id === takip.id ? takip : x)));
+    }
   }
 
   async function okulDersiEkle(e: React.FormEvent) {
@@ -163,6 +184,11 @@ export default function Takvim() {
                         <div style={{ fontSize: 10, fontWeight: 800, color: "#2A9D8F", marginBottom: 2 }}>{saatEtiketi(ders.tarih)}</div>
                         <div style={{ fontSize: 11, lineHeight: 1.35, color: "#0F1B2D", textDecoration: ders.durum === "iptal" ? "line-through" : "none" }}>{ders.baslik}</div>
                         {ders.durum === "iptal" && <div style={{ fontSize: 9, color: "#C4503A", marginTop: 2 }}>İptal edildi</div>}
+                        {seansNotlari.find((not) => not.gorusme_id === ders.id)?.ozet && (
+                          <div style={{ marginTop: 5, paddingTop: 5, borderTop: "1px solid rgba(42,157,143,0.16)", fontSize: 10, lineHeight: 1.35, color: "rgba(15,27,45,0.68)" }}>
+                            <strong>Seans özeti:</strong> {seansNotlari.find((not) => not.gorusme_id === ders.id)?.ozet}
+                          </div>
+                        )}
                       </div>
                     ))}
                     {daySchoolLessons.map((ders) => (
@@ -189,6 +215,28 @@ export default function Takvim() {
             );
           })}
         </div>
+      </Card>
+
+      <Card>
+        <div style={{ marginBottom: 14 }}>
+          <h2 className="section-title" style={{ fontSize: 17, marginBottom: 4 }}>Koçluk takip maddelerim</h2>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Koçunla kararlaştırdığın adımları buradan takip et.</p>
+        </div>
+        {takipMaddeleri.length === 0 ? (
+          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.45)" }}>Henüz takip maddesi yok.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {takipMaddeleri.map((takip) => (
+              <label key={takip.id} style={{ display: "flex", alignItems: "flex-start", gap: 9, padding: "9px 10px", borderRadius: 8, background: takip.durum === "tamamlandi" ? "rgba(42,157,143,0.07)" : "rgba(228,187,96,0.08)", cursor: "pointer" }}>
+                <Checkbox checked={takip.durum === "tamamlandi"} onChange={(e) => takipDurumunuDegistir(takip, e.target.checked ? "tamamlandi" : "bekliyor")} />
+                <span style={{ flex: 1 }}>
+                  <span style={{ display: "block", fontSize: 13, textDecoration: takip.durum === "tamamlandi" ? "line-through" : "none", color: takip.durum === "tamamlandi" ? "rgba(15,27,45,0.4)" : "#16283F" }}>{takip.baslik}</span>
+                  <span style={{ display: "block", marginTop: 2, fontSize: 11, color: "rgba(15,27,45,0.45)" }}>Son tarih: {new Date(`${takip.son_tarih}T12:00:00`).toLocaleDateString("tr-TR")}{takip.aciklama ? ` · ${takip.aciklama}` : ""}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
       </Card>
 
       <Card>

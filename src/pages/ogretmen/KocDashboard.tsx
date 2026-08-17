@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { kocAnalizVerisiniGetir } from "../../lib/kocAiQueries";
-import { kocRiskleriniHesapla, type OgrenciRiski } from "../../lib/aiMotoru";
+import { kocRiskleriniHesapla, type OgrenciRiski, type KocAnalizVerisi } from "../../lib/aiMotoru";
 import { gorusmeleriGetir } from "../../lib/kocAraclariQueries";
 import type { KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import type { Gorusme, KocSonucSatiri, Gorev } from "../../types/database";
 import { Card, ErrorState, KPICard, Badge, ProgressBar, LoadingState, Btn } from "../../components/ui";
 import { Icon } from "../../components/Icon";
+import { ErkenUyariPaneli } from "../../components/ErkenUyariPaneli";
 
 function bugunIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -25,6 +26,7 @@ export default function KocDashboard({ onOgrenciSec, onRiskAc }: { onOgrenciSec:
   const [satirlar, setSatirlar] = useState<KocSonucSatiri[]>([]);
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
   const [riskler, setRiskler] = useState<OgrenciRiski[]>([]);
+  const [analizVerisi, setAnalizVerisi] = useState<KocAnalizVerisi | null>(null);
   const [gorusmeler, setGorusmeler] = useState<Gorusme[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState(false);
@@ -34,6 +36,7 @@ export default function KocDashboard({ onOgrenciSec, onRiskAc }: { onOgrenciSec:
     setHata(false);
     try {
       const [v, g] = await Promise.all([kocAnalizVerisiniGetir(), gorusmeleriGetir()]);
+      setAnalizVerisi(v);
       setOgrenciler(v.ogrenciler);
       setSatirlar(v.sonuclar);
       setGorevler(v.gorevler);
@@ -138,6 +141,8 @@ export default function KocDashboard({ onOgrenciSec, onRiskAc }: { onOgrenciSec:
         <KPICard label="Pasif" value={pasifSayisi} color="#9A9FA8" />
         <KPICard label="Bugün Bekleyen Görev" value={bekleyenGorev} color={bekleyenGorev > 0 ? "#C4503A" : "#0F1B2D"} />
       </div>
+
+      {analizVerisi && <ErkenUyariPaneli veri={analizVerisi} onOgrenciSec={onOgrenciSec} />}
 
       <div className="grid-2">
         <Card className="tape-accent">

@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { CalismaKaydi, Gorev, Gorusme, Kitap, KonuIlerleme, OgrenciProfili, TekrarPlan } from "../types/database";
+import type { CalismaKaydi, Gorev, Gorusme, Kitap, KonuIlerleme, OgrenciProfili, TekrarPlan, SeansNotu, TakipMaddesi } from "../types/database";
 
 export interface KonuKaydi {
   id: string;
@@ -17,6 +17,8 @@ export interface VeliCocukVerisi {
   konuIlerlemeleri: KonuIlerleme[];
   tekrarPlanlari: TekrarPlan[];
   gorusmeler: Gorusme[];
+  seansNotlari: SeansNotu[];
+  takipMaddeleri: TakipMaddesi[];
   konular: KonuKaydi[];
 }
 
@@ -112,6 +114,8 @@ export async function veliCocukVerisiniGetir(): Promise<VeliCocukVerisi> {
     konuIlerlemeleri: [],
     tekrarPlanlari: [],
     gorusmeler: [],
+    seansNotlari: [],
+    takipMaddeleri: [],
     konular: [],
   };
 
@@ -125,7 +129,7 @@ export async function veliCocukVerisiniGetir(): Promise<VeliCocukVerisi> {
 
   const q = (tablo: string) => supabase.from(tablo).select("*").eq("ogrenci_id", ogr);
 
-  const [profilR, calismaR, gorevR, kitapR, konuR, tekrarR, gorusmeR, konularR, derslerR, cocukR] = await Promise.all([
+  const [profilR, calismaR, gorevR, kitapR, konuR, tekrarR, gorusmeR, seansNotuR, takipR, konularR, derslerR, cocukR] = await Promise.all([
     supabase.from("ogrenci_profilleri").select("*").eq("ogrenci_id", ogr).maybeSingle(),
     q("calisma_kayitlari"),
     q("gorevler"),
@@ -133,6 +137,8 @@ export async function veliCocukVerisiniGetir(): Promise<VeliCocukVerisi> {
     q("konu_ilerlemeleri"),
     q("tekrar_planlari"),
     q("gorusmeler"),
+    q("seans_notlari"),
+    q("takip_maddeleri"),
     supabase.from("konular").select("*"),
     supabase.from("dersler").select("*"),
     supabase.from("ogrenciler").select("ad_soyad").eq("id", ogr).maybeSingle(),
@@ -157,6 +163,8 @@ export async function veliCocukVerisiniGetir(): Promise<VeliCocukVerisi> {
     konuIlerlemeleri: (konuR.data as KonuIlerleme[]) ?? [],
     tekrarPlanlari: (tekrarR.data as TekrarPlan[]) ?? [],
     gorusmeler: (gorusmeR.data as Gorusme[]) ?? [],
+    seansNotlari: (seansNotuR.data as SeansNotu[]) ?? [],
+    takipMaddeleri: (takipR.data as TakipMaddesi[]) ?? [],
     konular,
   };
 }

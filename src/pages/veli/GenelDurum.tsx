@@ -1,6 +1,7 @@
-import { Card, KPICard, ProgressBar, AnimatedNumber } from "../../components/ui";
+import { Card, KPICard, ProgressBar, AnimatedNumber, Badge } from "../../components/ui";
 import { useVeliVeri } from "./VeliVeri";
 import { useVeliDerived } from "./veliDerived";
+import { VeliHaftalikOzet } from "../../components/VeliHaftalikOzet";
 
 function bugunEtiketi(): string {
   return new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
@@ -13,6 +14,7 @@ export default function GenelDurum() {
   if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
 
   const bosVeri = sonuclar.length === 0 && veri.calismalar.length === 0;
+  const gorusmeHaritasi = new Map(veri.gorusmeler.map((gorusme) => [gorusme.id, gorusme]));
 
   return (
     <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -29,6 +31,8 @@ export default function GenelDurum() {
         </Card>
       ) : (
         <>
+          <VeliHaftalikOzet veri={veri} />
+
           <div className="grid-2">
             {d.ort !== null ? (
               <KPICard label="Ortalama Net" value={Math.round(d.ort * 10) / 10} decimals={1} color="#E4BB60" />
@@ -80,6 +84,41 @@ export default function GenelDurum() {
               </div>
             </div>
           </Card>
+
+          {(veri.seansNotlari.length > 0 || veri.takipMaddeleri.length > 0) && (
+            <Card>
+              <div style={{ marginBottom: 12 }}>
+                <h3 className="section-title" style={{ marginBottom: 3, fontSize: 16 }}>Koçluk güncellemeleri</h3>
+                <p style={{ fontSize: 12, color: "rgba(15,27,45,0.5)" }}>Koçunuzun paylaşmayı seçtiği seans özeti ve takip adımları.</p>
+              </div>
+              {veri.seansNotlari.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: veri.takipMaddeleri.length > 0 ? 14 : 0 }}>
+                  {[...veri.seansNotlari].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 3).map((not) => (
+                    <div key={not.id} style={{ padding: "9px 10px", borderRadius: 8, background: "rgba(42,157,143,0.06)", borderLeft: "3px solid #2A9D8F" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
+                        <strong style={{ fontSize: 12 }}>{gorusmeHaritasi.get(not.gorusme_id)?.baslik ?? "Koçluk seansı"}</strong>
+                        <span style={{ fontSize: 11, color: "rgba(15,27,45,0.45)" }}>{new Date(not.updated_at).toLocaleDateString("tr-TR")}</span>
+                      </div>
+                      <p style={{ fontSize: 12, lineHeight: 1.5, color: "rgba(15,27,45,0.7)", whiteSpace: "pre-wrap" }}>{not.ozet}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {veri.takipMaddeleri.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(15,27,45,0.4)", marginBottom: 7 }}>Takip adımları</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {[...veri.takipMaddeleri].sort((a, b) => a.son_tarih.localeCompare(b.son_tarih)).slice(0, 5).map((takip) => (
+                      <div key={takip.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid rgba(15,27,45,0.07)" }}>
+                        <span style={{ flex: 1, fontSize: 12, textDecoration: takip.durum === "tamamlandi" ? "line-through" : "none", color: takip.durum === "tamamlandi" ? "rgba(15,27,45,0.38)" : "#16283F" }}>{takip.baslik}</span>
+                        <Badge variant={takip.durum === "tamamlandi" ? "teal" : "gold"}>{takip.durum === "tamamlandi" ? "Tamamlandı" : "Açık"}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
 
           <Card>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>

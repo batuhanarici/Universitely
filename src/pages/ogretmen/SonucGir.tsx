@@ -11,6 +11,7 @@ import {
 import type { Deneme } from "../../types/database";
 import { subeleriGetir, subeyeGoreFiltrele, type Sube } from "../../lib/subeQueries";
 import { Card, Select, Btn, Badge, Label, FormGroup, ErrorState, LoadingState, useToast } from "../../components/ui";
+import { denemeAksiyonTaslagiOlustur } from "../../lib/denemeAksiyonQueries";
 
 type DenemeDetayli = Deneme & { sablon_adi: string };
 
@@ -155,6 +156,7 @@ export default function SonucGir() {
     try {
       const kayit = sorular.map((s) => ({ soru_no: s.soru_no, durum: cevaplar[s.soru_no] }));
       await sonucGirisiKaydet(denemeId, ogrenciId, kayit);
+      await denemeAksiyonTaslagiOlustur(denemeId, ogrenciId).catch(() => {});
       setKaydedildi(true);
       setZatenGirilmis(true);
       setCevaplar({});
