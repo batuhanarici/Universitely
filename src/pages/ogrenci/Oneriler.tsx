@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motorVerisiniGetir, onerileriUret, type Oneri } from "../../lib/oneriMotoru";
-import { Card, Badge, Btn, EmptyState } from "../../components/ui";
+import { Card, Badge, Btn, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 
 const priorityVariant: Record<Oneri["oncelik"], { badge: "brick" | "gold" | "teal"; etiket: string }> = {
   yuksek: { badge: "brick", etiket: "Öncelikli" },
@@ -8,31 +8,45 @@ const priorityVariant: Record<Oneri["oncelik"], { badge: "brick" | "gold" | "tea
   dusuk: { badge: "teal", etiket: "İyi Gidiyorsun" },
 };
 
+const ONERI_DAYANAKLARI: Record<string, string> = {
+  "Konu Eksikleri": "Deneme sonuçlarındaki konu bazlı doğru oranları.",
+  "Yanlış Arşivi": "Çözülmemiş yanlışların toplamı.",
+  "Tekrar Planı": "Bugünün tamamlanmamış tekrar planları.",
+  Hedef: "Profilindeki hedef net ile deneme ortalaman arasındaki fark.",
+  Kaynaklar: "Bitiş hedefi geçen ve tamamlanmamış kaynaklar.",
+  Görevler: "Bugün tamamlanmamış görevlerin.",
+  "Çalışma Temposu": "Son 7 gündeki kayıtlı çalışma süresi.",
+  Deneme: "Henüz girilmemiş deneme sonucu durumu.",
+  "Güçlü Yön": "Deneme sonuçlarındaki yüksek konu başarıları.",
+};
+
 export default function Oneriler() {
   const [oneriler, setOneriler] = useState<Oneri[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [yenileniyor, setYenileniyor] = useState(false);
+  const [hata, setHata] = useState(false);
   const [yenilemeAnahtari, setYenilemeAnahtari] = useState(0);
 
-  async function yukle(yenile: boolean) {
+  const yukle = useCallback(async (yenile: boolean) => {
     if (yenile) setYenileniyor(true);
+    setHata(false);
     try {
       const v = await motorVerisiniGetir();
       setOneriler(onerileriUret(v));
     } catch {
-      setOneriler([]);
+      setHata(true);
     } finally {
       setYukleniyor(false);
       setYenileniyor(false);
       if (yenile) setYenilemeAnahtari((k) => k + 1);
     }
-  }
-
-  useEffect(() => {
-    yukle(false);
   }, []);
 
-  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+  useEffect(() => {
+    void yukle(false);
+  }, [yukle]);
+
+  if (yukleniyor) return <LoadingState className="page-loading" />;
 
   return (
     <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -41,12 +55,18 @@ export default function Oneriler() {
           <h1 className="page-title">AI Koçum</h1>
           <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Verilerine dayalı kişisel öneriler</p>
         </div>
-        <Btn variant="ghost" size="sm" onClick={() => yukle(true)} disabled={yenileniyor}>
+        <Btn variant="ghost" size="sm" type="button" onClick={() => void yukle(true)} disabled={yenileniyor}>
           {yenileniyor ? "Analiz…" : "↻ Yenile"}
         </Btn>
       </div>
 
-      {oneriler.length === 0 ? (
+      {hata ? (
+        <ErrorState
+          title="Öneriler oluşturulamadı."
+          description="Çalışma ve deneme verilerine erişilemedi. Mevcut öneriler korunuyor; tekrar deneyebilirsin."
+          onRetry={() => void yukle(true)}
+        />
+      ) : oneriler.length === 0 ? (
         <Card>
           <EmptyState icon="🤖" title="Henüz öneri yok" desc="Daha fazla deneme ve çalışma verisi ekledikçe öneriler oluşur." />
         </Card>
@@ -62,6 +82,9 @@ export default function Oneriler() {
                 </div>
                 <h3 style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 600, color: "#0F1B2D", marginBottom: 6 }}>{on.baslik}</h3>
                 <p style={{ fontSize: 13, color: "rgba(15,27,45,0.65)", lineHeight: 1.6 }}>{on.detay}</p>
+                <p style={{ fontSize: 11.5, color: "rgba(15,27,45,0.45)", lineHeight: 1.4, marginTop: 8 }}>
+                  <strong>Dayanak:</strong> {ONERI_DAYANAKLARI[on.kategori] ?? "Kayıtlı çalışma ve sınav verilerin."}
+                </p>
               </div>
             </Card>
           ))}
