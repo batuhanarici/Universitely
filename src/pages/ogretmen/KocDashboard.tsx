@@ -4,7 +4,7 @@ import { kocRiskleriniHesapla, type OgrenciRiski } from "../../lib/aiMotoru";
 import { gorusmeleriGetir } from "../../lib/kocAraclariQueries";
 import type { KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import type { Gorusme, KocSonucSatiri, Gorev } from "../../types/database";
-import { Card, ErrorState, KPICard, Badge, ProgressBar, LoadingState } from "../../components/ui";
+import { Card, ErrorState, KPICard, Badge, ProgressBar, LoadingState, Btn } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 function bugunIso(): string {
@@ -20,7 +20,7 @@ const RISK_RENK: Record<string, string> = { yuksek: "#C4503A", orta: "#E4BB60", 
 const RISK_METIN: Record<string, string> = { yuksek: "yüksek", orta: "orta", dusuk: "düşük" };
 const RISK_BADGE: Record<string, "brick" | "gold" | "teal"> = { yuksek: "brick", orta: "gold", dusuk: "teal" };
 
-export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: string) => void }) {
+export default function KocDashboard({ onOgrenciSec, onRiskAc }: { onOgrenciSec: (id: string) => void; onRiskAc: () => void }) {
   const [ogrenciler, setOgrenciler] = useState<KocOgrencisi[]>([]);
   const [satirlar, setSatirlar] = useState<KocSonucSatiri[]>([]);
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
@@ -141,18 +141,40 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
 
       <div className="grid-2">
         <Card className="tape-accent">
-          <h3 className="section-title" style={{ marginBottom: 14, fontSize: 16 }}>Riskli Öğrenciler</h3>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+            <div>
+              <h3 className="section-title" style={{ marginBottom: 2, fontSize: 16 }}>Müdahale sırası</h3>
+              <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 11.5 }}>Risk skoru en yüksek öğrenciler</p>
+            </div>
+            <Btn variant="ghost" size="sm" type="button" onClick={onRiskAc}>Tüm riskler</Btn>
+          </div>
           {riskliOgrenciler.length === 0 && <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 13 }}>Riskli öğrenci yok — herkes düşük riskte.</p>}
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {riskliOgrenciler.map((r) => (
-              <div key={r.ogrenci_id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 99, flexShrink: 0, background: RISK_RENK[r.seviye] }} />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.ad_soyad}</span>
-                <div style={{ width: 90 }}><ProgressBar pct={r.riskSkoru} color={RISK_RENK[r.seviye]} /></div>
-                <Badge variant={RISK_BADGE[r.seviye]}>{RISK_METIN[r.seviye]}</Badge>
-                <button className="btn btn-ghost btn-sm btn-icon" onClick={() => onOgrenciSec(r.ogrenci_id)}><Icon name="user" size={12} /></button>
-              </div>
-            ))}
+            {riskliOgrenciler.map((r) => {
+              const oncelikliFaktor = r.faktorler[0];
+              return (
+                <div key={r.ogrenci_id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 99, flexShrink: 0, background: RISK_RENK[r.seviye] }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.ad_soyad}</p>
+                    <p style={{ fontSize: 11, color: "rgba(15,27,45,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {oncelikliFaktor ? `${oncelikliFaktor.ad} · ${oncelikliFaktor.detay}` : "Düzenli takip"}
+                    </p>
+                  </div>
+                  <div style={{ width: 90 }}><ProgressBar pct={r.riskSkoru} color={RISK_RENK[r.seviye]} /></div>
+                  <Badge variant={RISK_BADGE[r.seviye]}>{RISK_METIN[r.seviye]}</Badge>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm btn-icon"
+                    onClick={() => onOgrenciSec(r.ogrenci_id)}
+                    aria-label={`${r.ad_soyad} öğrenci detayını aç`}
+                    title="Öğrenci detayını aç"
+                  >
+                    <Icon name="user" size={12} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </Card>
 

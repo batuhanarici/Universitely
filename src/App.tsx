@@ -117,7 +117,7 @@ function OgretmenUygulamasi() {
         ) : (
         <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Suspense fallback={<PageLoading />}>
-          {sekme === "/coach/dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} />}
+          {sekme === "/coach/dashboard" && <KocDashboard onOgrenciSec={ogrenciDetayinaGit} onRiskAc={() => navigate("/coach/risk")} />}
           {sekme === "/coach/class-overview" && <SinifGenel />}
           {sekme === "/coach/class-analysis" && <SinifAnaliz />}
           {sekme === "/coach/students" && <OgrenciYonetimi onOgrenciSec={ogrenciDetayinaGit} />}
