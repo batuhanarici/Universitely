@@ -55,6 +55,17 @@ h1, h2, h3, .display {
 
 ::selection { background: var(--color-gold-light); color: var(--color-ink); }
 
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgba(42,157,143,0.7);
+  outline-offset: 3px;
+}
+@media (prefers-contrast: more) {
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline-color: #0F1B2D;
+    outline-width: 3px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -616,5 +627,9 @@ select.input { cursor: pointer; }
 .bildirim-satiri:focus-within .bildirim-aksiyonlar { opacity: 1; }
 @media (hover: none) {
   .bildirim-aksiyonlar { opacity: 1; }
+}
+.bildirim-aksiyon {
+  min-width: 44px;
+  min-height: 44px;
 }
 .bildirim-aksiyon:hover { background: rgba(15,27,45,0.06); }

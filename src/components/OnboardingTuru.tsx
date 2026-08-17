@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import UYArrow from "./UYArrow";
 import { Btn } from "./ui";
 import type { RehberGrup, RehberGiris } from "../lib/rehberTipleri";
+import { useFocusTrap } from "../lib/useFocusTrap";
 
 // Spotlight, sidebar dar/gizli olduğunda (mobil) anlamsızlaşır — bu genişliğin
 // altında sade, ortalanmış kart gösterilir.
@@ -71,6 +72,9 @@ export default function OnboardingTuru({ giris, gruplar, kapanis, onTamamla }: P
     }
   }
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, bitir);
+
   const spotlightAktif = genisEkran && grup && rect;
 
   // Tooltip'i hedefin sağına, dikey ortasına hizala; taşarsa viewport içine sıkıştır
@@ -83,9 +87,17 @@ export default function OnboardingTuru({ giris, gruplar, kapanis, onTamamla }: P
     : { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340 };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200 }}>
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Universitely rehber turu"
+      tabIndex={-1}
+      style={{ position: "fixed", inset: 0, zIndex: 200 }}
+    >
       {/* Arka planı karart + hedefi spot ışığıyla kes */}
       <div
+        aria-hidden="true"
         style={{
           position: "fixed", inset: 0,
           background: spotlightAktif ? "transparent" : "rgba(15,27,45,0.55)",
@@ -114,6 +126,7 @@ export default function OnboardingTuru({ giris, gruplar, kapanis, onTamamla }: P
         )}
 
         <button
+          type="button"
           onClick={bitir}
           disabled={kaydediliyor}
           style={{ position: "absolute", top: 14, right: 14, border: "none", background: "transparent", color: "rgba(15,27,45,0.4)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
@@ -150,6 +163,7 @@ export default function OnboardingTuru({ giris, gruplar, kapanis, onTamamla }: P
             {Array.from({ length: TOPLAM_ADIM }).map((_, i) => (
               <div
                 key={i}
+                aria-hidden="true"
                 style={{
                   width: 6, height: 6, borderRadius: "50%",
                   background: i === adim ? "var(--color-ink)" : "rgba(15,27,45,0.15)",

@@ -165,17 +165,38 @@ export function Tabs({ tabs, active, onChange }: {
   active: string;
   onChange: (t: string) => void;
 }) {
+  const normalized = tabs.map((t) => typeof t === "string" ? { label: t, value: t } : t);
+
+  function klavyeGezin(e: React.KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    const sonrakiIndex = e.key === "Home"
+      ? 0
+      : e.key === "End"
+        ? normalized.length - 1
+        : (index + (e.key === "ArrowRight" ? 1 : -1) + normalized.length) % normalized.length;
+    const sonraki = normalized[sonrakiIndex];
+    onChange(sonraki.value);
+    const tablar = e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]");
+    tablar?.[sonrakiIndex]?.focus();
+  }
+
   return (
-    <div className="tabs">
-      {tabs.map((t) => {
-        const label = typeof t === "string" ? t : t.label;
-        const value = typeof t === "string" ? t : t.value;
-        return (
-          <button key={value} className={`tab-btn ${active === value ? "active" : ""}`} onClick={() => onChange(value)}>
-            {label}
-          </button>
-        );
-      })}
+    <div className="tabs" role="tablist" aria-label="Sekmeler">
+      {normalized.map((tab, index) => (
+        <button
+          key={tab.value}
+          type="button"
+          role="tab"
+          aria-selected={active === tab.value}
+          tabIndex={active === tab.value ? 0 : -1}
+          className={`tab-btn ${active === tab.value ? "active" : ""}`}
+          onClick={() => onChange(tab.value)}
+          onKeyDown={(e) => klavyeGezin(e, index)}
+        >
+          {tab.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -195,13 +216,19 @@ export function StatusDot({ active }: { active: boolean }) {
 // ── Toast ──────────────────────────────────────────────────────────────────
 export function Toast({ msg, visible }: { msg: string; visible: boolean }) {
   return (
-    <div style={{
-      position: 'fixed', bottom: 24, left: '50%', transform: `translateX(-50%) translateY(${visible ? 0 : 12}px)`,
-      opacity: visible ? 1 : 0, transition: 'all 250ms ease',
-      background: '#0F1B2D', color: '#F4EFE4', padding: '10px 20px', borderRadius: 8,
-      fontSize: 13, fontWeight: 600, zIndex: 9999, pointerEvents: 'none',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
-    }}>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-hidden={!visible}
+      style={{
+        position: 'fixed', bottom: 24, left: '50%', transform: `translateX(-50%) translateY(${visible ? 0 : 12}px)`,
+        opacity: visible ? 1 : 0, transition: 'all 250ms ease',
+        background: '#0F1B2D', color: '#F4EFE4', padding: '10px 20px', borderRadius: 8,
+        fontSize: 13, fontWeight: 600, zIndex: 9999, pointerEvents: 'none',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
+      }}
+    >
       {msg}
     </div>
   );

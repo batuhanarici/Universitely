@@ -21,22 +21,23 @@ export default function BildirimSatiri({ bildirim, onAc, onOkundu, onArsivle, on
 }) {
   const renk = TUR_RENK[bildirim.tur] ?? "#0F1B2D";
   const okunmamis = !bildirim.okundu;
+  const icerikStil: CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    gap: 12,
+    alignItems: "flex-start",
+    padding: "11px 0 11px 11px",
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    textAlign: "left",
+    font: "inherit",
+    cursor: onAc ? "pointer" : "default",
+  };
 
-  return (
-    <div
-      className="bildirim-satiri"
-      onClick={onAc}
-      role={onAc ? "button" : undefined}
-      style={{
-        display: "flex",
-        gap: 12,
-        alignItems: "flex-start",
-        padding: "11px 14px",
-        cursor: onAc ? "pointer" : "default",
-        borderLeft: `3px solid ${renk}`,
-        background: okunmamis ? "#FFFDF6" : "transparent",
-      }}
-    >
+  const icerik = (
+    <>
       <div style={{ flexShrink: 0, marginTop: 2, color: renk }}>
         <Icon name={TUR_IKON[bildirim.tur] ?? "bell"} size={17} />
       </div>
@@ -97,13 +98,36 @@ export default function BildirimSatiri({ bildirim, onAc, onOkundu, onArsivle, on
           </p>
         )}
       </div>
+    </>
+  );
 
-      <div className="bildirim-aksiyonlar" style={{ display: "flex", gap: 2, flexShrink: 0, alignItems: "center", paddingTop: 2 }}>
+  return (
+    <div
+      className="bildirim-satiri"
+      style={{
+        display: "flex",
+        gap: 12,
+        alignItems: "stretch",
+        borderLeft: `3px solid ${renk}`,
+        background: okunmamis ? "#FFFDF6" : "transparent",
+      }}
+    >
+      {onAc ? (
+        <button type="button" onClick={onAc} aria-label={`Bildirimi aç: ${bildirim.baslik}`} style={icerikStil}>
+          {icerik}
+        </button>
+      ) : (
+        <div style={icerikStil}>{icerik}</div>
+      )}
+
+      <div className="bildirim-aksiyonlar" style={{ display: "flex", gap: 2, flexShrink: 0, alignItems: "center", padding: "11px 14px 0 0" }}>
         {onOkundu && (
           <button
+            type="button"
             className="bildirim-aksiyon"
             title={okunmamis ? "Okundu işaretle" : "Okunmamış işaretle"}
-            onClick={(e) => { e.stopPropagation(); onOkundu(); }}
+            aria-label={okunmamis ? "Okundu işaretle" : "Okunmamış işaretle"}
+            onClick={onOkundu}
             style={aksiyonStil}
           >
             <Icon name="check" size={13} color="#2A9D8F" />
@@ -111,9 +135,11 @@ export default function BildirimSatiri({ bildirim, onAc, onOkundu, onArsivle, on
         )}
         {onArsivle && (
           <button
+            type="button"
             className="bildirim-aksiyon"
             title="Arşivle"
-            onClick={(e) => { e.stopPropagation(); onArsivle(); }}
+            aria-label="Arşivle"
+            onClick={onArsivle}
             style={aksiyonStil}
           >
             <Icon name="folder" size={13} color="#A07C20" />
@@ -121,9 +147,11 @@ export default function BildirimSatiri({ bildirim, onAc, onOkundu, onArsivle, on
         )}
         {onSil && (
           <button
+            type="button"
             className="bildirim-aksiyon"
             title="Sil"
-            onClick={(e) => { e.stopPropagation(); onSil(); }}
+            aria-label="Sil"
+            onClick={onSil}
             style={aksiyonStil}
           >
             <Icon name="trash" size={13} color="#C4503A" />
