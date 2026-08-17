@@ -14,6 +14,10 @@ export function useCursorTrail() {
     let points: TrailPoint[] = [];
     let raf = 0;
 
+    const isFine = window.matchMedia("(pointer: fine)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!isFine || reducedMotion) return;
+
     function resize() {
       canvas!.width = window.innerWidth;
       canvas!.height = window.innerHeight;
@@ -21,12 +25,11 @@ export function useCursorTrail() {
     resize();
     window.addEventListener("resize", resize);
 
-    const isFine = window.matchMedia("(pointer: fine)").matches;
     function handleMove(e: MouseEvent) {
       points.push({ x: e.clientX, y: e.clientY, life: 1 });
       if (points.length > 40) points.shift();
     }
-    if (isFine) window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mousemove", handleMove);
 
     function draw() {
       ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
@@ -48,7 +51,7 @@ export function useCursorTrail() {
 
     return () => {
       window.removeEventListener("resize", resize);
-      if (isFine) window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mousemove", handleMove);
       cancelAnimationFrame(raf);
     };
   }, []);

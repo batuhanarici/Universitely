@@ -51,7 +51,7 @@ function Kart({ y, i }: { y: Yorum; i: number }) {
 
 export default function Testimonials() {
   const ref = useReveal<HTMLElement>();
-  // Kesintisiz kaymak için liste iki kez tekrarlanıyor; ikinci sıra ters akar.
+  // Tek satırın kesintisiz akması için liste iki kez tekrarlanıyor.
   const items = [...YORUMLAR, ...YORUMLAR];
 
   return (
@@ -62,11 +62,6 @@ export default function Testimonials() {
         <div className="lp-marquee-track">
           {items.map((y, i) => (
             <Kart key={`a-${y.name}-${i}`} y={y} i={i} />
-          ))}
-        </div>
-        <div className="lp-marquee-track lp-marquee-b">
-          {items.map((y, i) => (
-            <Kart key={`b-${y.name}-${i}`} y={y} i={i + 1} />
           ))}
         </div>
       </div>

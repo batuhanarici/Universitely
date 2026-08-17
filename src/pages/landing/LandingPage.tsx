@@ -33,7 +33,6 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
         <KeywordStrip />
         <StatsSection />
         <Testimonials />
-        <KeywordStrip />
         <Closing onGetStarted={onGetStarted} />
       </main>
       <Footer />

@@ -29,6 +29,7 @@ export default function MagneticButton({
   return (
     <button
       ref={ref}
+      type="button"
       className={`lp-btn-gold${className ? ` ${className}` : ""}`}
       style={style}
       onClick={onClick}

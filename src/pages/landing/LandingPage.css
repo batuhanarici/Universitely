@@ -55,6 +55,10 @@
   position: relative;
 }
 .lp-btn-gold:hover { box-shadow: 0 14px 30px rgba(22, 40, 63, 0.25); }
+.lp-btn-gold:active { transform: scale(0.97); }
+.lp-btn-gold:focus-visible,
+.lp-btn-ghost:focus-visible,
+.lp-role-tab:focus-visible { outline: 3px solid rgba(42,157,143,0.75); outline-offset: 4px; }
 .lp-btn-ghost {
   color: var(--lp-ink); font-size: 14px; font-weight: 600; opacity: 0.65;
   border-bottom: 1px solid rgba(22, 40, 63, 0.3); padding-bottom: 2px;
@@ -431,6 +435,11 @@
    ============================================================ */
 @media (max-width: 820px) {
   .lp-section { padding: 72px 6vw; }
+  .lp-hero { gap: 24px; }
+  .lp-hero-copy { max-width: 620px; }
+  .lp-cta-row { gap: 14px; margin-top: 28px; }
+  .lp-btn-gold { min-height: 48px; padding: 13px 24px; }
+
 
   .lp-nav { padding: 14px 6vw; }
   .lp-nav-links { display: none; }
@@ -455,7 +464,43 @@
 
 @media (max-width: 480px) {
   .lp-section { padding: 64px 5vw; }
+  .lp-hero { padding-top: 112px; padding-bottom: 36px; }
+  .lp-hero h1 { font-size: clamp(34px, 11vw, 48px); }
+  .lp-lede { font-size: 15px; }
+  .lp-hero-pills { gap: 8px; }
+  .lp-hero-pill { padding: 7px 11px; font-size: 11px; }
+  .lp-hero-visual { padding-top: 34px; }
+  .lp-mock-card { padding: 22px 18px; min-height: 430px; }
+  .lp-pool-note { top: -6px; right: 0; width: min(160px, 58vw); padding: 12px 13px; }
+  .lp-float-tag { left: 0; bottom: -14px; font-size: 11px; padding: 9px 12px; }
+  .lp-cta-row { align-items: stretch; flex-direction: column; }
+  .lp-cta-row .lp-btn-gold,
+  .lp-cta-row .lp-btn-ghost { width: 100%; text-align: center; }
+  .lp-btn-ghost { padding: 10px 0; }
   .lp-stat-row { gap: 28px; }
   .lp-stat-underline { width: 100px; }
   .lp-footer-inner { grid-template-columns: 1fr; gap: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-root *,
+  .lp-root *::before,
+  .lp-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .lp-root .lp-hero-copy,
+  .lp-root .lp-hero-visual,
+  .lp-root .lp-reveal,
+  .lp-root .lp-cmp-new {
+    opacity: 1;
+    transform: none;
+  }
+  .lp-root .lp-nav { transition: none; }
+  .lp-root .lp-marquee-track,
+  .lp-root .lp-strip-track { transform: none !important; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .lp-nav { background: var(--lp-cream); backdrop-filter: none; }
 }

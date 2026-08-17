@@ -28,9 +28,10 @@ export default function Hero({ onGetStarted }: { onGetStarted: () => void }) {
 
   useEffect(() => {
     const fine = window.matchMedia("(pointer: fine)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     function onScroll() {
       const y = window.scrollY;
-      if (cardRef.current && fine) {
+      if (cardRef.current && fine && !reducedMotion) {
         const rotY = -14 + Math.min(y * 0.03, 14);
         const rotX = 6 - Math.min(y * 0.015, 10);
         const ty = Math.min(y * 0.25, 120);
