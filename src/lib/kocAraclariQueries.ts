@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { KocNot, Gorusme, Odeme, VeliAlici, KocSonucSatiri } from "../types/database";
+import type { KocNot, Gorusme, GorusmeTuru, Odeme, VeliAlici, KocSonucSatiri } from "../types/database";
 
 export async function kocVelileriniGetir(): Promise<VeliAlici[]> {
   const { data, error } = await supabase.rpc("koc_velileri");
@@ -44,6 +44,7 @@ export async function gorusmeleriGetir(): Promise<Gorusme[]> {
   const { data, error } = await supabase
     .from("gorusmeler")
     .select("*")
+    .eq("tur", "gorusme")
     .order("tarih", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -52,6 +53,14 @@ export async function gorusmeleriGetir(): Promise<Gorusme[]> {
 export interface GorusmeGirdisi {
   ogrenci_id: string;
   katilimci: string;
+  baslik: string;
+  tarih: string;
+  notlar?: string | null;
+  tur?: GorusmeTuru;
+}
+
+export interface DersGirdisi {
+  ogrenci_id: string;
   baslik: string;
   tarih: string;
   notlar?: string | null;
@@ -66,11 +75,33 @@ export async function gorusmeEkle(girdi: GorusmeGirdisi): Promise<Gorusme> {
       baslik: girdi.baslik,
       tarih: girdi.tarih,
       notlar: girdi.notlar ?? null,
+      tur: girdi.tur ?? "gorusme",
     })
     .select()
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function dersleriGetir(): Promise<Gorusme[]> {
+  const { data, error } = await supabase
+    .from("gorusmeler")
+    .select("*")
+    .eq("tur", "ders")
+    .order("tarih", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function dersEkle(girdi: DersGirdisi): Promise<Gorusme> {
+  return gorusmeEkle({
+    ogrenci_id: girdi.ogrenci_id,
+    katilimci: "ogrenci",
+    baslik: girdi.baslik,
+    tarih: girdi.tarih,
+    notlar: girdi.notlar ?? null,
+    tur: "ders",
+  });
 }
 
 export async function gorusmeDurumGuncelle(id: string, durum: string) {

@@ -180,6 +180,8 @@ export interface KocNot {
   updated_at: string;
 }
 
+export type GorusmeTuru = "gorusme" | "ders";
+
 export interface Gorusme {
   id: string;
   ogrenci_id: string;
@@ -188,6 +190,44 @@ export interface Gorusme {
   tarih: string;
   durum: string;
   notlar: string | null;
+  created_at: string;
+  tur: GorusmeTuru;
+}
+
+export interface OkulDersProgrami {
+  id: string;
+  ogrenci_id: string;
+  gun: number;
+  baslangic: string;
+  bitis: string;
+  ders_adi: string;
+  created_at: string;
+}
+
+export type GorevDosyaTuru = "kaynak" | "teslim";
+
+export interface OgrenciHedefi {
+  id: string;
+  ogrenci_id: string;
+  tur: "lisans" | "onlisans";
+  universite_kodu: string;
+  universite_adi: string;
+  program_kodu: string;
+  program_adi: string;
+  program_url: string | null;
+  created_at: string;
+}
+
+export interface GorevDosyasi {
+  id: string;
+  gorev_id: string;
+  ogrenci_id: string;
+  yukleyen_id: string;
+  tur: GorevDosyaTuru;
+  dosya_adi: string;
+  storage_path: string;
+  mime_type: string | null;
+  boyut: number | null;
   created_at: string;
 }
 

@@ -4,6 +4,7 @@ import { GuvvenlikBolumu, BildirimBolumu } from "../../components/ProfilBolumler
 import { emailBildirimGetir, emailBildirimKaydet } from "../../lib/ayarlarQueries";
 import { useAuth } from "../../lib/AuthContext";
 import VeriBolumu from "./VeriBolumu";
+import SikayetFormu from "../../components/SikayetFormu";
 
 export default function AyarlarSayfasi() {
   const { toast, show } = useToast();
@@ -38,6 +39,7 @@ export default function AyarlarSayfasi() {
           { label: "Bildirimler", value: "bildirimler" },
           { label: "Güvenlik", value: "guvenlik" },
           { label: "Veri & Gizlilik", value: "veri" },
+          { label: "Destek", value: "destek" },
         ]}
         active={aktif}
         onChange={setAktif}
@@ -61,6 +63,7 @@ export default function AyarlarSayfasi() {
       )}
       {aktif === "guvenlik" && <div style={{ marginTop: 16 }}><GuvvenlikBolumu show={show} /></div>}
       {aktif === "veri" && <div style={{ marginTop: 16 }}><VeriBolumu /></div>}
+      {aktif === "destek" && <div style={{ marginTop: 16 }}><SikayetFormu /></div>}
 
       {toast}
     </div>

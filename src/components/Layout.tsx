@@ -27,6 +27,8 @@ export const studentNav: NavGroup[] = [
     { path: '/student/compare', label: 'Karşılaştırma', icon: 'compare' },
   ]},
   { group: 'Koç & Sistem', items: [
+    { path: '/student/goals', label: 'Üniversite Hedefleri', icon: 'star' },
+    { path: '/student/preference-robot', label: 'Tercih Robotu', icon: 'chart' },
     { path: '/student/ai-coach', label: 'AI Koçum', icon: 'ai' },
     { path: '/student/weekly-report', label: 'Haftalık Rapor', icon: 'report' },
     { path: '/student/motivation', label: 'Motivasyon', icon: 'medal' },
@@ -46,6 +48,7 @@ export const coachNav: NavGroup[] = [
     { path: '/coach/class-analysis', label: 'Sınıf Analiz', icon: 'grid' },
     { path: '/coach/students', label: 'Öğrenciler', icon: 'students' },
     { path: '/coach/weekly-program', label: 'Haftalık Program', icon: 'calendar' },
+    { path: '/coach/lesson-calendar', label: 'Ders Takvimi', icon: 'calendar' },
   ]},
   { group: 'Atama', items: [
     { path: '/coach/task-management', label: 'Görev Yönetimi', icon: 'task' },

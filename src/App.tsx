@@ -12,9 +12,11 @@ import PageLoading from "./components/PageLoading";
 
 const GirisEkrani = lazy(() => import("./pages/GirisEkrani"));
 const SifreSifirlama = lazy(() => import("./pages/SifreSifirlama"));
+const HesapAskida = lazy(() => import("./pages/HesapAskida"));
 const LandingPage = lazy(() => import("./pages/landing/LandingPage"));
 const OgrenciPaneli = lazy(() => import("./pages/ogrenci/OgrenciPaneli"));
 const VeliPaneli = lazy(() => import("./pages/veli/VeliPaneli"));
+const AdminPaneli = lazy(() => import("./pages/admin/AdminPaneli"));
 const DersKonuYonetimi = lazy(() => import("./pages/ogretmen/DersKonuYonetimi"));
 const SablonOlustur = lazy(() => import("./pages/ogretmen/SablonOlustur"));
 const DenemeOlustur = lazy(() => import("./pages/ogretmen/DenemeOlustur"));
@@ -33,6 +35,7 @@ const OgretmenRapor = lazy(() => import("./pages/ogretmen/OgretmenRapor"));
 const KocAI = lazy(() => import("./pages/ogretmen/KocAI"));
 const Muhasebe = lazy(() => import("./pages/ogretmen/Muhasebe"));
 const ProgramYonetimi = lazy(() => import("./pages/ogretmen/ProgramYonetimi"));
+const DersTakvimi = lazy(() => import("./pages/ogretmen/DersTakvimi"));
 const GorevYonetimi = lazy(() => import("./pages/ogretmen/GorevYonetimi"));
 const KaynakAta = lazy(() => import("./pages/ogretmen/KaynakAta"));
 const KonuAta = lazy(() => import("./pages/ogretmen/KonuAta"));
@@ -44,14 +47,14 @@ const OnboardingTuru = lazy(() => import("./components/OnboardingTuru"));
 
 type Sekme =
   | "/coach/dashboard" | "/coach/risk" | "/coach/accounting" | "/coach/class-overview" | "/coach/class-analysis"
-  | "/coach/students" | "/coach/student-detail" | "/coach/weekly-program" | "/coach/task-management"
+  | "/coach/students" | "/coach/student-detail" | "/coach/weekly-program" | "/coach/lesson-calendar" | "/coach/task-management"
   | "/coach/assign-resource" | "/coach/assign-subject" | "/coach/lesson-management" | "/coach/exam-template"
   | "/coach/create-exam" | "/coach/enter-result" | "/coach/bulk-result" | "/coach/messages"
   | "/coach/notifications" | "/coach/notes" | "/coach/meetings" | "/coach/bulk-notify" | "/coach/class-report";
 
 const KOC_ROUTE_LISTESI = [
   "/coach/dashboard", "/coach/risk", "/coach/accounting", "/coach/class-overview", "/coach/class-analysis",
-  "/coach/students", "/coach/student-detail", "/coach/weekly-program", "/coach/task-management",
+  "/coach/students", "/coach/student-detail", "/coach/weekly-program", "/coach/lesson-calendar", "/coach/task-management",
   "/coach/assign-resource", "/coach/assign-subject", "/coach/lesson-management", "/coach/exam-template",
   "/coach/create-exam", "/coach/enter-result", "/coach/bulk-result", "/coach/messages", "/coach/notifications",
   "/coach/notes", "/coach/meetings", "/coach/bulk-notify", "/coach/class-report",
@@ -128,6 +131,7 @@ function OgretmenUygulamasi() {
           {sekme === "/coach/enter-result" && <SonucGir />}
           {sekme === "/coach/bulk-result" && <TopluSonucGir />}
           {sekme === "/coach/weekly-program" && <ProgramYonetimi />}
+          {sekme === "/coach/lesson-calendar" && <DersTakvimi />}
           {sekme === "/coach/task-management" && <GorevYonetimi />}
           {sekme === "/coach/assign-resource" && <KaynakAta />}
           {sekme === "/coach/assign-subject" && <KonuAta />}
@@ -170,7 +174,7 @@ function OgretmenUygulamasi() {
 }
 
 function App() {
-  const { session, yukleniyor, ogrenciMi, veliMi, sifreSifirlama } = useAuth();
+  const { session, yukleniyor, ogrenciMi, veliMi, adminMi, hesapAskida, hesapNedeni, sifreSifirlama } = useAuth();
   // "Ücretsiz Dene" ile landing page'den giriş ekranına geçildiğinde true olur.
   const [girisIstendi, setGirisIstendi] = useState(
     () => sessionStorage.getItem("girisIstendi") === "1"
@@ -207,6 +211,10 @@ function App() {
     );
   } else if (!session) {
     icerik = <Suspense fallback={<PageLoading />}><GirisEkrani /></Suspense>;
+  } else if (hesapAskida) {
+    icerik = <Suspense fallback={<PageLoading />}><HesapAskida neden={hesapNedeni} /></Suspense>;
+  } else if (adminMi) {
+    icerik = <Suspense fallback={<PageLoading />}><AdminPaneli /></Suspense>;
   } else if (veliMi) {
     icerik = <Suspense fallback={<PageLoading />}><VeliPaneli /></Suspense>;
   } else if (ogrenciMi === null) {

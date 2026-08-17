@@ -3,6 +3,7 @@ import { gorevleriGetir, gorevEkle, gorevTamamla, gorevSil } from "../../lib/gor
 import type { Gorev, GorevTipi } from "../../types/database";
 import { Card, Btn, Input, Label, FormGroup, Select, Badge, Checkbox, useToast } from "../../components/ui";
 import { Icon } from "../../components/Icon";
+import GorevDosyaPaneli from "../../components/GorevDosyaPaneli";
 
 function bugunIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -96,6 +97,7 @@ export default function Gorevler() {
             💬 Koçundan: {g.geri_bildirim}
           </div>
         )}
+        <GorevDosyaPaneli gorevId={g.id} ogrenciId={g.ogrenci_id} yuklemeTuru="teslim" />
       </div>
     );
   }

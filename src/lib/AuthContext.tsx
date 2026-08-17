@@ -9,6 +9,9 @@ interface AuthCtx {
   yukleniyor: boolean;
   ogrenciMi: boolean | null; // null = henüz kontrol edilmedi
   veliMi: boolean;
+  adminMi: boolean;
+  hesapAskida: boolean;
+  hesapNedeni: string | null;
   sifreSifirlama: boolean; // şifre sıfırlama linkiyle geldiyse true
   setSifreSifirlama: (v: boolean) => void;
 }
@@ -18,6 +21,9 @@ const Ctx = createContext<AuthCtx>({
   yukleniyor: true,
   ogrenciMi: null,
   veliMi: false,
+  adminMi: false,
+  hesapAskida: false,
+  hesapNedeni: null,
   sifreSifirlama: false,
   setSifreSifirlama: () => {},
 });
@@ -27,6 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [ogrenciMi, setOgrenciMi] = useState<boolean | null>(null);
   const [sifreSifirlama, setSifreSifirlama] = useState(false);
+  const [adminMi, setAdminMi] = useState(false);
+  const [hesapAskida, setHesapAskida] = useState(false);
+  const [hesapNedeni, setHesapNedeni] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabaseConfigurada) {
@@ -53,6 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) {
       setOgrenciMi(null);
+      setAdminMi(false);
+      setHesapAskida(false);
+      setHesapNedeni(null);
       return;
     }
     const aktifSession = session;
@@ -76,8 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       if (iptal) return;
-      const { data } = await supabase.from("ogrenciler").select("id").eq("id", aktifSession.user.id).maybeSingle();
-      if (!iptal) setOgrenciMi(!!data);
+      const [{ data: ogrenci }, { data: admin }, { data: hesap }] = await Promise.all([
+        supabase.from("ogrenciler").select("id").eq("id", aktifSession.user.id).maybeSingle(),
+        supabase.from("admin_users").select("user_id").eq("user_id", aktifSession.user.id).maybeSingle(),
+        supabase.from("hesap_durumlari").select("durum, neden").eq("user_id", aktifSession.user.id).maybeSingle(),
+      ]);
+      if (!iptal) {
+        setOgrenciMi(!!ogrenci);
+        setAdminMi(!!admin);
+        setHesapAskida(hesap?.durum === "askida");
+        setHesapNedeni(hesap?.neden ?? null);
+      }
     }
     kontrolEt();
     return () => {
@@ -93,6 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         yukleniyor,
         ogrenciMi,
         veliMi: session?.user.user_metadata?.rol === "veli",
+        adminMi,
+        hesapAskida,
+        hesapNedeni,
         sifreSifirlama,
         setSifreSifirlama,
       }}
