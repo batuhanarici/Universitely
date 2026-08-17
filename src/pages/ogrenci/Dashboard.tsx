@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -11,7 +11,7 @@ import {
 } from "../../lib/ogrenciQueries";
 import { gorevleriGetir, gorevTamamla } from "../../lib/gorevQueries";
 import type { Gorev } from "../../types/database";
-import { AnimatedNumber, ProgressBar, Badge, Card, Checkbox, EmptyState, useToast } from "../../components/ui";
+import { AnimatedNumber, ProgressBar, Badge, Card, Checkbox, EmptyState, ErrorState, LoadingState, useToast } from "../../components/ui";
 import { useAuth } from "../../lib/AuthContext";
 
 const TEAL = "#2A9D8F";
@@ -79,17 +79,26 @@ export default function Dashboard() {
   const [havuz, setHavuz] = useState<TekrarKaydi[]>([]);
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [hata, setHata] = useState(false);
+
+  const verileriYukle = useCallback(async () => {
+    setYukleniyor(true);
+    setHata(false);
+    try {
+      const [s, h, g] = await Promise.all([kendiSonuclariniGetir(), kendiTekrarHavuzunuGetir(), gorevleriGetir()]);
+      setSonuclar(s);
+      setHavuz(h);
+      setGorevler(g);
+    } catch {
+      setHata(true);
+    } finally {
+      setYukleniyor(false);
+    }
+  }, []);
 
   useEffect(() => {
-    Promise.all([kendiSonuclariniGetir(), kendiTekrarHavuzunuGetir(), gorevleriGetir()])
-      .then(([s, h, g]) => {
-        setSonuclar(s);
-        setHavuz(h);
-        setGorevler(g);
-      })
-      .catch(() => {})
-      .finally(() => setYukleniyor(false));
-  }, []);
+    void verileriYukle();
+  }, [verileriYukle]);
 
   const konuOzetleri = useMemo(() => konulariOzetle(sonuclar), [sonuclar]);
   const zayifKonular = useMemo(() => konuOzetleri.filter((o) => oranHesapla(o) < 55), [konuOzetleri]);
@@ -152,7 +161,23 @@ export default function Dashboard() {
     show("Tekrar kaydedildi ✓");
   }
 
-  if (yukleniyor) return <p style={{ textAlign: "center", marginTop: 80, color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <LoadingState className="page-loading" />;
+
+  if (hata) {
+    return (
+      <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <h1 className="page-title">Öğrenci Paneli</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Bugünkü çalışma görünümün</p>
+        </div>
+        <ErrorState
+          title="Panel verileri yüklenemedi."
+          description="Bağlantını kontrol edip tekrar deneyebilirsin. Mevcut verilerin korunur."
+          onRetry={() => void verileriYukle()}
+        />
+      </div>
+    );
+  }
 
   const kalanTekrar = havuz.filter((h) => !h.cozuldu).length;
   const ad = (session?.user.user_metadata?.ad_soyad as string | undefined)?.split(" ")[0];

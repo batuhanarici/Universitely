@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import { kendiSonuclariniGetir, type SonucDetay } from "../../lib/ogrenciQueries";
 import { yanlisKonuDagiliminiHesapla } from "../../lib/analizHesaplari";
-import { Card } from "../../components/ui";
+import { Card, ErrorState, LoadingState } from "../../components/ui";
 
 const TEAL = "#2A9D8F";
 const RUST = "#C4503A";
@@ -80,7 +80,7 @@ export default function Analiz() {
     })).sort((a, b) => a.pct - b.pct);
   }, [sonuclar]);
 
-  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <LoadingState />;
 
   if (hata) {
     return (
@@ -89,17 +89,11 @@ export default function Analiz() {
           <h1 className="page-title">Analiz</h1>
           <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Deneme performansı grafikleri</p>
         </div>
-        <div className="card" role="alert" style={{ borderLeft: "4px solid #C4503A" }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#C4503A", marginBottom: 6 }}>
-            Analiz verileri yüklenemedi.
-          </p>
-          <p style={{ fontSize: 13, color: "rgba(15,27,45,0.6)", marginBottom: 14 }}>
-            Bağlantını kontrol edip tekrar deneyebilirsin. Mevcut verilerin korunur.
-          </p>
-          <button className="btn btn-primary" type="button" onClick={() => void verileriYukle()}>
-            Tekrar Dene
-          </button>
-        </div>
+        <ErrorState
+          title="Analiz verileri yüklenemedi."
+          description="Bağlantını kontrol edip tekrar deneyebilirsin. Mevcut verilerin korunur."
+          onRetry={() => void verileriYukle()}
+        />
       </div>
     );
   }

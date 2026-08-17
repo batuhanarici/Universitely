@@ -51,6 +51,48 @@ export function EmptyState({ icon, title, desc, action }: {
   );
 }
 
+// ── Loading / Error states ─────────────────────────────────────────────────
+export function LoadingState({ label = "Yükleniyor…", className = "" }: {
+  label?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={className}
+      role="status"
+      aria-live="polite"
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 72, color: "rgba(15,27,45,0.5)" }}
+    >
+      <span className="skeleton" aria-hidden="true" style={{ width: 18, height: 18, borderRadius: "50%" }} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+export function ErrorState({
+  title = "Veriler yüklenemedi.",
+  description = "Bağlantını kontrol edip tekrar deneyebilirsin.",
+  onRetry,
+  className = "",
+}: {
+  title?: string;
+  description?: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={`card ${className}`} role="alert" style={{ borderLeft: "4px solid #C4503A" }}>
+      <p style={{ fontSize: 14, fontWeight: 600, color: "#C4503A", marginBottom: 6 }}>{title}</p>
+      <p style={{ fontSize: 13, color: "rgba(15,27,45,0.6)", marginBottom: onRetry ? 14 : 0 }}>{description}</p>
+      {onRetry && (
+        <button className="btn btn-primary" type="button" onClick={onRetry}>
+          Tekrar Dene
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── KPICard ────────────────────────────────────────────────────────────────
 export function KPICard({ label, value, sub, color = '#0F1B2D', decimals = 0 }: {
   label: string; value: number; sub?: string; color?: string; decimals?: number;

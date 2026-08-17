@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { kocAnalizVerisiniGetir } from "../../lib/kocAiQueries";
 import { kocRiskleriniHesapla, type OgrenciRiski } from "../../lib/aiMotoru";
 import { gorusmeleriGetir } from "../../lib/kocAraclariQueries";
 import type { KocOgrencisi } from "../../lib/ogrenciYonetimQueries";
 import type { Gorusme, KocSonucSatiri, Gorev } from "../../types/database";
-import { Card, KPICard, Badge, ProgressBar } from "../../components/ui";
+import { Card, ErrorState, KPICard, Badge, ProgressBar, LoadingState } from "../../components/ui";
 import { Icon } from "../../components/Icon";
 
 function bugunIso(): string {
@@ -27,19 +27,28 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
   const [riskler, setRiskler] = useState<OgrenciRiski[]>([]);
   const [gorusmeler, setGorusmeler] = useState<Gorusme[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [hata, setHata] = useState(false);
+
+  const verileriYukle = useCallback(async () => {
+    setYukleniyor(true);
+    setHata(false);
+    try {
+      const [v, g] = await Promise.all([kocAnalizVerisiniGetir(), gorusmeleriGetir()]);
+      setOgrenciler(v.ogrenciler);
+      setSatirlar(v.sonuclar);
+      setGorevler(v.gorevler);
+      setRiskler(kocRiskleriniHesapla(v));
+      setGorusmeler(g);
+    } catch {
+      setHata(true);
+    } finally {
+      setYukleniyor(false);
+    }
+  }, []);
 
   useEffect(() => {
-    Promise.all([kocAnalizVerisiniGetir(), gorusmeleriGetir()])
-      .then(([v, g]) => {
-        setOgrenciler(v.ogrenciler);
-        setSatirlar(v.sonuclar);
-        setGorevler(v.gorevler);
-        setRiskler(kocRiskleriniHesapla(v));
-        setGorusmeler(g);
-      })
-      .catch(() => {})
-      .finally(() => setYukleniyor(false));
-  }, []);
+    void verileriYukle();
+  }, [verileriYukle]);
 
   const ogrenciAdi = useMemo(() => {
     const map = new Map<string, string>();
@@ -98,7 +107,23 @@ export default function KocDashboard({ onOgrenciSec }: { onOgrenciSec: (id: stri
   const aktifSayisi = ogrenciler.filter((o) => o.aktif).length;
   const pasifSayisi = ogrenciler.length - aktifSayisi;
 
-  if (yukleniyor) return <p style={{ color: "rgba(15,27,45,0.5)" }}>Yükleniyor…</p>;
+  if (yukleniyor) return <LoadingState />;
+
+  if (hata) {
+    return (
+      <div className="anim-stagger" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <h1 className="page-title">Koç Paneli</h1>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 14, marginTop: 4 }}>Sınıfına genel bakış</p>
+        </div>
+        <ErrorState
+          title="Koç paneli verileri yüklenemedi."
+          description="Bağlantını kontrol edip tekrar deneyebilirsin. Mevcut verilerin korunur."
+          onRetry={() => void verileriYukle()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
