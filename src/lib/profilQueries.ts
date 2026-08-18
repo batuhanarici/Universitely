@@ -4,8 +4,8 @@ import type { OgrenciProfili, SinavTuru } from "../types/database";
 export interface ProfilGirdisi {
   okul?: string;
   sinif?: string;
-  hedef_universite?: string;
-  hedef_bolum?: string;
+  hedef_universite?: string | null;
+  hedef_bolum?: string | null;
   sinav_turu?: SinavTuru;
   hedef_net?: number | null;
   email_bildirim?: boolean;

@@ -18,8 +18,6 @@ const Analiz = lazy(() => import("./Analiz"));
 const Yanlislar = lazy(() => import("./Yanlislar"));
 const Tekrar = lazy(() => import("./Tekrar"));
 const Takvim = lazy(() => import("./Takvim"));
-const Hedefler = lazy(() => import("./Hedefler"));
-const TercihRobotu = lazy(() => import("./TercihRobotu"));
 const Mesaj = lazy(() => import("./Mesaj"));
 const Oneriler = lazy(() => import("./Oneriler"));
 const HaftalikRapor = lazy(() => import("./HaftalikRapor"));
@@ -33,13 +31,13 @@ const OnboardingTuru = lazy(() => import("../../components/OnboardingTuru"));
 type Sekme =
   | "/student/dashboard" | "/student/study" | "/student/subjects" | "/student/tasks"
   | "/student/resources" | "/student/exams" | "/student/analysis" | "/student/wrongs" | "/student/repetition"
-  | "/student/calendar" | "/student/goals" | "/student/preference-robot" | "/student/messages" | "/student/notifications" | "/student/ai-coach" | "/student/weekly-report"
+  | "/student/calendar" | "/student/messages" | "/student/notifications" | "/student/ai-coach" | "/student/weekly-report"
   | "/student/compare" | "/student/motivation";
 
 const OGRENCI_ROUTE_LISTESI = [
   "/student/dashboard", "/student/study", "/student/subjects", "/student/tasks",
   "/student/resources", "/student/exams", "/student/analysis", "/student/wrongs", "/student/repetition",
-  "/student/calendar", "/student/goals", "/student/preference-robot", "/student/messages", "/student/notifications", "/student/ai-coach", "/student/weekly-report",
+  "/student/calendar", "/student/messages", "/student/notifications", "/student/ai-coach", "/student/weekly-report",
   "/student/compare", "/student/motivation",
 ] as const satisfies readonly Sekme[];
 
@@ -104,8 +102,6 @@ export default function OgrenciPaneli() {
           {sekme === "/student/wrongs" && <Yanlislar />}
           {sekme === "/student/repetition" && <Tekrar />}
           {sekme === "/student/calendar" && <Takvim />}
-          {sekme === "/student/goals" && <Hedefler />}
-          {sekme === "/student/preference-robot" && <TercihRobotu />}
           {sekme === "/student/messages" && <Mesaj />}
           {sekme === "/student/notifications" && <BildirimMerkezi onNavigate={git} />}
           {sekme === "/student/ai-coach" && <Oneriler />}

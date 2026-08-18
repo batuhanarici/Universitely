@@ -70,8 +70,8 @@ function universiteleriCikar(html: string) {
 
 function yamlBloklariniCikar(yaml: string) {
   return yaml
-    .split(/^\s*-\s*$/m)
-    .map((blok) => blok.trim())
+    .split(/\r?\n(?=\s*-\s*(?:\S|$))/)
+    .map((blok) => blok.replace(/^\s*-\s*/, "").trim())
     .filter(Boolean);
 }
 
@@ -154,7 +154,9 @@ Deno.serve(async (request) => {
     if (isUniversiteler) {
       try {
         const html = await sayfayiGetir(programAnaSayfa(tur));
-        return json({ source: "yok-atlas", fetchedAt: new Date().toISOString(), tur, universities: universiteleriCikar(html) });
+        const universities = universiteleriCikar(html);
+        if (universities.length === 0) throw new Error("YÖK Atlas üniversite listesi boş döndü.");
+        return json({ source: "yok-atlas", fetchedAt: new Date().toISOString(), tur, universities });
       } catch {
         const universities = await statikUniversiteleriGetir();
         return json({ source: "community-snapshot-2021", fallback: true, fetchedAt: new Date().toISOString(), tur, universities });
@@ -164,7 +166,9 @@ Deno.serve(async (request) => {
     if (input.tip === "programlar" && input.universiteKodu) {
       try {
         const html = await sayfayiGetir(programUniversiteSayfasi(tur, input.universiteKodu));
-        return json({ source: "yok-atlas", fetchedAt: new Date().toISOString(), tur, programs: programlariCikar(html, tur, input.universiteKodu) });
+        const programs = programlariCikar(html, tur, input.universiteKodu);
+        if (programs.length === 0) throw new Error("YÖK Atlas bölüm listesi boş döndü.");
+        return json({ source: "yok-atlas", fetchedAt: new Date().toISOString(), tur, programs });
       } catch {
         const programs = await statikProgramlariGetir(tur, input.universiteKodu);
         return json({ source: "community-snapshot-2021", fallback: true, fetchedAt: new Date().toISOString(), tur, programs });

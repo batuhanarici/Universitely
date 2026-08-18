@@ -6,9 +6,18 @@ import {
   ogrenciAdSoyadGetir,
   ogrenciAdSoyadKaydet,
 } from "../../lib/profilQueries";
+import {
+  ogrenciHedefiEkle,
+  ogrenciHedefiSil,
+  ogrenciHedefleriniGetir,
+  programlariGetir,
+  universiteleriGetir,
+  type ProgramKatalogKaydi,
+  type UniversiteKatalogKaydi,
+} from "../../lib/universiteQueries";
 import { avatarYukle, avatarSil } from "../../lib/avatarQueries";
-import type { OgrenciProfili, SinavTuru } from "../../types/database";
-import { Card, Btn, Input, Label, FormGroup, Badge } from "../../components/ui";
+import type { OgrenciHedefi, OgrenciProfili, SinavTuru } from "../../types/database";
+import { Card, Btn, Input, Label, FormGroup, Badge, Select } from "../../components/ui";
 import ProfilAvatar from "../../components/ProfilAvatar";
 import { AdSoyadBolumu, GuvvenlikBolumu, BildirimBolumu } from "../../components/ProfilBolumleri";
 import { useAuth } from "../../lib/authContext";
@@ -32,8 +41,6 @@ export default function Profil() {
   const [adSoyad, setAdSoyad] = useState("");
   const [okul, setOkul] = useState("");
   const [sinif, setSinif] = useState("");
-  const [hedefUniversite, setHedefUniversite] = useState("");
-  const [hedefBolum, setHedefBolum] = useState("");
   const [sinavTuru, setSinavTuru] = useState<SinavTuru>("tyt");
   const [hedefNet, setHedefNet] = useState("");
   const [emailBildirim, setEmailBildirim] = useState(false);
@@ -41,26 +48,80 @@ export default function Profil() {
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [avatarYol, setAvatarYol] = useState<string | null>(null);
   const [avatarYukleniyor, setAvatarYukleniyor] = useState(false);
+  const [hedefler, setHedefler] = useState<OgrenciHedefi[]>([]);
+  const [hedefTuru, setHedefTuru] = useState<"lisans" | "onlisans">("lisans");
+  const [universiteler, setUniversiteler] = useState<UniversiteKatalogKaydi[]>([]);
+  const [programlar, setProgramlar] = useState<ProgramKatalogKaydi[]>([]);
+  const [universiteKodu, setUniversiteKodu] = useState("");
+  const [programKodu, setProgramKodu] = useState("");
+  const [hedefKatalogYukleniyor, setHedefKatalogYukleniyor] = useState(false);
+  const [programlarYukleniyor, setProgramlarYukleniyor] = useState(false);
+  const [hedefKaydediliyor, setHedefKaydediliyor] = useState(false);
+  const [hedefHatasi, setHedefHatasi] = useState("");
 
   useEffect(() => {
-    Promise.all([profiliGetir(), ogrenciAdSoyadGetir()])
-      .then(([p, ad]) => {
+    Promise.all([profiliGetir(), ogrenciAdSoyadGetir(), ogrenciHedefleriniGetir()])
+      .then(([p, ad, kayitliHedefler]) => {
         if (p) {
           setProfil(p);
           setOkul(p.okul ?? "");
           setSinif(p.sinif ?? "");
-          setHedefUniversite(p.hedef_universite ?? "");
-          setHedefBolum(p.hedef_bolum ?? "");
           setSinavTuru(p.sinav_turu);
           setHedefNet(p.hedef_net != null ? String(p.hedef_net) : "");
           setEmailBildirim(p.email_bildirim);
           setAvatarYol(p.avatar_url ?? null);
         }
         setAdSoyad(ad);
+        setHedefler(kayitliHedefler);
       })
       .catch(() => {})
       .finally(() => setYukleniyor(false));
   }, []);
+
+  useEffect(() => {
+    let aktif = true;
+    setHedefKatalogYukleniyor(true);
+    setHedefHatasi("");
+    setUniversiteKodu("");
+    setProgramKodu("");
+    setProgramlar([]);
+    universiteleriGetir(hedefTuru)
+      .then((liste) => {
+        if (aktif) setUniversiteler(liste);
+      })
+      .catch(() => {
+        if (aktif) setHedefHatasi("Üniversite listesi alınamadı. Lütfen tekrar dene.");
+      })
+      .finally(() => {
+        if (aktif) setHedefKatalogYukleniyor(false);
+      });
+    return () => { aktif = false; };
+  }, [hedefTuru]);
+
+  useEffect(() => {
+    if (!universiteKodu) {
+      setProgramlar([]);
+      setProgramKodu("");
+      return;
+    }
+    let aktif = true;
+    setProgramlarYukleniyor(true);
+    setHedefHatasi("");
+    programlariGetir(hedefTuru, universiteKodu)
+      .then((liste) => {
+        if (aktif) {
+          setProgramlar(liste);
+          setProgramKodu("");
+        }
+      })
+      .catch(() => {
+        if (aktif) setHedefHatasi("Bu üniversitenin bölüm listesi alınamadı. Lütfen tekrar dene.");
+      })
+      .finally(() => {
+        if (aktif) setProgramlarYukleniyor(false);
+      });
+    return () => { aktif = false; };
+  }, [hedefTuru, universiteKodu]);
 
   async function handleKaydet(e: React.FormEvent) {
     e.preventDefault();
@@ -69,8 +130,6 @@ export default function Profil() {
       const kaydedilen = await profiliKaydet({
         okul: okul.trim() || undefined,
         sinif: sinif.trim() || undefined,
-        hedef_universite: hedefUniversite.trim() || undefined,
-        hedef_bolum: hedefBolum.trim() || undefined,
         sinav_turu: sinavTuru,
         hedef_net: hedefNet.trim() === "" ? null : Number(hedefNet),
       });
@@ -80,6 +139,53 @@ export default function Profil() {
       show("Kaydederken bir hata oluştu.");
     } finally {
       setKaydediliyor(false);
+    }
+  }
+
+  async function hedefEkle() {
+    const program = programlar.find((kayit) => kayit.kod === programKodu);
+    const universite = universiteler.find((kayit) => kayit.kod === universiteKodu);
+    if (!program || !universite) return;
+    setHedefKaydediliyor(true);
+    setHedefHatasi("");
+    try {
+      const yeni = await ogrenciHedefiEkle(program, universite.ad);
+      const kaydedilenProfil = await profiliKaydet({
+        hedef_universite: yeni.universite_adi,
+        hedef_bolum: yeni.program_adi,
+      });
+      setHedefler((mevcut) => [yeni, ...mevcut]);
+      setProfil(kaydedilenProfil);
+      setUniversiteKodu("");
+      setProgramKodu("");
+      setProgramlar([]);
+      show("Üniversite hedefi eklendi ✓");
+    } catch (error) {
+      setHedefHatasi(error instanceof Error && (error.message.includes("duplicate") || error.message.includes("23505")) ? "Bu bölümü hedeflerine zaten ekledin." : "Hedef eklenemedi. Lütfen tekrar dene.");
+    } finally {
+      setHedefKaydediliyor(false);
+    }
+  }
+
+  async function hedefSil(hedef: OgrenciHedefi) {
+    const eskiHedefler = hedefler;
+    const kalanlar = hedefler.filter((kayit) => kayit.id !== hedef.id);
+    setHedefler(kalanlar);
+    setHedefHatasi("");
+    try {
+      await ogrenciHedefiSil(hedef.id);
+      if (eskiHedefler[0]?.id === hedef.id) {
+        const sonraki = kalanlar[0];
+        const kaydedilenProfil = await profiliKaydet({
+          hedef_universite: sonraki?.universite_adi ?? null,
+          hedef_bolum: sonraki?.program_adi ?? null,
+        });
+        setProfil(kaydedilenProfil);
+      }
+      show("Üniversite hedefi kaldırıldı.");
+    } catch {
+      setHedefler(eskiHedefler);
+      setHedefHatasi("Hedef kaldırılamadı. Lütfen tekrar dene.");
     }
   }
 
@@ -141,6 +247,61 @@ export default function Profil() {
       )}
 
       <Card>
+        <div style={{ marginBottom: 14 }}>
+          <h2 className="section-title" style={{ marginBottom: 4 }}>Üniversite hedefleri</h2>
+          <p style={{ color: "rgba(15,27,45,0.5)", fontSize: 12, lineHeight: 1.5 }}>Hedef bölüm ve üniversitelerini YÖK Atlas kataloğundan seç. Tercih sıralaması veya yerleşme garantisi içermez.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "150px 1.3fr 1.7fr auto", gap: 10, alignItems: "end" }}>
+          <FormGroup>
+            <Label>Program türü</Label>
+            <Select value={hedefTuru} onChange={(e) => setHedefTuru(e.target.value as "lisans" | "onlisans")}>
+              <option value="lisans">Lisans</option>
+              <option value="onlisans">Ön lisans</option>
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label>Üniversite</Label>
+            <Select value={universiteKodu} onChange={(e) => setUniversiteKodu(e.target.value)} disabled={hedefKatalogYukleniyor || universiteler.length === 0}>
+              <option value="">{hedefKatalogYukleniyor ? "Üniversiteler yükleniyor…" : "Üniversite seç"}</option>
+              {universiteler.map((uni) => <option key={uni.kod} value={uni.kod}>{uni.ad}</option>)}
+            </Select>
+          </FormGroup>
+          <FormGroup>
+            <Label>Bölüm / program</Label>
+            <Select value={programKodu} onChange={(e) => setProgramKodu(e.target.value)} disabled={!universiteKodu || programlarYukleniyor || programlar.length === 0}>
+              <option value="">{programlarYukleniyor ? "Bölümler yükleniyor…" : "Bölüm seç"}</option>
+              {programlar.map((program) => <option key={program.kod} value={program.kod}>{program.ad}</option>)}
+            </Select>
+          </FormGroup>
+          <Btn variant="primary" type="button" onClick={() => void hedefEkle()} disabled={!programKodu || hedefKaydediliyor}>
+            {hedefKaydediliyor ? "Ekleniyor…" : "Hedefe ekle"}
+          </Btn>
+        </div>
+        {hedefHatasi && <p style={{ color: "#C4503A", fontSize: 12, margin: "10px 0 0" }}>{hedefHatasi}</p>}
+        {!hedefKatalogYukleniyor && !hedefHatasi && universiteler.length === 0 && <p style={{ color: "rgba(15,27,45,0.45)", fontSize: 12, margin: "10px 0 0" }}>Katalogda üniversite bulunamadı.</p>}
+        {hedefler.length > 0 && (
+          <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(15,27,45,0.08)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
+              <p style={{ fontSize: 11, fontWeight: 750, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(15,27,45,0.42)" }}>Kayıtlı hedefler</p>
+              <Badge variant="ink">{hedefler.length} hedef</Badge>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              {hedefler.map((hedef) => (
+                <div key={hedef.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 8, border: "1px solid rgba(15,27,45,0.08)", background: "rgba(228,187,96,0.07)" }}>
+                  <div style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 7, background: "#16283F", color: "#F4EFE4", fontSize: 10, fontWeight: 800 }}>{hedef.tur === "lisans" ? "4Y" : "2Y"}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: "#16283F", fontWeight: 700, fontSize: 12.5 }}>{hedef.program_adi}</div>
+                    <div style={{ color: "rgba(15,27,45,0.5)", fontSize: 11, marginTop: 2 }}>{hedef.universite_adi} · {hedef.program_kodu}</div>
+                  </div>
+                  <Btn variant="ghost" size="sm" type="button" onClick={() => void hedefSil(hedef)}>Kaldır</Btn>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      <Card>
         <h2 className="section-title" style={{ marginBottom: 16 }}>Profil Fotoğrafı</h2>
         <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
           <ProfilAvatar adSoyad={adSoyad || "Öğrenci"} tohum={session?.user?.id ?? ""} yol={avatarYol} boyut={72} />
@@ -173,14 +334,6 @@ export default function Profil() {
               <Input placeholder="Örn: 12-A" value={sinif} onChange={(e) => setSinif(e.target.value)} />
             </FormGroup>
           </div>
-          <FormGroup>
-            <Label>Hedef Üniversite</Label>
-            <Input placeholder="Örn: İTÜ, ODTÜ, Boğaziçi…" value={hedefUniversite} onChange={(e) => setHedefUniversite(e.target.value)} />
-          </FormGroup>
-          <FormGroup>
-            <Label>Hedef Bölüm</Label>
-            <Input placeholder="Örn: Bilgisayar Mühendisliği" value={hedefBolum} onChange={(e) => setHedefBolum(e.target.value)} />
-          </FormGroup>
           <FormGroup>
             <Label>Sınav Türü</Label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
