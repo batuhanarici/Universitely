@@ -58,9 +58,14 @@ export async function ogrenciHedefleriniGetir(): Promise<OgrenciHedefi[]> {
 }
 
 export async function ogrenciHedefiEkle(program: ProgramKatalogKaydi, universiteAdi: string): Promise<OgrenciHedefi> {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!authData.user) throw new Error("Oturum bulunamadı.");
+
   const { data, error } = await supabase
     .from("ogrenci_hedefleri")
     .insert({
+      ogrenci_id: authData.user.id,
       tur: program.tur,
       universite_kodu: program.universiteKodu,
       universite_adi: universiteAdi,
